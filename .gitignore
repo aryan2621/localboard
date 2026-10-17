@@ -1,0 +1,25 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.cursor
+.DS_Store
+*.sw?
+
+# Local databases
+*.sqlite
+
+# Rust build output, and llama-server built by scripts/build-llama-server.sh
+src-tauri/target/
+src-tauri/binaries/

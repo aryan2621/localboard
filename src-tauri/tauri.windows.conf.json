@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "build": {
+    "beforeDevCommand": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fetch-llama-server.ps1 && npm run dev",
+    "beforeBuildCommand": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/fetch-llama-server.ps1 && npm run build"
+  },
+  "bundle": {
+    "externalBin": [],
+    "resources": {
+      "binaries/llama/": "llama/"
+    }
+  }
+}

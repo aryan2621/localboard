@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "LocalBoard",
+  "version": "0.1.0",
+  "identifier": "app.localboard.desktop",
+  "build": {
+    "beforeDevCommand": "./scripts/build-llama-server.sh && npm run dev",
+    "devUrl": "http://127.0.0.1:1520",
+    "beforeBuildCommand": "./scripts/build-llama-server.sh && npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "LocalBoard",
+        "width": 1280,
+        "height": 850,
+        "backgroundColor": "#F9F8F4"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost http://127.0.0.1:1520 http://127.0.0.1:17890 ws://127.0.0.1:1520; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; frame-src http://127.0.0.1:17890"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "externalBin": [
+      "binaries/llama-server"
+    ],
+    "macOS": {
+      "signingIdentity": null,
+      "hardenedRuntime": true,
+      "entitlements": null
+    },
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "localboard"
+        ]
+      }
+    }
+  }
+}

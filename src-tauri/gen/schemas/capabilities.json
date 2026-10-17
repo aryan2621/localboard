@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"LocalBoard window permissions","local":true,"windows":["main"],"permissions":["core:default","core:window:allow-close","core:window:allow-hide","core:window:allow-show","core:window:allow-set-focus","core:window:allow-unminimize","dialog:allow-open","dialog:allow-save","notification:default","deep-link:default"]}}

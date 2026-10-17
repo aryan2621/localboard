@@ -1,0 +1,225 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 48 33% 97%;
+    --sidebar: 53 29% 94%;
+    --foreground: 30 3% 12%;
+    --card: 48 25% 92%;
+    --card-foreground: 30 3% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 3% 12%;
+    --primary: 15 56% 52%;
+    --primary-foreground: 0 0% 100%;
+    --brand: 15 56% 52%;
+    --brand-foreground: 0 0% 100%;
+    --secondary: 48 25% 92%;
+    --secondary-foreground: 30 3% 12%;
+    --muted: 48 25% 92%;
+    --muted-foreground: 48 5% 40%;
+    --accent: 48 22% 90%;
+    --accent-foreground: 30 3% 12%;
+    --destructive: 0 56% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 139 33% 37%;
+    --warning: 36 71% 39%;
+    --border: 50 21% 87%;
+    --input: 49 16% 81%;
+    --ring: 15 56% 52%;
+    --surface: 0 0% 100%;
+    --surface-foreground: 30 3% 12%;
+    --chart-1: 15 56% 52%;
+    --chart-2: 212 55% 45%;
+    --chart-3: 172 45% 34%;
+    --chart-4: 40 75% 46%;
+    --chart-5: 268 35% 55%;
+    --chart-6: 340 50% 52%;
+    --chart-7: 80 35% 38%;
+    --chart-8: 215 15% 48%;
+    --shadow-color: 30 10% 10%;
+    --radius: 0.5rem;
+    --app-text-caption: 0.8125rem;
+    --app-text-label: 0.9375rem;
+    --app-text-body: 1.0625rem;
+    --app-text-title: 1.25rem;
+    --app-text-heading: 1.625rem;
+    --app-text-page: 2rem;
+    --app-text-display: 2.5rem;
+  }
+
+  html[data-font-size='sm'] {
+    --app-text-caption: 0.75rem;
+    --app-text-label: 0.875rem;
+    --app-text-body: 1rem;
+    --app-text-title: 1.125rem;
+    --app-text-heading: 1.5rem;
+    --app-text-page: 1.75rem;
+    --app-text-display: 2.125rem;
+  }
+
+  html[data-font-size='lg'] {
+    --app-text-caption: 0.9375rem;
+    --app-text-label: 1.0625rem;
+    --app-text-body: 1.1875rem;
+    --app-text-title: 1.4375rem;
+    --app-text-heading: 1.875rem;
+    --app-text-page: 2.375rem;
+    --app-text-display: 2.875rem;
+  }
+
+  .dark {
+    --background: 60 3% 15%;
+    --sidebar: 30 3% 12%;
+    --foreground: 50 23% 95%;
+    --card: 60 2% 18%;
+    --card-foreground: 50 23% 95%;
+    --popover: 60 2% 21%;
+    --popover-foreground: 50 23% 95%;
+    --primary: 15 63% 60%;
+    --primary-foreground: 0 0% 100%;
+    --brand: 15 63% 60%;
+    --brand-foreground: 0 0% 100%;
+    --secondary: 60 2% 18%;
+    --secondary-foreground: 50 23% 95%;
+    --muted: 60 2% 18%;
+    --muted-foreground: 48 5% 60%;
+    --accent: 45 4% 22%;
+    --accent-foreground: 50 23% 95%;
+    --destructive: 6 74% 71%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 115 31% 65%;
+    --warning: 35 68% 62%;
+    --border: 48 4% 24%;
+    --input: 50 4% 29%;
+    --ring: 15 63% 60%;
+    --surface: 60 2% 18%;
+    --surface-foreground: 50 23% 95%;
+    --chart-1: 15 63% 62%;
+    --chart-2: 212 65% 66%;
+    --chart-3: 172 45% 56%;
+    --chart-4: 40 80% 62%;
+    --chart-5: 268 50% 74%;
+    --chart-6: 340 60% 70%;
+    --chart-7: 80 40% 62%;
+    --chart-8: 215 20% 68%;
+    --shadow-color: 0 0% 0%;
+  }
+
+  html {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  ::selection {
+    background: hsl(var(--brand) / 0.25);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased font-sans font-normal text-app-label;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #root {
+    height: 100%;
+    min-height: 0;
+  }
+
+  html.platform-macos .mac-drag-region {
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 28px;
+    z-index: 40;
+    -webkit-app-region: drag;
+    app-region: drag;
+  }
+
+  html.platform-macos .mac-window-space {
+    height: 28px;
+  }
+
+  html.platform-macos a,
+  html.platform-macos button,
+  html.platform-macos [role='button'],
+  html.platform-macos input,
+  html.platform-macos textarea,
+  html.platform-macos select {
+    -webkit-app-region: no-drag;
+    app-region: no-drag;
+  }
+
+  /* Full-height pages with panes (Analysts, Automations, Schema, Query Bench) fill the window under the title bar. */
+  .split-page {
+    height: 100dvh;
+  }
+
+  html.platform-macos .split-page {
+    height: calc(100dvh - 28px);
+  }
+
+  html:not(.platform-macos) .mac-drag-region,
+  html:not(.platform-macos) .mac-window-space {
+    display: none;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-medium tracking-normal;
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    @apply font-mono;
+  }
+
+  svg.lucide {
+    stroke-width: 1.5;
+  }
+
+  /* Fallback keyboard focus ring; components that style their own focus override it. */
+  a:focus-visible,
+  button:focus-visible,
+  summary:focus-visible,
+  [role='button']:focus-visible,
+  [role='tab']:focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.5);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Text with a soft light sweeping across it: marks the step that is running right now. */
+  .shimmer-text {
+    background-image: linear-gradient(90deg, hsl(var(--muted-foreground)) 0%, hsl(var(--foreground)) 45%, hsl(var(--muted-foreground)) 90%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    @apply animate-shimmer;
+  }
+}
