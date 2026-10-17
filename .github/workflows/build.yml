@@ -48,6 +48,13 @@ jobs:
         shell: bash
         run: cmake --version | head -1 && rustc --version && node --version
 
+      # SQLCipher builds OpenSSL from source; under `shell: bash` Git's MSYS perl wins on PATH and
+      # lacks modules OpenSSL's Configure needs, so point openssl-src at the runner's Strawberry Perl.
+      - name: Use Strawberry Perl for OpenSSL
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "OPENSSL_SRC_PERL=C:\Strawberry\perl\bin\perl.exe" >> $env:GITHUB_ENV
+
       - run: npm ci
 
       - run: npx tsc --noEmit
