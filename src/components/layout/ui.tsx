@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowLeft, Check, ChevronDown, ChevronRight, Copy, LayoutGrid, List, Loader2, MoreHorizontal, Search, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, Copy, LayoutGrid, List, Loader2, MoreHorizontal, Search, type LucideIcon } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { iconStroke } from '../../lib/icon'
 import { Badge } from '../ui/badge'
@@ -326,17 +326,14 @@ export function ListItemCard({
       onClick={onClick}
       aria-current={selected ? 'true' : undefined}
       className={cn(
-        'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        selected ? 'border-brand/40 bg-accent' : 'border-border bg-surface hover:border-foreground/25 hover:bg-accent/40',
+        'flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        selected ? 'bg-accent' : 'hover:bg-accent/60',
         className,
       )}
     >
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-app-label font-medium text-foreground">{title}</span>
-        {meta && <span className="mt-0.5 block truncate text-app-caption text-muted-foreground">{meta}</span>}
-      </span>
+      <span className="min-w-0 flex-1 truncate text-app-label text-foreground">{title}</span>
+      {meta && <span className="max-w-[45%] shrink-0 truncate text-app-caption tabular-nums text-muted-foreground">{meta}</span>}
       {badge}
-      <ChevronRight size={15} strokeWidth={iconStroke} className="shrink-0 text-muted-foreground" />
     </button>
   )
 }
