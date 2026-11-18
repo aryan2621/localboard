@@ -38,6 +38,7 @@ import { NewWorkspaceDialog } from '../workspaces/NewWorkspaceDialog'
 import { UnlockWorkspaceForm } from '../workspaces/UnlockWorkspaceForm'
 import { Sheet, SheetBody, SheetContent, SheetHeader } from '../ui/sheet'
 import { Input } from '../ui/input'
+import { Hint } from '../ui/tooltip'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -316,37 +317,48 @@ function WorkspaceMenu({ compact = false }: { compact?: boolean }) {
   )
 }
 
+const RAIL: NavItem[][] = [
+  [TOP_NAV[0], ...TOP_NAV.slice(1)],
+  DATA_NAV,
+  WORKSPACE_NAV,
+]
+
+/** Slim icon rail: every page one click away, labels on hover. */
 export function Sidebar() {
   const page = useNavigation((state) => state.page)
   const navigate = useNavigation((state) => state.navigate)
 
   return (
-    <aside className="flex w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar min-[900px]:w-[232px]">
-      <div className="mac-window-space mac-drag-region shrink-0" />
-      <div className="flex items-center gap-2 px-4 pb-3 pt-4">
-        <img src="/app-icon.png" alt="" className="h-5 w-5 rounded-md" />
-        <h1 className="font-medium text-app-title text-foreground">LocalBoard</h1>
-      </div>
-      <nav className="flex min-h-0 flex-1 flex-col px-2">
-        <div className="space-y-0.5">
-          {TOP_NAV.map(({ page: target, label, icon: Icon }) => (
-            <NavRow
-              key={target}
-              icon={<Icon size={15} strokeWidth={iconStroke} />}
-              label={label}
-              active={page === target}
-              onClick={() => navigate(target)}
-            />
-          ))}
-        </div>
-        <NavGroup label="Data" items={DATA_NAV} />
-        <NavGroup label="Workspace" items={WORKSPACE_NAV} />
-        <ChatHistory />
+    <aside className="flex w-12 shrink-0 flex-col items-center border-r border-border bg-sidebar">
+      <div className="mac-window-space mac-drag-region w-full shrink-0" />
+      <img src="/app-icon.png" alt="LocalBoard" className="my-3 h-5 w-5 rounded-md" />
+      <nav aria-label="Pages" className="flex min-h-0 flex-1 flex-col items-center gap-3 overflow-y-auto py-1">
+        {RAIL.map((group, index) => (
+          <div key={index} className={cn('flex flex-col items-center gap-0.5', index > 0 && 'border-t border-border pt-3')}>
+            {group.map(({ page: target, label, icon: Icon }) => (
+              <Hint key={target} text={label} side="right">
+                <button
+                  type="button"
+                  aria-label={label}
+                  aria-current={page === target ? 'page' : undefined}
+                  onClick={() => navigate(target)}
+                  className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-md transition-colors duration-fast ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    page === target ? 'bg-accent text-foreground' : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
+                  )}
+                >
+                  <Icon size={16} strokeWidth={iconStroke} />
+                </button>
+              </Hint>
+            ))}
+          </div>
+        ))}
       </nav>
-      <div className="space-y-1 border-t border-border px-2 py-2">
-        <AiStatus />
-        <WorkspaceMenu />
+      <div className="py-2">
+        <WorkspaceMenu compact />
       </div>
     </aside>
   )
 }
+
+export { ChatHistory, AiStatus }

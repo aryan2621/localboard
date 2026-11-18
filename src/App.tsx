@@ -17,6 +17,7 @@ import { useAppearanceSync } from './lib/theme'
 import { useNavigation } from './stores/navigation'
 
 const CommandPalette = lazy(() => import('./components/layout/CommandPalette').then((m) => ({ default: m.CommandPalette })))
+const DataPane = lazy(() => import('./components/layout/DataPane').then((m) => ({ default: m.DataPane })))
 const Sidebar = lazy(() => import('./components/layout/Sidebar').then((m) => ({ default: m.Sidebar })))
 const SettingsModal = lazy(() => import('./components/settings/SettingsModal').then((m) => ({ default: m.SettingsModal })))
 
@@ -137,6 +138,8 @@ function WorkspacePassphraseScreen({ id }: { id: string }) {
   )
 }
 
+const PANE_PAGES = ['home', 'chat', 'history', 'bench']
+
 function Workspace() {
   const page = useNavigation((state) => state.page)
   const dragging = useWindowDrop()
@@ -145,6 +148,7 @@ function Workspace() {
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden">
       <Suspense fallback={null}><Sidebar /></Suspense>
+      {PANE_PAGES.includes(page) && <Suspense fallback={null}><DataPane /></Suspense>}
       <main className="min-w-0 flex-1 overflow-y-auto">
         <div className="mac-window-space mac-drag-region" data-tauri-drag-region />
         <OfflineBanner />
