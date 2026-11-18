@@ -70,7 +70,7 @@ function DownloadBar({ catalog }: { catalog: ModelCatalog }) {
         <div className="h-full bg-brand transition-[width]" style={{ width: `${percent}%` }} />
       </div>
       <span className="w-9 text-right text-app-caption tabular-nums text-muted-foreground">{download?.total ? `${percent}%` : '…'}</span>
-      <Button variant="ghost" size="sm" onClick={() => void api.cancelDownload()}>
+      <Button variant="ghost" size="sm" onClick={() => api.cancelDownload().catch((failure) => toast.error(errorMessage(failure)))}>
         Cancel
       </Button>
     </>

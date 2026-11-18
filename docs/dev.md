@@ -1,7 +1,7 @@
 # LocalBoard developer guide
 
 Local-first desktop AI data analyst: Tauri v2 + React + Rust + DuckDB + SQLite, with a bundled
-llama.cpp server as the built-in AI (llama.cpp is the runtime by design; Ollama is not used). No cloud calls, no telemetry.
+llama.cpp server as the built-in AI (llama.cpp is the runtime by design; Ollama is not used). No telemetry; analysis stays local, and the only network calls are the ones listed under Privacy.
 
 ## Prerequisites
 
@@ -52,7 +52,7 @@ LocalBoard only uses models in its own models folder.
   From Explore, **Add as live table** registers a read-only DuckDB scanner view (`postgres_scan` /
   `mysql_scan`, or SQLite `ATTACH … READ_ONLY`). First use may download a DuckDB extension. If that
   fails, LocalBoard says so and does not copy the table. Registered names go through the catalog; every
-  query still hits the SQL guard. SQL Server is not in this build (sqlx 0.8 has no MSSQL driver).
+  query still hits the SQL guard. Snowflake, Databricks, MotherDuck and SQL Server are unfinished and hidden by default; set `localStorage.setItem('localboard.experimentalConnectors', '1')` in the dev console to show them. SQL Server has no sqlx driver in this build, so treat it as non-working.
 
 ## Asking questions
 
@@ -104,7 +104,7 @@ Every workspace starts with one analyst. Add more from **Agents** (for example F
 
 Home and Chat have **Choose an output**: Answer (default), Dashboard, Datasite, PDF report or Presentation. **Datasites** is under Advanced in the sidebar.
 
-A **datasite** is a multi-page site (overview plus sections) served at `http://127.0.0.1:17890/d/{id}` while LocalBoard is running. The model proposes pages; each chart SQL is guarded and run before the page is kept. Failed charts are dropped and named. Export writes a static HTML snapshot or a live-linked HTML file against that local server. There is no LAN bind.
+A **datasite** is a multi-page site (overview plus sections) served at `http://127.0.0.1:17890/d/{id}` while LocalBoard is running. The model proposes pages; each chart SQL is guarded and run before the page is kept. Failed charts are dropped and named. Export writes a static HTML snapshot only (no live link). There is no LAN bind.
 
 A **PDF report** is narrative, charts, tables and a SQL appendix. A **presentation** is an editable outline; export writes PPTX with charts as images. Settings → General holds a workspace brand name and `#RRGGBB` colour used on datasites, reports and decks. From an answer, **Save as datasite / PDF / deck** reuses that answer’s guarded SQL and computed facts. It does not run a second unguarded query.
 
@@ -124,7 +124,7 @@ Every kept generate and every later refresh writes Audit and lineage the same wa
 
 ## Command palette
 
-**⌘K / Ctrl-K** searches chats, dashboards, datasites, apps, automations and saved queries, and jumps to common pages.
+**⌘K / Ctrl-K** searches chats, dashboards, datasites, automations and saved queries, and jumps to common pages.
 
 ## Audit
 

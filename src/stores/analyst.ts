@@ -8,6 +8,7 @@ type AnalystState = {
   live: Record<string, LiveAnswer>
   apply: (messageId: string, event: AnalystEvent) => void
   clear: (messageId: string) => void
+  reset: () => void
 }
 
 const EMPTY: LiveAnswer = { steps: [], text: '' }
@@ -27,6 +28,7 @@ export const useAnalyst = create<AnalystState>((set) => ({
       }
       return state
     }),
+  reset: () => set({ live: {} }),
   clear: (messageId) =>
     set((state) => {
       const live = { ...state.live }

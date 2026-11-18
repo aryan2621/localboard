@@ -24,7 +24,8 @@ import {
   Sun,
   Table2,
 } from 'lucide-react'
-import { api } from '../../lib/api'
+import { toast } from 'sonner'
+import { api, errorMessage } from '../../lib/api'
 import { lockNow } from '../../lib/lock'
 import { iconStroke } from '../../lib/icon'
 import { queryKeys } from '../../lib/queryClient'
@@ -297,10 +298,10 @@ function WorkspaceMenu({ compact = false }: { compact?: boolean }) {
             {THEME_LABEL[theme].icon} {`Theme: ${THEME_LABEL[theme].label}`}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => void api.runInBackground()}>
+          <DropdownMenuItem onSelect={() => api.runInBackground().catch((failure) => toast.error(errorMessage(failure)))}>
             <Power strokeWidth={iconStroke} /> Quit (keep running in background)
           </DropdownMenuItem>
-          <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => void api.forceQuit()}>
+          <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => api.forceQuit().catch((failure) => toast.error(errorMessage(failure)))}>
             <PowerOff strokeWidth={iconStroke} /> Force quit (stop everything)
           </DropdownMenuItem>
         </DropdownMenuContent>

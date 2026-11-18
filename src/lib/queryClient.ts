@@ -1,6 +1,15 @@
-import { QueryClient } from '@tanstack/react-query'
+import { MutationCache, QueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { errorMessage } from './api'
+import { useAnalyst } from '../stores/analyst'
 
 export const queryClient = new QueryClient({
+  // Fallback toast for mutations without their own onError.
+  mutationCache: new MutationCache({
+    onError: (failure, _vars, _ctx, mutation) => {
+      if (!mutation.options.onError) toast.error(errorMessage(failure))
+    },
+  }),
   defaultOptions: {
     // All data is local; refetch only when the backend tells us something changed.
     queries: { retry: false, refetchOnWindowFocus: false, staleTime: Infinity },
@@ -61,21 +70,8 @@ export function invalidateConnectionData() {
 
 /** Everything scoped to the open workspace; reset when switching workspaces. */
 export function invalidateWorkspaceData() {
-  void queryClient.invalidateQueries({ queryKey: queryKeys.connections })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.tables })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.conversations })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.starters })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.completions })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.agents })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.dashboards })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.datasites })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.reports })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.decks })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.theme })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.automations })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.smtp })
-  void queryClient.invalidateQueries({ queryKey: ['audit'] })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.governance })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.masks })
-  void queryClient.invalidateQueries({ queryKey: queryKeys.mcpServers })
+  void queryClient.cancelQueries()
+  useAnalyst.getState().reset()
+  // Everything but the workspace list itself is scoped to the open workspace.
+  void queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== queryKeys.workspaces[0] })
 }

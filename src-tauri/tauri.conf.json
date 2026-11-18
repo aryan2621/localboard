@@ -19,7 +19,8 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost http://127.0.0.1:1520 http://127.0.0.1:17890 ws://127.0.0.1:1520; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; frame-src http://127.0.0.1:17890"
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost http://127.0.0.1:17890; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; frame-src http://127.0.0.1:17890",
+      "devCsp": "default-src 'self'; connect-src ipc: http://ipc.localhost http://127.0.0.1:1520 http://127.0.0.1:17890 ws://127.0.0.1:1520; img-src 'self' asset: http://asset.localhost data:; style-src 'self' 'unsafe-inline'; frame-src http://127.0.0.1:17890"
     }
   },
   "bundle": {

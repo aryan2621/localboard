@@ -28,6 +28,7 @@ pub const WORKSPACE: &[Migration] = &[
     Migration { version: 12, name: "mcp", sql: include_str!("workspace_0012_mcp.sql") },
     Migration { version: 13, name: "governance", sql: include_str!("workspace_0013_governance.sql") },
     Migration { version: 14, name: "automation_step_kinds", sql: include_str!("workspace_0014_automation_step_kinds.sql") },
+    Migration { version: 15, name: "drop_data_apps", sql: include_str!("workspace_0015_drop_data_apps.sql") },
 ];
 
 /// Applies every migration newer than the database's recorded version, each in its own

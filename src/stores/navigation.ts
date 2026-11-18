@@ -70,7 +70,7 @@ export const useNavigation = create<NavigationState>((set, get) => ({
   closeSettings: () => set({ settingsOpen: false }),
   setSettingsSection: (section) => set({ settingsSection: section }),
   resetForWorkspace: () =>
-    set({ page: 'home', selectedTableId: null, schemaSource: null, conversationId: null, dashboardId: null, datasiteId: null, reportId: null, deckId: null, benchSql: null, artifactTab: 'sites' }),
+    set({ page: 'home', selectedTableId: null, schemaSource: null, conversationId: null, dashboardId: null, datasiteId: null, reportId: null, deckId: null, automationId: null, benchSql: null, artifactTab: 'sites' }),
 }))
 
 // Remember where the user came from, so a page that replaces the sidebar can send them back there.

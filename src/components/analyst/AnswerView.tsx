@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle, BookmarkPlus, Check, ChevronDown, Code2, GitBranch, Loader2, RotateCw, SquareTerminal, Square, ThumbsDown, ThumbsUp, X } from 'lucide-react'
+import { save } from '@tauri-apps/plugin-dialog'
 import { toast } from 'sonner'
 import {
   api,
@@ -117,6 +118,17 @@ function QueryStatusBadge({ query }: { query: QueryRecord }) {
 }
 
 /** Every query behind the answer, in order, with the tables each one read. */
+async function exportCsv(sql: string) {
+  try {
+    const path = await save({ defaultPath: 'result.csv', filters: [{ name: 'csv', extensions: ['csv'] }] })
+    if (!path) return
+    await api.benchExport(sql, {}, 'csv', path)
+    toast.success('Exported csv')
+  } catch (failure) {
+    toast.error(errorMessage(failure))
+  }
+}
+
 function SqlPanel({ queries, primaryId }: { queries: QueryRecord[]; primaryId: string | null }) {
   const openBench = useNavigation((state) => state.openBench)
   return (
@@ -142,7 +154,12 @@ function SqlPanel({ queries, primaryId }: { queries: QueryRecord[]; primaryId: s
                 ))}
               </span>
             )}
-            <Button variant="ghost" size="sm" className="ml-auto h-7" onClick={() => openBench(query.sql)}>
+            {!query.error && (
+              <Button variant="ghost" size="sm" className="ml-auto h-7" onClick={() => void exportCsv(query.sql)}>
+                {'Export CSV'}
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" className={cn('h-7', query.error && 'ml-auto')} onClick={() => openBench(query.sql)}>
               <SquareTerminal strokeWidth={iconStroke} /> {'Edit in Query Bench'}
             </Button>
           </div>

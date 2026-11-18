@@ -859,7 +859,7 @@ export function AutomationsPage() {
                           <Button type="button" size="sm" variant="outline" onClick={() => api.notifyTest().then(() => toast.success('Test sent. Nothing showed up? Check notification settings.'), (failure) => toast.error(errorMessage(failure)))}>
                             Send test
                           </Button>
-                          <Button type="button" size="sm" variant="ghost" onClick={() => void api.notifyOpenSettings()}>
+                          <Button type="button" size="sm" variant="ghost" onClick={() => api.notifyOpenSettings().catch((failure) => toast.error(errorMessage(failure)))}>
                             Open notification settings
                           </Button>
                           <span>Alerts are hidden if notifications are off for LocalBoard or Focus is on.</span>

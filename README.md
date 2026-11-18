@@ -4,12 +4,12 @@
 
 <!-- DEMO VIDEO: paste the https://github.com/user-attachments/assets/... link on the next line -->
 
-- **Ask:** connect CSV, Excel, Parquet or JSON files, or a PostgreSQL, MySQL or SQLite database, and ask in plain English. The analyst writes the SQL, runs it, checks it and answers with a chart.
+- **Ask:** connect CSV, Excel, Parquet or JSON files, or a PostgreSQL, MySQL or SQLite database (other connectors are experimental and hidden), and ask in plain English. The analyst writes the SQL, runs it, checks it and answers with a chart.
 - **Build:** turn answers into dashboards, multi-page datasites, PDF reports and slide decks.
 - **Automate:** run checks on a schedule, when a file changes or on demand: thresholds, anomaly alerts, comparisons and scheduled reports.
 - **Control it:** a SQL editor (Query Bench), analysts with their own rules and examples, an audit log, column masking and an MCP server for Claude Desktop and Cursor.
 
-Everything runs on your computer with a built-in local AI (llama.cpp). Your data never leaves it. Every query is checked to be a single read-only `SELECT`.
+Everything runs on your computer with a built-in local AI (llama.cpp). Your data stays on it: the only outbound traffic is what you set up (model download from Hugging Face, database hosts you enter, optional SMTP or remote MCP). Every query is checked to be a single read-only `SELECT`.
 
 **[⬇ Download for macOS](https://github.com/aryan2621/localboard/releases/latest/download/LocalBoard_0.1.0_aarch64.dmg)**
 · macOS 11+, Apple silicon · [Windows and all downloads](https://github.com/aryan2621/localboard/releases/latest)
