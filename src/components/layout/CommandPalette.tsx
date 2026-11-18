@@ -130,8 +130,8 @@ export function CommandPalette() {
                 onClick={() => choose(hit)}
                 className={`flex w-full flex-col rounded-lg px-3 py-2 text-left text-app-label focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${index === active ? 'bg-accent' : ''}`}
               >
-                <span>{'titleKey' in hit ? hit.titleKey : hit.title}</span>
-                <span className="text-app-caption text-muted-foreground">{'subtitleKey' in hit && hit.subtitleKey ? hit.subtitleKey : hit.kind}</span>
+                <span className="truncate">{'titleKey' in hit ? hit.titleKey : hit.title}</span>
+                <span className="truncate text-app-caption text-muted-foreground">{'subtitleKey' in hit && hit.subtitleKey ? hit.subtitleKey : hit.kind}</span>
               </button>
             </li>
           ))}

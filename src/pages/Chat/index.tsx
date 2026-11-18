@@ -47,7 +47,7 @@ function ChatHeader({ conversation }: { conversation: ConversationDetail }) {
   return (
     <header className="flex items-center gap-2 border-b border-border pb-4">
       <Hint text={conversation.title}>
-        <h1 className="min-w-0 flex-1 truncate font-serif text-app-heading text-foreground">{conversation.title}</h1>
+        <h1 className="min-w-0 flex-1 truncate font-serif text-app-heading text-foreground" title={conversation.title}>{conversation.title}</h1>
       </Hint>
       <Button variant="ghost" size="sm" onClick={() => exportChat.mutate()} disabled={exportChat.isPending}>
         <Download strokeWidth={iconStroke} /> {'Export'}
@@ -106,7 +106,7 @@ function Conversation({ id }: { id: string }) {
         {conversation.messages.map((message) =>
           message.role === 'user' ? (
             <div key={message.id} className="flex justify-end">
-              <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-card px-4 py-2.5 text-app-body text-foreground">{message.content}</p>
+              <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-card px-4 py-2.5 text-app-body text-foreground">{message.content}</p>
             </div>
           ) : (
             <AnswerView
@@ -122,7 +122,7 @@ function Conversation({ id }: { id: string }) {
         {sending && (
           <>
             <div className="flex justify-end">
-              <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-card px-4 py-2.5 text-app-body text-foreground">{sending.question}</p>
+              <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-card px-4 py-2.5 text-app-body text-foreground">{sending.question}</p>
             </div>
             {sending.output !== 'answer' && <GenerationSteps running />}
           </>
@@ -145,7 +145,7 @@ export function ChatPage() {
   }, [conversationId, navigate])
 
   return (
-    <div className="mx-auto flex min-h-[calc(100%-28px)] max-w-3xl flex-col px-8 pt-6">
+    <div className="mx-auto flex min-h-[calc(100%-28px)] max-w-3xl flex-col px-4 sm:px-8 pt-6">
       {conversationId && <Conversation key={conversationId} id={conversationId} />}
     </div>
   )

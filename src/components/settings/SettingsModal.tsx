@@ -245,7 +245,7 @@ function WorkspaceRow({ workspace, active }: { workspace: Workspace; active: boo
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div className="flex flex-wrap items-center gap-3 px-4 py-3">
       <Input
         aria-label={'Workspace name'}
         value={name}
@@ -253,7 +253,7 @@ function WorkspaceRow({ workspace, active }: { workspace: Workspace; active: boo
         onChange={(event) => setName(event.target.value)}
         onBlur={rename}
         onKeyDown={(event) => event.key === 'Enter' && event.currentTarget.blur()}
-        className="h-8 flex-1 border-transparent bg-transparent shadow-none hover:border-border focus:border-border"
+        className="h-8 min-w-[10rem] flex-1 border-transparent bg-transparent shadow-none hover:border-border focus:border-border"
       />
       {active ? (
         <StatusBadge variant="success">Open</StatusBadge>
@@ -398,7 +398,7 @@ function SecuritySection() {
             <Input type="password" value={lockPass} onChange={(event) => setLockPass(event.target.value)} className="max-w-[14rem]" aria-label={'App lock passphrase'} />
           </SettingsRow>
           <SettingsRow label={gov?.lockEnabled ? 'Change or turn off' : 'Turn on'} description={'Cmd/Ctrl-L locks the app right away.'}>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button size="sm" disabled={!lockPass || (gov?.lockEnabled && !lockCurrent) || lock.isPending} onClick={() => lock.mutate(true)}>
                 {gov?.lockEnabled ? 'Change passphrase' : 'Set lock'}
               </Button>
@@ -487,16 +487,16 @@ function LocalMcpSection() {
     <SettingsSection collapsible title={'LocalBoard as an MCP server'} description={'Lets Claude Desktop or Cursor query this workspace. Local only; the token is the key.'}>
       <SettingsCard>
         <SettingsRow label={'Endpoint'}>
-          <div className="flex items-center gap-2">
-            <code className="text-app-caption text-foreground">{info.url}</code>
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="min-w-0 break-all text-app-caption text-foreground">{info.url}</code>
             <Button size="sm" variant="outline" onClick={() => void copy(info.url)}>
               {'Copy'}
             </Button>
           </div>
         </SettingsRow>
         <SettingsRow label={'Token'}>
-          <div className="flex items-center gap-2">
-            <code className="max-w-[14rem] truncate text-app-caption text-foreground">{reveal ? info.token : '•'.repeat(24)}</code>
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="min-w-0 max-w-[14rem] truncate text-app-caption text-foreground">{reveal ? info.token : '•'.repeat(24)}</code>
             <Button size="sm" variant="outline" aria-label={reveal ? 'Hide token' : 'Reveal token'} onClick={() => setReveal(!reveal)}>
               {reveal ? <EyeOff size={14} strokeWidth={iconStroke} /> : <Eye size={14} strokeWidth={iconStroke} />}
             </Button>
@@ -649,7 +649,7 @@ export function SettingsModal() {
   return (
     <Dialog open={settingsOpen} onOpenChange={(open) => !open && closeSettings()}>
       <DialogContent className="flex h-[min(640px,85vh)] max-w-4xl gap-0 overflow-hidden p-0">
-        <aside className="flex w-[14rem] shrink-0 flex-col border-r border-border bg-sidebar p-3">
+        <aside className="flex w-36 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar p-3 min-[700px]:w-[14rem]">
           <p className="px-2 pb-4 pt-2 font-serif text-app-title text-foreground">Settings</p>
           <nav className="space-y-4">
             {SECTIONS.map((group) => (
@@ -665,8 +665,8 @@ export function SettingsModal() {
                       settingsSection === id ? 'bg-accent text-foreground' : 'text-foreground/80 hover:bg-accent hover:text-foreground',
                     )}
                   >
-                    <Icon size={15} strokeWidth={iconStroke} />
-                    {label}
+                    <Icon size={15} strokeWidth={iconStroke} className="shrink-0" />
+                    <span className="min-w-0 truncate">{label}</span>
                   </button>
                 ))}
               </div>
@@ -674,11 +674,11 @@ export function SettingsModal() {
           </nav>
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="space-y-1 px-8 pb-5 pt-7">
+          <header className="space-y-1 px-5 pb-5 pt-7 sm:px-8">
             <DialogTitle >{current.label}</DialogTitle>
             <DialogDescription>{current.description}</DialogDescription>
           </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-8 pb-8">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-8 sm:px-8">
             <SectionContent section={settingsSection} />
           </div>
         </div>

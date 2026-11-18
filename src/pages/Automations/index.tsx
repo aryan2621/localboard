@@ -442,7 +442,7 @@ export function AutomationsPage() {
         <ViewToggle value={view} onChange={setView} />
       </div>
       {view === 'cards' ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
           {jobPg.pageItems.map((item) => {
             const Icon = TRIGGER_ICON[item.triggerKind] ?? Timer
             return (
@@ -455,8 +455,8 @@ export function AutomationsPage() {
                 <span className="flex items-start gap-3">
                   <IconTile icon={Icon} tone={item.enabled && !item.needsReview ? 'brand' : 'muted'} />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-app-label font-semibold text-foreground">{item.name}</span>
-                    <span className="block truncate text-app-caption text-muted-foreground">{triggerWords(item.triggerKind, item.trigger)}</span>
+                    <span className="block truncate text-app-label font-semibold text-foreground" title={item.name}>{item.name}</span>
+                    <span className="block truncate text-app-caption text-muted-foreground" title={triggerWords(item.triggerKind, item.trigger)}>{triggerWords(item.triggerKind, item.trigger)}</span>
                   </span>
                   {statusBadge(item)}
                 </span>
@@ -486,7 +486,7 @@ export function AutomationsPage() {
                   <TableCell>
                     <span className="flex items-center gap-2.5">
                       {statusDot(item)}
-                      <span className="font-medium text-foreground">{item.name}</span>
+                      <span className="break-words font-medium text-foreground">{item.name}</span>
                     </span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{triggerWords(item.triggerKind, item.trigger)}</TableCell>
@@ -504,7 +504,7 @@ export function AutomationsPage() {
   )
 
   const welcome = (
-    <div className="mx-auto flex max-w-2xl flex-col items-center px-8 py-16 text-center">
+    <div className="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center sm:px-8">
       <IconTile icon={Timer} size="lg" />
       <h1 className="mt-4 font-serif text-app-page text-foreground">Put your checks on autopilot</h1>
       <p className="mt-2 text-app-label text-muted-foreground">
@@ -549,7 +549,7 @@ export function AutomationsPage() {
   )
 
   const detail = (
-    <div className="mx-auto max-w-4xl space-y-6 px-8 py-8">
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-8">
       <header className="flex flex-wrap items-start gap-4">
         <IconTile icon={TRIGGER_ICON[triggerKind] ?? Timer} size="lg" />
         <div className="min-w-0 flex-1">
@@ -736,7 +736,7 @@ export function AutomationsPage() {
                       </FormField>
                     )}
                     {step.kind === 'threshold' && (
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-3 gap-3 [&>*]:min-w-0">
                         <FormField label="Column">
                           <Input value={String(step.config.column ?? '')} onChange={(event) => setConfig(index, 'column', event.target.value)} />
                         </FormField>
@@ -775,7 +775,7 @@ export function AutomationsPage() {
                     )}
                     {step.kind === 'mcp_tool' && (
                       <>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
                           <FormField label="Server">
                             <Pick
                               value={String(step.config.serverId ?? '')}
@@ -845,7 +845,7 @@ export function AutomationsPage() {
                       </>
                     )}
                     {step.kind === 'notify' && (
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
                         <FormField label="Title (optional)">
                           <Input value={String(step.config.title ?? '')} onChange={(event) => setConfig(index, 'title', event.target.value)} />
                         </FormField>
@@ -1044,7 +1044,7 @@ function RunRow({ entry, steps }: { entry: AutomationRun; steps: Automation['ste
                     <p className="flex items-center gap-2 text-app-caption">
                       <Badge variant={statusVariant(step.status)}>{step.status}</Badge>
                       <span className="font-medium text-foreground">{step.kind}</span>
-                      {step.summary && <span className="truncate text-muted-foreground">{step.summary}</span>}
+                      {step.summary && <span className="truncate text-muted-foreground" title={step.summary}>{step.summary}</span>}
                     </p>
                     <pre className="max-h-48 overflow-auto whitespace-pre-wrap rounded-lg bg-muted p-2 text-app-caption text-muted-foreground">
                       {`Input: ${JSON.stringify(config ?? {}, null, 2)}\nOutput: ${JSON.stringify(step.facts ?? step.summary, null, 2)}`}

@@ -65,7 +65,7 @@ export function ProviderSettings() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
         <FormField label="Provider" htmlFor="llm-kind">
           <Select value={kind} onValueChange={(value) => changeKind(value as LlmKind)}>
             <SelectTrigger id="llm-kind">
@@ -95,10 +95,10 @@ export function ProviderSettings() {
             htmlFor="llm-key"
             hint={config?.has_key ? 'Key saved. Leave blank to keep it, or type a new one to replace it.' : 'No key saved yet.'}
           >
-            <div className="flex gap-2">
-              <Input id="llm-key" type="password" autoComplete="off" value={apiKey} onChange={(event) => setApiKey(event.target.value)} />
+            <div className="flex min-w-0 gap-2">
+              <Input id="llm-key" className="min-w-0" type="password" autoComplete="off" value={apiKey} onChange={(event) => setApiKey(event.target.value)} />
               {config?.has_key && (
-                <Button type="button" variant="outline" loading={clearKey.isPending} onClick={() => clearKey.mutate()}>
+                <Button type="button" variant="outline" className="shrink-0" loading={clearKey.isPending} onClick={() => clearKey.mutate()}>
                   Remove key
                 </Button>
               )}
@@ -121,7 +121,7 @@ export function ProviderSettings() {
           Test connection
         </Button>
         {testResult && (
-          <p role="status" className={testResult.ok ? 'text-app-label text-success' : 'text-app-label text-destructive'}>
+          <p role="status" className={`min-w-0 max-w-full break-words text-app-label ${testResult.ok ? 'text-success' : 'text-destructive'}`}>
             {testResult.ok ? 'Works: ' : 'Failed: '}
             {testResult.message}
           </p>

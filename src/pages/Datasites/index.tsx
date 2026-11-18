@@ -150,7 +150,7 @@ function ArtifactTabPanel({
             {newButton}
           </div>
           {shown.length === 0 && <p className="text-app-label text-muted-foreground">Nothing matches “{search}”.</p>}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
             {pg.pageItems.map((item) => (
               <button
                 key={item.id}
@@ -171,7 +171,7 @@ function ArtifactTabPanel({
                 <span className="flex items-center gap-3 px-4 py-3">
                   <IconTile icon={Icon} size="sm" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-app-label font-semibold text-foreground">{item.name}</span>
+                    <span className="block truncate text-app-label font-semibold text-foreground" title={item.name}>{item.name}</span>
                     <span className="block truncate text-app-caption text-muted-foreground">
                       {item.itemCount} {item.itemCount === 1 ? unit.replace(/s$/, '') : unit} · edited {relativeTime(item.updatedAt)}
                     </span>
@@ -305,7 +305,7 @@ function DeckList() {
 
 function LoadError({ error }: { error: unknown }) {
   return (
-    <div className="px-8 py-10">
+    <div className="px-4 py-10 sm:px-8">
       <Alert variant="destructive">
         <AlertDescription>{errorMessage(error)}</AlertDescription>
       </Alert>
@@ -348,7 +348,7 @@ function DatasiteView({ id }: { id: string }) {
         onBack={() => back(null)}
         actions={
           <>
-            <div className="w-72">
+            <div className="w-full max-w-72">
               <CopyField value={live.data.url} label="Copy link" />
             </div>
           </>
@@ -399,7 +399,7 @@ function DatasiteView({ id }: { id: string }) {
                   <span className="size-2.5 rounded-full bg-border" />
                   <span className="size-2.5 rounded-full bg-border" />
                 </span>
-                <span className="min-w-0 flex-1 truncate rounded-md bg-muted px-2 py-0.5 font-mono text-app-caption text-muted-foreground">{pageUrl}</span>
+                <span className="min-w-0 flex-1 truncate rounded-md bg-muted px-2 py-0.5 font-mono text-app-caption text-muted-foreground" title={pageUrl}>{pageUrl}</span>
               </div>
               <iframe key={pageUrl} title={page?.title ?? live.data.datasite.name} src={pageUrl} className="min-h-0 w-full flex-1 bg-white" sandbox="allow-scripts" />
             </div>
@@ -465,7 +465,7 @@ function ReportView({ id }: { id: string }) {
           {preview ? (
             <iframe title={live.data.report.name} src={preview} className="h-full w-full rounded-xl border border-border bg-white shadow-md" sandbox="allow-scripts" />
           ) : (
-            <div className="mx-auto h-full max-w-3xl space-y-6 overflow-y-auto rounded-xl border border-border bg-card px-10 py-8 shadow-md">
+            <div className="mx-auto h-full max-w-3xl space-y-6 overflow-y-auto rounded-xl border border-border bg-card px-5 py-8 shadow-md sm:px-10">
               {blocks.map((block) => (
                 <section key={block.id} id={`block-${block.id}`} className="space-y-1">
                   <h2 className="font-serif text-app-title">{block.title}</h2>
@@ -484,7 +484,7 @@ function ReportView({ id }: { id: string }) {
                 <>
                   <span className="w-4 text-right text-app-caption tabular-nums text-muted-foreground">{index + 1}</span>
                   <Icon size={14} strokeWidth={iconStroke} className="shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate text-app-label text-foreground">{block.title || 'Untitled'}</span>
+                  <span className="min-w-0 flex-1 truncate text-app-label text-foreground" title={block.title}>{block.title || 'Untitled'}</span>
                 </>
               )
               return (
@@ -596,7 +596,7 @@ function DeckView({ id }: { id: string }) {
       <DetailHeader
         title={
           <div className="flex min-w-0 items-center gap-2">
-            <h1 className="truncate font-serif text-app-title text-foreground">{live.data.deck.name}</h1>
+            <h1 className="truncate font-serif text-app-title text-foreground" title={live.data.deck.name}>{live.data.deck.name}</h1>
             <Badge variant={outline ? 'warning' : 'secondary'}>{outline ? 'Unsaved' : `${slides.length} slides`}</Badge>
           </div>
         }
@@ -660,7 +660,7 @@ function DeckView({ id }: { id: string }) {
         }
         detail={
           selected && (
-            <div className="mx-auto max-w-4xl space-y-5 px-8 py-6">
+            <div className="mx-auto max-w-4xl space-y-5 px-4 py-6 sm:px-8">
               <div className="flex items-center gap-2">
                 <span className="text-app-caption text-muted-foreground">
                   Slide {selectedIndex + 1} of {slides.length}

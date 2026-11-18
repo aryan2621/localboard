@@ -229,7 +229,7 @@ export function QueryBenchPage() {
   return (
     <div className="flex flex-col">
       <div className="min-w-0">
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-8 py-3 backdrop-blur">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-3 sm:px-8 backdrop-blur">
               <div className="min-w-0">
                 <h1 className="font-serif text-app-title text-foreground">Query Bench</h1>
                 <p className="truncate text-app-caption text-muted-foreground">Read-only SELECT. Parameters use :name and are bound, never pasted in.</p>
@@ -239,11 +239,11 @@ export function QueryBenchPage() {
                 <Kbd>↵</Kbd> to run
               </span>
             </div>
-        <div className="min-w-0 space-y-4 px-8 py-6">
+        <div className="min-w-0 space-y-4 px-4 py-6 sm:px-8">
           {editingSaved && (
-            <div className="flex items-center gap-2 text-app-caption text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-app-caption text-muted-foreground">
               <span>
-                Editing <span className="font-medium text-foreground">{editingSaved.name}</span>
+                Editing <span className="break-words font-medium text-foreground">{editingSaved.name}</span>
               </span>
               {dirty && <StatusBadge variant="warning">Unsaved</StatusBadge>}
               <Button variant="ghost" size="sm" className="h-6 px-2" onClick={() => setEditingSaved(null)}>
@@ -270,7 +270,7 @@ export function QueryBenchPage() {
           </Tabs>
           <SqlEditor insertRef={insertRef} value={sql} schema={schema} onChange={setSql} onRun={() => !busy && sql.trim() && run.mutate()} />
           {params.length > 0 && (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 [&>*]:min-w-0">
               {params.map((name) => (
                 <FormField key={name} label={`:${name}`} htmlFor={`qb-param-${name}`}>
                   <Input
@@ -449,7 +449,7 @@ export function QueryBenchPage() {
                   onClick={() => restoreHistory(entry)}
                   className="block w-full rounded-lg border border-border bg-surface px-3 py-2 text-left transition-colors duration-fast hover:border-foreground/25 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                 >
-                  <span className="block truncate font-mono text-app-caption text-foreground">{entry.sql}</span>
+                  <span className="block truncate font-mono text-app-caption text-foreground" title={entry.sql}>{entry.sql}</span>
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-app-caption text-muted-foreground">
                     {entry.status !== 'ok' && <Badge variant="destructive">{entry.status}</Badge>}
                     {entry.rowCount !== null && <span className="tabular-nums">{entry.rowCount.toLocaleString()} rows</span>}

@@ -134,7 +134,7 @@ export function SplitView({
           </Hint>
         </aside>
       ) : (
-        <aside className="flex min-h-0 shrink-0 flex-col border-r border-border bg-sidebar/40" style={{ width: listWidth }}>
+        <aside className="flex min-h-0 shrink-0 flex-col border-r border-border bg-sidebar/40" style={{ width: listWidth, maxWidth: '40%' }}>
           <div className="flex min-h-0 flex-1 flex-col">{list}</div>
           {collapsible && (
             <button
@@ -341,9 +341,9 @@ export function Banner({ icon: Icon, tone = 'brand', title, description, actions
 export function SaveBar({ dirty, saving, onSave, onDiscard, label = 'Unsaved changes' }: { dirty: boolean; saving?: boolean; onSave: () => void; onDiscard: () => void; label?: string }) {
   if (!dirty && !saving) return null
   return (
-    <div className="sticky bottom-4 z-10 mx-auto flex w-full max-w-xl animate-rise-in items-center gap-3 rounded-xl border border-border bg-popover px-4 py-2.5 shadow-lg">
+    <div className="sticky bottom-4 z-10 mx-auto flex w-full max-w-xl flex-wrap animate-rise-in items-center gap-3 rounded-xl border border-border bg-popover px-4 py-2.5 shadow-lg">
       <span className="size-2 rounded-full bg-warning" aria-hidden />
-      <span className="flex-1 text-app-label text-foreground">{label}</span>
+      <span className="min-w-0 flex-1 truncate text-app-label text-foreground" title={label}>{label}</span>
       <Button variant="ghost" size="sm" disabled={saving} onClick={onDiscard}>
         Discard
       </Button>

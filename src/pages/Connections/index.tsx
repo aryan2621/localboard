@@ -298,7 +298,7 @@ function PendingSources({ paths }: { paths: string[] }) {
         {paths.map((path) => (
           <li key={path}>
             <Hint text={path}>
-              <span className="block truncate font-mono text-app-caption text-muted-foreground">{path}</span>
+              <span className="block truncate font-mono text-app-caption text-muted-foreground" title={path}>{path}</span>
             </Hint>
           </li>
         ))}
@@ -396,8 +396,8 @@ function SourceRow({ connection, onExplore, layout = 'card' }: { connection: Con
           >
             <IconTile icon={icon} size="sm" tone={database ? 'brand' : 'muted'} />
             <span className="min-w-0">
-              <span className="block truncate text-app-label font-medium text-foreground">{connection.name}</span>
-              <span className="block truncate font-mono text-app-caption text-muted-foreground">{connection.detail}</span>
+              <span className="block truncate text-app-label font-medium text-foreground" title={connection.name}>{connection.name}</span>
+              <span className="block truncate font-mono text-app-caption text-muted-foreground" title={connection.detail}>{connection.detail}</span>
             </span>
           </button>
         </TableCell>
@@ -430,9 +430,9 @@ function SourceRow({ connection, onExplore, layout = 'card' }: { connection: Con
           onClick={() => openSchemaFor(connection.id)}
           className="min-w-0 flex-1 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-default"
         >
-          <span className="block truncate text-app-label font-semibold text-foreground">{connection.name}</span>
+          <span className="block truncate text-app-label font-semibold text-foreground" title={connection.name}>{connection.name}</span>
           <Hint text={connection.detail}>
-            <span className="block truncate font-mono text-app-caption text-muted-foreground">{connection.detail}</span>
+            <span className="block truncate font-mono text-app-caption text-muted-foreground" title={connection.detail}>{connection.detail}</span>
           </Hint>
         </button>
         {action.isPending && <Loader2 size={15} strokeWidth={iconStroke} className="mt-1 animate-spin text-muted-foreground" />}
@@ -553,7 +553,7 @@ function DatabaseForm({ kind, onSaved }: { kind: DatabaseKind; onSaved: () => vo
           </Hint>
         )}
       </p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
         <FormField label="Name" htmlFor="conn-name" className="col-span-2">
           <Input id="conn-name" value={config.name} placeholder="e.g. Sales replica" onChange={(e) => update({ name: e.target.value })} />
         </FormField>
@@ -619,7 +619,7 @@ function AddDataDialog({ open: isOpen, onOpenChange }: { open: boolean; onOpenCh
         )}
       >
         <Icon size={15} strokeWidth={iconStroke} className="shrink-0 text-muted-foreground" />
-        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
         {trailing}
       </button>
     )
@@ -629,7 +629,7 @@ function AddDataDialog({ open: isOpen, onOpenChange }: { open: boolean; onOpenCh
   return (
     <Sheet open={isOpen} onOpenChange={close}>
       <SheetContent width="xl" className="flex-row overflow-hidden">
-        <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
+        <aside className="flex w-44 shrink-0 flex-col border-r border-border bg-sidebar min-[700px]:w-64">
           <div className="px-5 pb-3 pt-5">
             <DialogTitle>Add data</DialogTitle>
             <DialogDescription className="mt-1">Read where it lives. Nothing is uploaded.</DialogDescription>
@@ -755,8 +755,8 @@ function ExploreDialog({
   return (
     <Sheet open={tables !== null} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <SheetContent width="xl" className="flex-row overflow-hidden">
-        <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
-          <p className="px-5 pb-2 pt-5 font-serif text-app-title text-foreground">{name}</p>
+        <aside className="flex w-44 shrink-0 flex-col border-r border-border bg-sidebar min-[700px]:w-64">
+          <p className="truncate px-5 pb-2 pt-5 font-serif text-app-title text-foreground" title={name}>{name}</p>
           <div className="px-3 pb-2">
             <SearchInput value={search} onChange={setSearch} placeholder="Search tables" />
           </div>
@@ -808,7 +808,7 @@ function ExploreDialog({
               </>
             )}
           </div>
-          <div className="flex items-center justify-between gap-3 border-t border-border px-6 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-6 py-3">
             <p className="text-app-caption text-muted-foreground">
               <Hint
                 text={
@@ -889,8 +889,8 @@ export function ConnectionsPage() {
               title="Sources"
               description="Select a source to see its tables."
               actions={
-                <div className="flex items-center gap-2">
-                  <SearchInput value={search} onChange={setSearch} placeholder="Search sources" className="w-64" />
+                <div className="flex flex-wrap items-center gap-2">
+                  <SearchInput value={search} onChange={setSearch} placeholder="Search sources" className="w-full sm:w-64" />
                   <ViewToggle value={view} onChange={setView} />
                 </div>
               }
@@ -898,7 +898,7 @@ export function ConnectionsPage() {
             {shown.length === 0 ? (
               <p className="text-app-label text-muted-foreground">No sources match “{search}”.</p>
             ) : view === 'cards' ? (
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
                 {pg.pageItems.map((connection) => (
                   <SourceRow key={connection.id} connection={connection} onExplore={(item) => explore.mutate(item)} />
                 ))}

@@ -87,7 +87,7 @@ function NavRow({ icon, label, active, onClick, trailing }: { icon: ReactNode; l
       )}
     >
       {icon}
-      <span className="flex-1 truncate text-left">{label}</span>
+      <span className="flex-1 truncate text-left" title={label}>{label}</span>
       {trailing}
     </button>
   )
@@ -196,7 +196,7 @@ function ChatHistory() {
                 active ? 'bg-accent text-foreground' : 'text-foreground/75 hover:bg-accent hover:text-foreground',
               )}
             >
-              <span className="truncate">{conversation.title}</span>
+              <span className="truncate" title={conversation.title}>{conversation.title}</span>
             </button>
           )
         })}
@@ -249,7 +249,7 @@ function WorkspaceMenu({ compact = false }: { compact?: boolean }) {
             {!compact && (
               <>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-app-label font-medium text-foreground">{active?.name ?? 'No workspace'}</span>
+                  <span className="block truncate text-app-label font-medium text-foreground" title={active?.name}>{active?.name ?? 'No workspace'}</span>
                   <span className="block text-app-caption text-muted-foreground">{'Workspace'}</span>
                 </span>
                 <ChevronsUpDown size={15} strokeWidth={iconStroke} className="text-muted-foreground" />
@@ -274,7 +274,7 @@ function WorkspaceMenu({ compact = false }: { compact?: boolean }) {
                 })
               }
             >
-              <span className="flex-1 truncate">{workspace.name}</span>
+              <span className="flex-1 truncate" title={workspace.name}>{workspace.name}</span>
               {workspace.id === data.activeId && <Check strokeWidth={iconStroke} />}
             </DropdownMenuItem>
           ))}
@@ -321,7 +321,7 @@ export function Sidebar() {
   const navigate = useNavigation((state) => state.navigate)
 
   return (
-    <aside className="flex w-[296px] shrink-0 flex-col border-r border-border bg-sidebar">
+    <aside className="flex w-60 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar min-[900px]:w-[296px]">
       <div className="mac-window-space mac-drag-region shrink-0" />
       <div className="flex items-center gap-2.5 px-6 pb-5 pt-6">
         <img src="/app-icon.png" alt="" className="h-[26px] w-[26px] rounded-md" />

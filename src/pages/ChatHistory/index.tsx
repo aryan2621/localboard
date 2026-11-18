@@ -200,7 +200,7 @@ function Preview({ id }: { id: string }) {
           {data.messages.map((message) =>
             message.role === 'user' ? (
               <li key={message.id} className="flex justify-end">
-                <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-accent px-4 py-2.5 text-app-label text-foreground">{message.content}</p>
+                <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-accent px-4 py-2.5 text-app-label text-foreground">{message.content}</p>
               </li>
             ) : (
               <li key={message.id} className="space-y-1">

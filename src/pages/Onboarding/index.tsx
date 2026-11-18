@@ -144,9 +144,9 @@ export function Onboarding() {
 
   return (
     <div className="flex h-screen bg-background">
-      <aside className="flex w-80 shrink-0 flex-col border-r border-border bg-sidebar">
+      <aside className="flex w-60 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar min-[900px]:w-80">
         <div className="mac-window-space mac-drag-region shrink-0" />
-        <div className="flex items-center gap-3 px-8 pb-10 pt-6">
+        <div className="flex items-center gap-3 px-5 pb-10 pt-6 min-[900px]:px-8">
           <img src="/app-icon.png" alt="" className="h-10 w-10 rounded-lg" />
           <div>
             <p className="font-serif text-app-title text-foreground">LocalBoard</p>
@@ -184,7 +184,7 @@ export function Onboarding() {
             )
           })}
         </ol>
-        <div className="mt-auto flex gap-2 px-8 py-6 text-app-caption text-muted-foreground">
+        <div className="mt-auto flex gap-2 px-5 py-6 min-[900px]:px-8 text-app-caption text-muted-foreground">
           <Shield size={14} strokeWidth={iconStroke} className="mt-0.5 shrink-0" />
           Your files stay on this computer.
         </div>
@@ -192,7 +192,7 @@ export function Onboarding() {
       <main className="flex min-w-0 flex-1 flex-col">
         <div className="mac-window-space mac-drag-region shrink-0" />
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div key={step} className="mx-auto w-full max-w-2xl animate-rise-in px-10 py-12">
+          <div key={step} className="mx-auto w-full max-w-2xl animate-rise-in px-6 py-10 sm:px-10 sm:py-12">
             <p className="mb-3 text-app-caption font-medium text-brand">
               Step {index + 1} of {STEPS.length}
             </p>
@@ -202,7 +202,7 @@ export function Onboarding() {
             {step === 'data' && <DataStep added={tablesAdded} onAdded={(tables) => setTablesAdded((n) => n + tables)} />}
           </div>
         </div>
-        <footer className="flex items-center justify-between gap-3 border-t border-border px-10 py-4">
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-6 py-4 sm:px-10">
           <div>
             {index > 0 && (
               <Button variant="ghost" onClick={() => setStep(STEPS[index - 1])}>
@@ -210,7 +210,7 @@ export function Onboarding() {
               </Button>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {step === 'model' && !modelReady && (
               <Button variant="ghost" onClick={next}>
                 Continue in SQL-only mode

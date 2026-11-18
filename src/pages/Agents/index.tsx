@@ -71,7 +71,7 @@ export function AgentsPage() {
     onError: (failure) => toast.error(errorMessage(failure)),
   })
 
-  if (error) return <p className="p-8 text-app-label text-destructive">{errorMessage(error)}</p>
+  if (error) return <p className="break-words p-8 text-app-label text-destructive">{errorMessage(error)}</p>
   if (!agents) return <PageLoader label="Loading analysts" />
 
   if (selected) {
@@ -112,7 +112,7 @@ export function AgentsPage() {
           {shown.length === 0 ? (
             <p className="text-app-label text-muted-foreground">No analysts match “{search}”.</p>
           ) : view === 'cards' ? (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
               {pg.pageItems.map((agent) => (
                 <button
                   key={agent.id}
@@ -123,7 +123,7 @@ export function AgentsPage() {
                   <span className="flex items-center gap-3">
                     <Avatar name={agent.name} />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-app-label font-semibold text-foreground">{agent.name}</span>
+                      <span className="block truncate text-app-label font-semibold text-foreground" title={agent.name}>{agent.name}</span>
                       <span className="block text-app-caption text-muted-foreground">Created {relativeTime(agent.createdAt)}</span>
                     </span>
                   </span>
@@ -151,7 +151,7 @@ export function AgentsPage() {
                       <TableCell>
                         <span className="flex items-center gap-2.5">
                           <Avatar name={agent.name} size="sm" />
-                          <span className="font-medium text-foreground">{agent.name}</span>
+                          <span className="break-words font-medium text-foreground">{agent.name}</span>
                         </span>
                       </TableCell>
                       <TableCell className="max-w-0 w-[45%]">
@@ -209,12 +209,12 @@ function AnalystDetail({ agent, canDelete, onDeleted }: { agent: Agent; canDelet
   })
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-8 py-8">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-8">
       <header className="flex flex-wrap items-start gap-4">
         <Avatar name={agent.name} size="lg" />
         <div className="min-w-0 flex-1">
-          <h1 className="font-serif text-app-page text-foreground">{agent.name}</h1>
-          <p className="mt-1 text-app-label text-muted-foreground">{agent.description || 'No description yet. Add one so questions are routed here.'}</p>
+          <h1 className="break-words font-serif text-app-page text-foreground">{agent.name}</h1>
+          <p className="break-words mt-1 text-app-label text-muted-foreground">{agent.description || 'No description yet. Add one so questions are routed here.'}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button variant="outline" onClick={() => navigate('home')}>
@@ -358,7 +358,7 @@ function McpTools({ agentId }: { agentId: string }) {
                     {tool.name}
                     <Badge variant={rule ? 'brand' : 'outline'}>{rule ? 'Custom' : 'Default'}</Badge>
                   </p>
-                  <p className="mt-0.5 text-app-caption text-muted-foreground">{tool.description || (tool.readOnly ? 'Read-only' : 'Can change things')}</p>
+                  <p className="break-words mt-0.5 text-app-caption text-muted-foreground">{tool.description || (tool.readOnly ? 'Read-only' : 'Can change things')}</p>
                 </div>
                 {rule && (
                   <Button size="sm" variant="ghost" disabled={resetRule.isPending} onClick={() => resetRule.mutate(tool.name)}>
@@ -413,7 +413,7 @@ function Profile({ agent }: { agent: Agent }) {
 
   return (
     <section className="space-y-5 pt-2">
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2 [&>*]:min-w-0">
         <Panel title="About" description="Used to route questions to this analyst.">
           <div className="space-y-4">
             <FormField label="Name" htmlFor="agent-name">
@@ -450,7 +450,7 @@ function Profile({ agent }: { agent: Agent }) {
                 {visibleTables.map((table) => (
                   <label key={table.id} className="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors duration-fast hover:bg-accent/40">
                     <Checkbox checked={assigned.includes(table.relation)} onCheckedChange={() => toggleTable(table.relation)} />
-                    <span className="min-w-0 flex-1 truncate font-mono text-app-caption text-foreground">{table.relation}</span>
+                    <span className="min-w-0 flex-1 truncate font-mono text-app-caption text-foreground" title={table.relation}>{table.relation}</span>
                     <span className="shrink-0 text-app-caption tabular-nums text-muted-foreground">
                       {table.row_count === null ? '' : `${table.row_count.toLocaleString()} rows`}
                     </span>
@@ -462,7 +462,7 @@ function Profile({ agent }: { agent: Agent }) {
         </Panel>
       </div>
       <Panel title="Models" description={overridden ? `${overridden} of 3 tasks use their own model.` : 'Every task uses the workspace default model.'}>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3 [&>*]:min-w-0">
           {(['sql', 'reasoning', 'narrative'] as const).map((task) => (
             <FormField key={task} label={TASK_LABEL[task]}>
               <Input
@@ -577,7 +577,7 @@ function Rules({ agentId }: { agentId: string }) {
               <IconTile icon={ListChecks} size="sm" tone="muted" />
               <button type="button" onClick={() => setDialog({ rule })} className="min-w-0 flex-1 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40">
                 <span className="flex items-center gap-2">
-                  <span className="text-app-label font-medium text-foreground">{rule.title || 'Untitled rule'}</span>
+                  <span className="break-words text-app-label font-medium text-foreground">{rule.title || 'Untitled rule'}</span>
                   {rule.tableName && <Badge variant="outline" className="font-mono">{rule.tableName}</Badge>}
                 </span>
                 <span className="mt-0.5 line-clamp-2 block whitespace-pre-wrap text-app-caption text-muted-foreground">{rule.body}</span>
@@ -720,11 +720,11 @@ function Examples({ agentId }: { agentId: string }) {
       {examples.length === 0 ? (
         <EmptyState icon={BookOpen} title="No examples yet" description="Thumbs up on a good answer saves it here, or add one by hand." action={<Button onClick={() => setOpen(true)}>New example</Button>} />
       ) : (
-        <div className="grid gap-3 xl:grid-cols-2">
+        <div className="grid gap-3 xl:grid-cols-2 [&>*]:min-w-0">
           {examplePg.pageItems.map((example) => (
             <div key={example.id} className="group flex flex-col rounded-xl border border-border bg-surface">
               <div className="flex items-start gap-2 px-4 pt-3">
-                <p className="min-w-0 flex-1 text-app-label font-medium text-foreground">{example.question}</p>
+                <p className="min-w-0 flex-1 break-words text-app-label font-medium text-foreground">{example.question}</p>
                 {example.origin === 'thumbs_up' && <Badge variant="brand">From a liked answer</Badge>}
                 <RowMenu label="Example actions">
                   <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setRemoving(example.id)}>
@@ -732,7 +732,7 @@ function Examples({ agentId }: { agentId: string }) {
                   </DropdownMenuItem>
                 </RowMenu>
               </div>
-              <pre className="m-3 mt-2 max-h-40 overflow-auto rounded-lg bg-muted/50 p-3 font-mono text-app-caption text-foreground/90">{example.sql}</pre>
+              <pre className="m-3 mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted/50 p-3 font-mono text-app-caption text-foreground/90">{example.sql}</pre>
             </div>
           ))}
         </div>
@@ -917,12 +917,12 @@ function Knowledge({ agentId }: { agentId: string }) {
       {files.length === 0 ? (
         <EmptyState icon={FileText} title="No documents yet" description="Add a glossary, a metrics guide or a policy for this analyst to learn from." action={addButton} />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
           {files.map((file) => (
             <div key={file.id} className="group flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
               <IconTile icon={FileText} tone="muted" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-app-label font-medium text-foreground">{file.name}</p>
+                <p className="truncate text-app-label font-medium text-foreground" title={file.name}>{file.name}</p>
                 <p className="text-app-caption text-muted-foreground">
                   {file.chunkCount} excerpts · added {relativeTime(file.createdAt)}
                 </p>

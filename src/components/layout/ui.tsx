@@ -33,7 +33,7 @@ export function SettingsSection({
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
           <span className="min-w-0">
             <span className="block text-app-label font-semibold text-foreground">{title}</span>
-            {description && <span className="mt-0.5 block truncate text-app-caption text-muted-foreground">{description}</span>}
+            {description && <span className="mt-0.5 block truncate text-app-caption text-muted-foreground" title={description}>{description}</span>}
           </span>
           <ChevronDown size={16} className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
         </summary>
@@ -75,12 +75,12 @@ export function SettingsRow({
   className?: string
 }) {
   return (
-    <div className={cn('flex items-center justify-between gap-4 px-4 py-3.5 first:rounded-t-xl last:rounded-b-xl', className)}>
-      <div className="min-w-0 flex-1">
-        <p className="text-app-label text-foreground">{label}</p>
-        {description && <p className="text-app-caption text-muted-foreground mt-0.5 leading-relaxed">{description}</p>}
+    <div className={cn('flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5 first:rounded-t-xl last:rounded-b-xl', className)}>
+      <div className="min-w-[10rem] flex-1">
+        <p className="break-words text-app-label text-foreground">{label}</p>
+        {description && <p className="mt-0.5 break-words text-app-caption leading-relaxed text-muted-foreground">{description}</p>}
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="max-w-full min-w-0 [&_input]:max-w-full">{children}</div>
     </div>
   )
 }
@@ -140,7 +140,7 @@ export function PageContainer({
   className?: string
   children: ReactNode
 }) {
-  return <div className={cn('mx-auto space-y-8 px-8 py-10 md:px-12', PAGE_WIDTH[width], className)}>{children}</div>
+  return <div className={cn('mx-auto space-y-8 px-4 py-10 sm:px-8 md:px-12', PAGE_WIDTH[width], className)}>{children}</div>
 }
 
 export function PageHeader({
@@ -157,10 +157,10 @@ export function PageHeader({
   return (
     <header className={cn('flex flex-wrap items-end justify-between gap-4', className)}>
       <div className="min-w-0 space-y-1">
-        <h1 className="font-serif text-app-page text-foreground">{title}</h1>
+        <h1 className="break-words font-serif text-app-page text-foreground">{title}</h1>
         {description && <p className="text-app-body text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </header>
   )
 }
@@ -235,7 +235,7 @@ export function SectionHeader({ title, description, actions, className }: { titl
         <h2 className="font-serif text-app-title text-foreground">{title}</h2>
         {description && <p className="text-app-caption text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+      {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </div>
   )
 }
@@ -266,7 +266,7 @@ export function PageLoader({ label = 'Loading' }: { label?: string }) {
     <div className="space-y-4 py-8" role="status" aria-label={label}>
       <Skeleton className="h-8 w-1/3" />
       <Skeleton className="h-4 w-2/3" />
-      <div className="grid gap-3 pt-2 sm:grid-cols-2">
+      <div className="grid gap-3 pt-2 sm:grid-cols-2 [&>*]:min-w-0">
         <Skeleton className="h-20 rounded-xl" />
         <Skeleton className="h-20 rounded-xl" />
         <Skeleton className="h-20 rounded-xl" />

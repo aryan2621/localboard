@@ -317,7 +317,7 @@ export function ResultChart({
       {asTable ? (
         <ResultTable result={result} onSelectCell={onSelectCell} />
       ) : (
-        <div className={`rounded-xl border border-border bg-surface p-3${tall ? ' h-[28rem]' : ''}`}>
+        <div className={`rounded-xl border border-border bg-surface p-3${tall ? ' h-[min(28rem,70vh)]' : ''}`}>
           <EChart spec={spec} result={result} onSelect={onSelect} />
         </div>
       )}

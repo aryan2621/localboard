@@ -14,7 +14,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      'flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-input bg-surface px-3 text-app-label text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-muted-foreground [&>span]:truncate',
+      'flex h-9 w-full max-w-full items-center justify-between gap-2 rounded-lg border border-input bg-surface px-3 text-left text-app-label [&>span]:truncate text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-muted-foreground [&>span]:truncate',
       className,
     )}
     {...props}
@@ -36,7 +36,7 @@ const SelectContent = React.forwardRef<
       ref={ref}
       position={position}
       className={cn(
-        'relative z-[60] max-h-72 min-w-[8rem] overflow-hidden rounded-lg border border-border bg-popover text-foreground shadow-lg origin-[var(--radix-select-content-transform-origin)] data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out',
+        'relative z-[60] max-h-72 min-w-[8rem] max-w-[calc(100vw-1rem)] overflow-hidden rounded-lg border border-border bg-popover text-foreground shadow-lg origin-[var(--radix-select-content-transform-origin)] data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out',
         position === 'popper' && 'data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1',
         className,
       )}

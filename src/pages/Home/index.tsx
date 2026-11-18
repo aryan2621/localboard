@@ -96,7 +96,7 @@ export function HomePage() {
             </section>
           )}
           {!generate.isPending && (chats.length > 0 || boards.length > 0) && (
-            <div className="grid animate-rise-in gap-6 pt-6 sm:grid-cols-2">
+            <div className="grid animate-rise-in gap-6 pt-6 sm:grid-cols-2 [&>*]:min-w-0">
               {chats.length > 0 && (
                 <section className="space-y-2">
                   <h2 className="text-app-caption font-medium text-muted-foreground">Recent chats</h2>

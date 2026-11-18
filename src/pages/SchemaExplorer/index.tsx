@@ -315,7 +315,7 @@ function TableView({ id }: { id: string }) {
           </div>
         </div>
         <Hint text={table.source_ref}>
-          <p className="truncate font-mono text-app-caption text-muted-foreground">{table.source_ref}</p>
+          <p className="truncate font-mono text-app-caption text-muted-foreground" title={table.source_ref}>{table.source_ref}</p>
         </Hint>
         <p className="text-app-caption text-muted-foreground">
           {rows(table.row_count)} · {columns.length} columns
@@ -416,7 +416,7 @@ function TableOverview({ tables }: { tables: TableRecord[] }) {
       {shown.length === 0 ? (
         <p className="text-app-label text-muted-foreground">No tables match “{search}”.</p>
       ) : view === 'cards' ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
           {pg.pageItems.map((table) => (
             <ListItemCard
               key={table.id}
@@ -449,7 +449,7 @@ function TableOverview({ tables }: { tables: TableRecord[] }) {
                   <TableCell className="text-muted-foreground">{sourceName(table.connection_id)}</TableCell>
                   <TableCell className="text-right tabular-nums">{table.row_count?.toLocaleString() ?? '–'}</TableCell>
                   <TableCell className="max-w-0 w-[40%]">
-                    {table.description ? <span className="block truncate text-muted-foreground">{table.description}</span> : status(table)}
+                    {table.description ? <span className="block truncate text-muted-foreground" title={table.description}>{table.description}</span> : status(table)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -472,7 +472,7 @@ export function SchemaExplorerPage() {
   const sourceName = connections.find((connection) => connection.id === schemaSource)?.name
   const listed = schemaSource ? (tables ?? []).filter((table) => table.connection_id === schemaSource) : (tables ?? [])
 
-  if (error) return <p className="p-8 text-app-label text-destructive">{errorMessage(error)}</p>
+  if (error) return <p className="break-words p-8 text-app-label text-destructive">{errorMessage(error)}</p>
   if (!tables) return <PageLoader label="Loading tables" />
   if (tables.length === 0)
     return (

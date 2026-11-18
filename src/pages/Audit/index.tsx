@@ -230,7 +230,7 @@ export function AuditPage() {
                   </TableCell>
                   <TableCell className="max-w-0">
                     <Hint text={entry.sql ? clip(entry.sql) : undefined}>
-                      <span className="block truncate font-mono text-app-caption text-muted-foreground">{clip(entry.sql)}</span>
+                      <span className="block truncate font-mono text-app-caption text-muted-foreground" title={clip(entry.sql)}>{clip(entry.sql)}</span>
                     </Hint>
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right text-app-caption text-muted-foreground">
@@ -262,7 +262,7 @@ function AuditDetail({ entry }: { entry: AuditEntry }) {
     <>
       <SheetHeader title={kindLabel(entry.kind)} description={`${new Date(entry.ts).toLocaleString()} · ${relativeTime(entry.ts)}`} />
       <SheetBody>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-xl border border-border bg-muted/30 p-4 text-app-label sm:grid-cols-3">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-xl border border-border bg-muted/30 p-4 text-app-label sm:grid-cols-3 [&>*]:min-w-0">
         <Field label="Status">
           <StatusPill status={entry.status} />
         </Field>

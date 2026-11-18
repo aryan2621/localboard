@@ -23,9 +23,9 @@ export function StepList({ steps }: { steps: Step[] }) {
           <span className="relative mt-0.5 flex size-[14px] shrink-0 items-center justify-center rounded-full bg-background">
             <StepIcon status={step.status} />
           </span>
-          <span className="min-w-0">
+          <span className="min-w-0 break-words">
             <span className={step.status === 'running' ? 'text-foreground' : 'text-muted-foreground'}>{step.label}</span>
-            {step.detail && <Hint text={step.detail}><span className="block truncate text-app-caption text-muted-foreground/80">{step.detail}</span></Hint>}
+            {step.detail && <Hint text={step.detail}><span className="block truncate text-app-caption text-muted-foreground/80" title={step.detail}>{step.detail}</span></Hint>}
           </span>
         </li>
       ))}
@@ -68,7 +68,7 @@ export function StepsPanel({ steps, running, suffix }: { steps: Step[]; running?
           </span>
           <span key={`${current.id}-${current.label}`} className="flex min-w-0 flex-1 animate-step-in items-baseline gap-2">
             <span className="shimmer-text shrink-0 font-medium">{label}…</span>
-            {current.detail && <span className="truncate text-app-caption text-muted-foreground">{current.detail}</span>}
+            {current.detail && <span className="truncate text-app-caption text-muted-foreground" title={current.detail}>{current.detail}</span>}
           </span>
           <span className="shrink-0 text-app-caption tabular-nums text-muted-foreground">
             {finished > 0 && `${finished} done · `}

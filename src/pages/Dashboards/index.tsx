@@ -191,7 +191,7 @@ function DashboardGroups({
         return (
           <section key={group.key || 'unfiled'} className="space-y-3">
             {groups.length > 1 && <SectionHeader title={group.label} description={`${items.length} ${items.length === 1 ? 'dashboard' : 'dashboards'}`} />}
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
               {items.map((item) => (
                 <button
                   key={item.id}
@@ -207,7 +207,7 @@ function DashboardGroups({
                   <span className="flex items-center gap-3 px-4 py-3">
                     <IconTile icon={LayoutDashboard} size="sm" />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-app-label font-semibold text-foreground">{item.name}</span>
+                      <span className="block truncate text-app-label font-semibold text-foreground" title={item.name}>{item.name}</span>
                       <span className="block truncate text-app-caption text-muted-foreground">
                         {item.tileCount} {item.tileCount === 1 ? 'tile' : 'tiles'} · edited {relativeTime(item.updatedAt)}
                       </span>
@@ -369,7 +369,7 @@ export function DashboardsPage() {
             }}
           >
             <SheetBody>
-            <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-muted/30 p-3 text-app-caption">
+            <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-muted/30 p-3 text-app-caption [&>*]:min-w-0">
               {DASHBOARD_TIPS.map((tip) => (
                 <div key={tip.label}>
                   <p className="font-medium text-foreground">{tip.label}</p>
@@ -579,7 +579,7 @@ function TileSheet({
             <>
               <div className="space-y-1.5">
                 <Label>Chart</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2 [&>*]:min-w-0">
                   {CHART_KINDS.map((option) => (
                     <button
                       key={option.value}
@@ -885,10 +885,10 @@ function DashboardView({ id }: { id: string }) {
         </div>
       )}
       {kpiTiles.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
           {kpiTiles.map((tile) => (
             <Card key={tile.id} className="relative p-4">
-              <p className="pr-7 text-app-caption font-medium text-muted-foreground">{tile.title}</p>
+              <p className="break-words pr-7 text-app-caption font-medium text-muted-foreground">{tile.title}</p>
               {tile.result && <ResultChart spec={tile.chart} result={tile.result} />}
               <div className="absolute right-1.5 top-1.5">
                 <RowMenu label={`Actions for ${tile.title}`} className="h-7 w-7">
@@ -913,11 +913,11 @@ function DashboardView({ id }: { id: string }) {
         />
       )}
       {tiles.length > 0 && (
-        <div className="grid gap-4 lg:grid-cols-12">
+        <div className="grid gap-4 lg:grid-cols-12 [&>*]:min-w-0">
           {tiles.map((tile, index) => (
             <Card key={tile.id} className={cn('group flex min-w-0 flex-col', SPAN[spanOf(tile)])}>
               <div className="flex items-center justify-between gap-2 px-4 py-2.5">
-                <h3 className="truncate text-app-label font-semibold text-foreground">{tile.title}</h3>
+                <h3 className="truncate text-app-label font-semibold text-foreground" title={tile.title}>{tile.title}</h3>
                 <div className="flex shrink-0 items-center gap-1">
                   {tile.chart.kind !== 'text' && tile.result && (
                     <Hint text="Open large">
@@ -975,7 +975,7 @@ function DashboardView({ id }: { id: string }) {
                 {tile.error && (
                   <Alert variant="destructive">
                     <AlertDescription className="space-y-2">
-                      <p className="whitespace-pre-wrap">{tile.error}</p>
+                      <p className="whitespace-pre-wrap break-words">{tile.error}</p>
                       <Button variant="outline" size="sm" onClick={() => openBench(tile.sql)}>
                         Open in Query Bench
                       </Button>

@@ -14,7 +14,7 @@ const PopoverContent = React.forwardRef<
       ref={ref}
       align={align}
       sideOffset={sideOffset}
-      className={cn('z-[60] w-72 rounded-xl border border-border bg-popover p-4 text-foreground shadow-lg outline-none origin-[var(--radix-popover-content-transform-origin)] data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out', className)}
+      className={cn('z-[60] max-h-[var(--radix-popover-content-available-height)] w-72 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-xl border border-border bg-popover p-4 text-foreground shadow-lg outline-none origin-[var(--radix-popover-content-transform-origin)] data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out', className)}
       {...props}
     />
   </PopoverPrimitive.Portal>

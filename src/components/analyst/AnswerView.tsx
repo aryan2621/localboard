@@ -155,7 +155,7 @@ function SqlPanel({ queries, primaryId }: { queries: QueryRecord[]; primaryId: s
               </span>
             )}
             {!query.error && (
-              <span className="ml-auto flex gap-1">
+              <span className="ml-auto flex flex-wrap gap-1">
                 <Button variant="ghost" size="sm" className="h-7" onClick={() => void exportResult(query.sql, 'csv')}>
                   {'Export CSV'}
                 </Button>
@@ -168,7 +168,7 @@ function SqlPanel({ queries, primaryId }: { queries: QueryRecord[]; primaryId: s
               <SquareTerminal strokeWidth={iconStroke} /> {'Edit in Query Bench'}
             </Button>
           </div>
-          <pre className="overflow-x-auto whitespace-pre-wrap px-3 py-2 font-mono text-app-caption text-foreground">{query.sql}</pre>
+          <pre className="overflow-x-auto whitespace-pre-wrap break-words px-3 py-2 font-mono text-app-caption text-foreground">{query.sql}</pre>
           {query.error && <p className="border-t border-border px-3 py-2 text-app-caption text-destructive">{query.error}</p>}
         </div>
       ))}
@@ -187,8 +187,8 @@ function MemoryBanner({ proposal, agentId }: { proposal: { id: string; body: str
   return (
     <div className="rounded-xl border border-border bg-card px-3 py-2.5">
       <p className="text-app-caption text-muted-foreground">{'Remember this for future questions?'}</p>
-      <p className="mt-1 text-app-label text-foreground">{proposal.body}</p>
-      <div className="mt-2 flex gap-2">
+      <p className="mt-1 break-words text-app-label text-foreground">{proposal.body}</p>
+      <div className="mt-2 flex flex-wrap gap-2">
         <Button size="sm" onClick={() => status.mutate('active')} disabled={status.isPending}>
           {'Save'}
         </Button>
@@ -214,12 +214,12 @@ function LineagePanel({ message, queries }: { message: MessageRecord; queries: Q
       <dl className="flex flex-wrap gap-x-6 gap-y-1">
         <div className="flex gap-1.5">
           <dt className="text-muted-foreground">{'Model'}</dt>
-          <dd className="text-foreground">{answer?.model ? `${answer.model}${lineage?.modelId ? ` (${lineage.modelId})` : ''}` : 'None (SQL only)'}</dd>
+          <dd className="min-w-0 break-words text-foreground">{answer?.model ? `${answer.model}${lineage?.modelId ? ` (${lineage.modelId})` : ''}` : 'None (SQL only)'}</dd>
         </div>
         {answer?.agentName && (
           <div className="flex gap-1.5">
             <dt className="text-muted-foreground">{'Analyst'}</dt>
-            <dd className="text-foreground">{answer.agentName}</dd>
+            <dd className="min-w-0 break-words text-foreground">{answer.agentName}</dd>
           </div>
         )}
       </dl>
@@ -268,7 +268,7 @@ function LineagePanel({ message, queries }: { message: MessageRecord; queries: Q
                   <dd className="text-muted-foreground">{'None'}</dd>
                 ) : (
                   (items as string[]).map((item) => (
-                    <dd key={item} className="rounded-md bg-card px-1.5 py-0.5 font-mono text-app-caption text-foreground">{item}</dd>
+                    <dd key={item} className="min-w-0 break-all rounded-md bg-card px-1.5 py-0.5 font-mono text-app-caption text-foreground">{item}</dd>
                   ))
                 )}
               </div>
@@ -450,7 +450,7 @@ export function AnswerView({
             <li key={assumption}>{`Assumed: ${assumption}`}</li>
           ))}
           {answer.warnings.map((warning) => (
-            <li key={warning} className="flex gap-1.5 text-warning">
+            <li key={warning} className="flex min-w-0 gap-1.5 break-words text-warning">
               <AlertTriangle size={13} strokeWidth={iconStroke} className="mt-px shrink-0" /> {warning}
             </li>
           ))}
