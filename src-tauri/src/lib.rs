@@ -140,6 +140,7 @@ pub fn run() {
             commands::llm::llm_get_config,
             commands::llm::llm_set_config,
             commands::llm::llm_test,
+            commands::llm::llm_list_models,
             commands::llm::set_task_routing,
             commands::analyst::ask,
             commands::analyst::cancel_answer,

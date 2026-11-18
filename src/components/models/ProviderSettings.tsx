@@ -24,6 +24,7 @@ export function ProviderSettings() {
   const [model, setModel] = useState('')
   const [embedModel, setEmbedModel] = useState('')
   const [apiKey, setApiKey] = useState('')
+  const [installed, setInstalled] = useState<string[]>([])
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null)
 
   useEffect(() => {
@@ -56,10 +57,21 @@ export function ProviderSettings() {
     onError: (failure) => setTestResult({ ok: false, message: errorMessage(failure) }),
   })
 
+  const loadModels = useMutation({
+    mutationFn: () => api.listLlmModels(baseUrl.trim()),
+    onSuccess: (names) => {
+      setInstalled(names)
+      if (names.length === 0) toast.error('Ollama is running but has no models. Run "ollama pull <model>" first.')
+      else if (!names.includes(model)) setModel(names[0])
+    },
+    onError,
+  })
+
   const remote = kind !== 'ollama' && kind !== 'compat'
   const changeKind = (next: LlmKind) => {
     setKind(next)
     setBaseUrl(KINDS.find((k) => k.kind === next)?.baseUrl ?? '')
+    setInstalled([])
     setTestResult(null)
   }
 
@@ -84,7 +96,29 @@ export function ProviderSettings() {
           <Input id="llm-base-url" value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} spellCheck={false} />
         </FormField>
         <FormField label="Model" htmlFor="llm-model">
-          <Input id="llm-model" value={model} onChange={(event) => setModel(event.target.value)} spellCheck={false} />
+          <div className="flex min-w-0 gap-2">
+            {installed.length > 0 ? (
+              <Select value={model} onValueChange={setModel}>
+                <SelectTrigger id="llm-model" className="min-w-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {installed.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input id="llm-model" className="min-w-0" value={model} onChange={(event) => setModel(event.target.value)} spellCheck={false} />
+            )}
+            {kind === 'ollama' && (
+              <Button type="button" variant="outline" className="shrink-0" loading={loadModels.isPending} onClick={() => loadModels.mutate()}>
+                Load models
+              </Button>
+            )}
+          </div>
         </FormField>
         <FormField label="Embedding model (optional)" htmlFor="llm-embed">
           <Input id="llm-embed" value={embedModel} onChange={(event) => setEmbedModel(event.target.value)} spellCheck={false} />

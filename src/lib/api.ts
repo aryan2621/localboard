@@ -537,6 +537,7 @@ export const api = {
   llmConfig: () => call<LlmConfig>('llm_get_config'),
   // apiKey: null keeps the stored key, '' clears it.
   setLlmConfig: (config: LlmSettings, apiKey: string | null) => call<void>('llm_set_config', { config, apiKey }),
+  listLlmModels: (baseUrl: string) => call<string[]>('llm_list_models', { baseUrl }),
   testLlm: () => call<{ ok: boolean; message: string }>('llm_test'),
   setTaskRouting: (routing: TaskRouting) => call<TaskRouting>('set_task_routing', { routing }),
 

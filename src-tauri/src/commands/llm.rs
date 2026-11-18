@@ -1,7 +1,7 @@
 use serde::Serialize;
 use tauri::State;
 
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 use crate::llm::provider::Task;
 use crate::llm::router::{TaskRouting, SETTINGS_KEY};
 use crate::llm::{LlmConfig, CONFIG_KEY};
@@ -58,6 +58,30 @@ pub async fn llm_test(state: State<'_, AppState>) -> AppResult<LlmTest> {
         Ok(()) => LlmTest { ok: true, message: "Connected".into() },
         Err(error) => LlmTest { ok: false, message: error.to_string() },
     })
+}
+
+/// Models installed in a local Ollama (or other loopback OpenAI-compatible server). Loopback only, so it can't be pointed at the network.
+#[tauri::command]
+pub async fn llm_list_models(state: State<'_, AppState>, base_url: String) -> AppResult<Vec<String>> {
+    state.ensure_unlocked()?;
+    let base_url = base_url.trim().trim_end_matches('/');
+    if !crate::engine::mcp::is_loopback(base_url) {
+        return Err(AppError::invalid("Listing models works only for a server on this computer."));
+    }
+    let client = reqwest::Client::builder().timeout(std::time::Duration::from_secs(3)).build().map_err(|e| AppError::Internal(e.to_string()))?;
+    let body: serde_json::Value = client
+        .get(format!("{base_url}/models"))
+        .send()
+        .await
+        .map_err(|_| AppError::invalid("Can't reach the server. Is Ollama running?"))?
+        .error_for_status()
+        .map_err(|e| AppError::invalid(e.to_string()))?
+        .json()
+        .await
+        .map_err(|e| AppError::invalid(e.to_string()))?;
+    let mut names: Vec<String> = body["data"].as_array().into_iter().flatten().filter_map(|m| m["id"].as_str().map(str::to_owned)).collect();
+    names.sort();
+    Ok(names)
 }
 
 #[tauri::command]
