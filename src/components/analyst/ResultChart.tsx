@@ -18,7 +18,7 @@ echarts.use([BarChart, FunnelChart, HeatmapChart, LineChart, PieChart, GridCompo
 const SERIES_TOKENS = ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5', 'chart-6', 'chart-7', 'chart-8']
 // A second cue besides colour, so series stay distinguishable without colour vision.
 const SYMBOLS = ['circle', 'rect', 'triangle', 'diamond', 'roundRect', 'pin', 'arrow', 'circle']
-const FONT = '"Inter Variable", -apple-system, system-ui, sans-serif'
+const FONT = '-apple-system, system-ui, sans-serif'
 const VALUE_LABELS_UP_TO = 8
 const compact = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 })
 const DOTS_UP_TO = 60

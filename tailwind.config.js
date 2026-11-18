@@ -70,7 +70,7 @@ export default {
         '2xl': 'var(--radius)',
       },
       fontFamily: {
-        sans: ['"Inter Variable"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', ...defaultTheme.fontFamily.sans],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'system-ui', ...defaultTheme.fontFamily.sans],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', ...defaultTheme.fontFamily.mono],
       },
       fontSize: {

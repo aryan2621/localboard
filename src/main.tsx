@@ -17,7 +17,3 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>,
 )
-
-void Promise.all([
-  import('@fontsource-variable/inter'),
-])

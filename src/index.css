@@ -1,6 +1,6 @@
 /* Hallmark · shape: app screen · genre: modern-minimal · theme: custom, Linear-style (by request) · redesign: full
  * nav: kept sidebar · signature: the answer table, hairline rows, tabular figures · states: loading, empty, error, full
- * axes: light/grotesk-sans/chromatic-indigo · posture: restrained · contrast: pass · v2.0.0 */
+ * axes: light/grotesk-sans/graphite-green · posture: restrained · contrast: pass · v2.0.0 */
 /* Hallmark · pre-emit critique: P4 H4 E3 S4 R4 V4 · weakest: E, empty states keep their old copy until each page is recomposed */
 @import '@fontsource/ibm-plex-mono/400.css';
 @import '@fontsource/ibm-plex-mono/500.css';
@@ -10,16 +10,16 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 40 8% 98.5%;
     --sidebar: 240 5% 97%;
     --foreground: 240 4% 11%;
     --card: 0 0% 100%;
     --card-foreground: 240 4% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 4% 11%;
-    --primary: 235 52% 54%;
+    --primary: 165 42% 28%;
     --primary-foreground: 0 0% 100%;
-    --brand: 235 52% 54%;
+    --brand: 165 42% 28%;
     --brand-foreground: 0 0% 100%;
     --secondary: 240 5% 96%;
     --secondary-foreground: 240 4% 11%;
@@ -33,11 +33,11 @@
     --warning: 32 90% 30%;
     --border: 240 5% 90%;
     --input: 240 5% 82%;
-    --ring: 235 52% 54%;
+    --ring: 165 42% 28%;
     --surface: 0 0% 100%;
     --surface-foreground: 240 4% 11%;
     /* Categorical palette (Okabe-Ito based, colour-blind safe); green accent kept out of the first slots. */
-    --chart-1: 235 52% 54%;
+    --chart-1: 165 42% 28%;
     --chart-2: 26 100% 38%;
     --chart-3: 190 70% 30%;
     --chart-4: 45 95% 36%;
@@ -84,10 +84,10 @@
     --card-foreground: 220 10% 96%;
     --popover: 225 9% 11%;
     --popover-foreground: 220 10% 96%;
-    --primary: 235 75% 70%;
-    --primary-foreground: 235 40% 8%;
-    --brand: 235 75% 70%;
-    --brand-foreground: 235 40% 8%;
+    --primary: 165 40% 56%;
+    --primary-foreground: 165 40% 8%;
+    --brand: 165 40% 56%;
+    --brand-foreground: 165 40% 8%;
     --secondary: 225 8% 13%;
     --secondary-foreground: 220 10% 96%;
     --muted: 225 8% 13%;
@@ -100,10 +100,10 @@
     --warning: 38 80% 60%;
     --border: 225 8% 16%;
     --input: 225 8% 24%;
-    --ring: 235 75% 70%;
+    --ring: 165 40% 56%;
     --surface: 225 9% 10%;
     --surface-foreground: 220 10% 96%;
-    --chart-1: 235 75% 70%;
+    --chart-1: 165 40% 56%;
     --chart-2: 26 90% 60%;
     --chart-3: 190 60% 55%;
     --chart-4: 45 90% 58%;
