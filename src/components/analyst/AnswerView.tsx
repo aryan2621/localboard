@@ -30,7 +30,6 @@ import { MoreMenu, PageLoader, StatusBadge } from '../layout/ui'
 import { Button } from '../ui/button'
 import { formatNumber, ResultChart } from './ResultChart'
 import { StepList, StepsPanel } from './StepsPanel'
-import { Sheet, SheetBody, SheetContent, SheetHeader } from '../ui/sheet'
 
 const RULE_LABEL: Record<Anomaly['rule'], string | null> = {
   zscore: 'z-score',
@@ -480,7 +479,7 @@ export function AnswerView({
           ) : (
             <>
               {queries.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={() => setShowSql(true)}>
+                <Button variant="ghost" size="sm" onClick={() => setShowSql((open) => !open)}>
                   <Code2 strokeWidth={iconStroke} /> SQL
                 </Button>
               )}
@@ -543,16 +542,14 @@ export function AnswerView({
             </>
           )}
         </div>
-        <Sheet open={showSql && !pending} onOpenChange={setShowSql}>
-          <SheetContent width="lg">
-            <SheetHeader title="How this was answered" description={`${queries.length} ${queries.length === 1 ? 'query' : 'queries'} · every attempt, its timing and the tables it read`} />
-            <SheetBody>
-              {answer?.explanation && <p className="rounded-lg bg-muted/40 px-3 py-2 text-app-label text-foreground">{answer.explanation}</p>}
-              <SqlPanel queries={queries} primaryId={answer?.primaryQueryId ?? null} />
-            </SheetBody>
-          </SheetContent>
-        </Sheet>
       </>
+
+      <Collapsible open={showSql && !pending} onOpenChange={setShowSql}>
+        <CollapsibleContent className="space-y-3 border-t border-border pt-3">
+          {answer?.explanation && <p className="text-app-label text-foreground">{answer.explanation}</p>}
+          <SqlPanel queries={queries} primaryId={answer?.primaryQueryId ?? null} />
+        </CollapsibleContent>
+      </Collapsible>
 
       <Collapsible open={showLineage && !pending} onOpenChange={setShowLineage}>
         <CollapsibleContent>
