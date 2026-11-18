@@ -65,6 +65,10 @@ type KindSpec = {
 
 const ROW_CAP: FieldSpec = { key: 'row_cap', label: 'Snapshot row cap per table', placeholder: '1000000' }
 
+// Unfinished connectors; enable with localStorage.setItem('localboard.experimentalConnectors', '1').
+const EXPERIMENTAL_KINDS: DatabaseKind[] = ['snowflake', 'databricks', 'motherduck', 'sqlserver']
+const EXPERIMENTAL_ENABLED = localStorage.getItem('localboard.experimentalConnectors') === '1'
+
 const KINDS: Record<DatabaseKind, KindSpec> = {
   postgres: {
     label: 'PostgreSQL',
@@ -598,7 +602,9 @@ function AddDataDialog({ open: isOpen, onOpenChange }: { open: boolean; onOpenCh
   }
 
   const term = search.trim().toLowerCase()
-  const kinds = (Object.keys(KINDS) as DatabaseKind[]).filter((kind) => !term || KINDS[kind].label.toLowerCase().includes(term))
+  const kinds = (Object.keys(KINDS) as DatabaseKind[])
+    .filter((kind) => EXPERIMENTAL_ENABLED || !EXPERIMENTAL_KINDS.includes(kind))
+    .filter((kind) => !term || KINDS[kind].label.toLowerCase().includes(term))
   const row = (value: AddChoice, icon: typeof Database, label: string, trailing?: React.ReactNode) => {
     const Icon = icon
     return (

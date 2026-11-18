@@ -169,6 +169,10 @@ async fn explore(config: &DbConfig) -> Result<Vec<ExploredTable>, String> {
     }
 }
 
+fn is_local_host(host: &str) -> bool {
+    matches!(host.trim().to_ascii_lowercase().as_str(), "localhost" | "127.0.0.1" | "::1" | "[::1]" | "") || host.starts_with('/')
+}
+
 async fn connect_postgres(config: &DbConfig) -> Result<PgConnection, String> {
     let mut options = PgConnectOptions::new()
         .host(&config.host)
@@ -180,7 +184,8 @@ async fn connect_postgres(config: &DbConfig) -> Result<PgConnection, String> {
     if strict {
         options = options.options([("default_transaction_read_only", "on"), ("statement_timeout", "30000")]);
     }
-    if config.kind == ConnectorKind::Supabase {
+    // Require TLS off-box; an `ssl = off` extra is the explicit opt-out (no UI field).
+    if config.kind == ConnectorKind::Supabase || (!is_local_host(&config.host) && config.extra("ssl") != "off") {
         options = options.ssl_mode(PgSslMode::Require);
     }
     let mut connection = sqlx::PgConnection::connect_with(&options)

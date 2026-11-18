@@ -15,6 +15,11 @@ pub struct Databricks {
     catalog: String,
 }
 
+fn trusted_host(host: &str) -> bool {
+    let host = host.to_ascii_lowercase();
+    [".databricks.com", ".azuredatabricks.net", ".databricks.azure.us", ".databricks.azure.cn"].iter().any(|suffix| host.ends_with(suffix))
+}
+
 fn warehouse_id(http_path: &str) -> Option<String> {
     let id = http_path.trim().trim_end_matches('/').rsplit('/').next()?;
     (!id.is_empty() && id.chars().all(|ch| ch.is_ascii_alphanumeric())).then(|| id.to_owned())
@@ -23,7 +28,7 @@ fn warehouse_id(http_path: &str) -> Option<String> {
 impl Databricks {
     pub fn new(config: &DbConfig) -> Result<Self, ConnectorError> {
         let host = config.host.trim().trim_start_matches("https://").trim_end_matches('/');
-        if host.is_empty() || !host.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '.' || ch == '-') {
+        if host.is_empty() || !host.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '.' || ch == '-') || !trusted_host(host) {
             return Err(ConnectorError::Unsupported("Host must be the workspace hostname, e.g. dbc-1234.cloud.databricks.com".into()));
         }
         let warehouse = warehouse_id(config.extra("http_path"))
@@ -114,5 +119,16 @@ impl Backend for Databricks {
         }
         rows.truncate(max_rows);
         Ok(Snapshot { columns, rows, truncated: false })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn host_allowlist() {
+        assert!(super::trusted_host("dbc-1.cloud.databricks.com"));
+        assert!(super::trusted_host("adb-1.2.azuredatabricks.net"));
+        assert!(!super::trusted_host("evil.com"));
+        assert!(!super::trusted_host("databricks.com.evil.com"));
     }
 }

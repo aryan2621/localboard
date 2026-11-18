@@ -32,8 +32,8 @@ impl BigQuery {
             return Err(ConnectorError::Unsupported("Service-account JSON needs client_email and private_key".into()));
         };
         let token_uri = field("token_uri").unwrap_or_else(|| "https://oauth2.googleapis.com/token".into());
-        if !token_uri.starts_with("https://") {
-            return Err(ConnectorError::Unsupported("token_uri must be https".into()));
+        if !token_uri.starts_with("https://oauth2.googleapis.com/") {
+            return Err(ConnectorError::Unsupported("token_uri must be https://oauth2.googleapis.com/token".into()));
         }
         let project = if config.database.is_empty() { field("project_id").unwrap_or_default() } else { config.database.clone() };
         if project.is_empty() || !project.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-' || ch == ':' || ch == '.') {

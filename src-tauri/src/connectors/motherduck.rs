@@ -39,12 +39,7 @@ fn attach_on(conn: &duckdb::Connection, config: &DbConfig) -> Result<String, Con
     ))
     .map_err(wrap)?;
     let target = sql_string(&format!("md:{}", config.database));
-    let read_only = format!("ATTACH IF NOT EXISTS {target} AS {} (READ_ONLY);", quote_ident(&alias));
-    if conn.execute_batch(&read_only).is_err() {
-        // Some MotherDuck databases (shares excepted) reject READ_ONLY; every statement we run is a SELECT
-        // and a read-scaling token is recommended, but say so instead of silently downgrading.
-        conn.execute_batch(&format!("ATTACH IF NOT EXISTS {target} AS {};", quote_ident(&alias))).map_err(wrap)?;
-    }
+    conn.execute_batch(&format!("ATTACH IF NOT EXISTS {target} AS {} (READ_ONLY);", quote_ident(&alias))).map_err(wrap)?;
     Ok(alias)
 }
 

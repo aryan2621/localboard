@@ -9,6 +9,8 @@ use super::files::FileFormat;
 
 /// Quiet period after the last file event before a refresh runs; editors write in bursts.
 const DEBOUNCE: Duration = Duration::from_millis(750);
+/// Upper bound on one burst so a steadily-written file still refreshes.
+const MAX_WAIT: Duration = Duration::from_secs(10);
 
 #[derive(Clone, Debug)]
 pub enum WatchScope {
@@ -56,10 +58,24 @@ pub fn start<F>(targets: Vec<WatchTarget>, on_change: F) -> notify::Result<Catal
 where
     F: Fn(BTreeSet<String>) + Send + 'static,
 {
-    let (sender, receiver) = mpsc::channel::<notify::Event>();
+    // Watch roots and targets are canonical so they compare equal to the (canonical) paths notify reports.
+    let targets: Vec<WatchTarget> = targets
+        .into_iter()
+        .map(|mut target| {
+            target.path = std::fs::canonicalize(&target.path).unwrap_or(target.path);
+            target
+        })
+        .collect();
+    let (sender, receiver) = mpsc::channel::<BTreeSet<String>>();
+    let filter = targets.clone();
     let mut watcher = notify::recommended_watcher(move |result: notify::Result<notify::Event>| match result {
         Ok(event) => {
-            let _ = sender.send(event);
+            // Filter here so unrelated events never wake or extend the debounce.
+            let mut hit = BTreeSet::new();
+            collect(&filter, &event, &mut hit);
+            if !hit.is_empty() {
+                let _ = sender.send(hit);
+            }
         }
         Err(error) => tracing::warn!("file watcher error: {error}"),
     })?;
@@ -81,19 +97,16 @@ where
         .name("localboard-file-watcher".into())
         .spawn(move || {
             // Exits when the watcher (and with it the sender) is dropped.
-            while let Ok(first) = receiver.recv() {
-                let mut changed = BTreeSet::new();
-                collect(&targets, &first, &mut changed);
-                loop {
-                    match receiver.recv_timeout(DEBOUNCE) {
-                        Ok(event) => collect(&targets, &event, &mut changed),
+            while let Ok(mut changed) = receiver.recv() {
+                let started = std::time::Instant::now();
+                while let Some(left) = MAX_WAIT.checked_sub(started.elapsed()) {
+                    match receiver.recv_timeout(DEBOUNCE.min(left)) {
+                        Ok(more) => changed.extend(more),
                         Err(mpsc::RecvTimeoutError::Timeout) => break,
                         Err(mpsc::RecvTimeoutError::Disconnected) => return,
                     }
                 }
-                if !changed.is_empty() {
-                    on_change(changed);
-                }
+                on_change(changed);
             }
         })
         .map_err(|error| notify::Error::generic(&error.to_string()))?;

@@ -91,6 +91,14 @@ fn rekey_connection_secrets(state: &AppState, workspace_id: &str) -> AppResult<(
 }
 
 fn write_backup(dir: &Path, name: &str, encrypted: bool, dest: &Path) -> AppResult<()> {
+    let result = write_zip(dir, name, encrypted, dest);
+    if result.is_err() {
+        let _ = std::fs::remove_file(dest);
+    }
+    result
+}
+
+fn write_zip(dir: &Path, name: &str, encrypted: bool, dest: &Path) -> AppResult<()> {
     let file = File::create(dest)?;
     let mut zip = ZipWriter::new(file);
     let opts = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
@@ -118,7 +126,18 @@ fn add_file(zip: &mut ZipWriter<File>, path: PathBuf, name: &str, opts: SimpleFi
     Ok(())
 }
 
+/// Largest database a backup may expand to; guards against zip bombs.
+const MAX_ENTRY_BYTES: u64 = 20 * 1024 * 1024 * 1024;
+
 fn read_backup(src: &Path, dest: &Path) -> AppResult<bool> {
+    let result = read_zip(src, dest);
+    if result.is_err() {
+        let _ = std::fs::remove_dir_all(dest);
+    }
+    result
+}
+
+fn read_zip(src: &Path, dest: &Path) -> AppResult<bool> {
     let mut encrypted = false;
     std::fs::create_dir_all(dest)?;
     let file = File::open(src)?;
@@ -141,7 +160,10 @@ fn read_backup(src: &Path, dest: &Path) -> AppResult<bool> {
             continue;
         }
         let mut out = File::create(dest.join(&name))?;
-        std::io::copy(&mut entry, &mut out)?;
+        let copied = std::io::copy(&mut (&mut entry).take(MAX_ENTRY_BYTES + 1), &mut out)?;
+        if copied > MAX_ENTRY_BYTES {
+            return Err(AppError::invalid("That backup is too large to import"));
+        }
     }
     if !dest.join(WORKSPACE_DB).is_file() {
         return Err(AppError::invalid("That backup has no workspace database"));

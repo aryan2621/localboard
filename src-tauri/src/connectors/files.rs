@@ -110,6 +110,10 @@ impl DuckDbSource for FolderSource {
 fn collect_files(dir: &Path, recursive: bool, depth: usize, out: &mut Vec<PathBuf>) -> Result<(), ConnectorError> {
     let entries = std::fs::read_dir(dir).map_err(|error| ConnectorError::Unavailable(format!("{}: {error}", dir.display())))?;
     for entry in entries.flatten() {
+        // file_type() does not follow links: skip symlinks so a folder cannot point readers outside itself.
+        if entry.file_type().is_ok_and(|kind| kind.is_symlink()) {
+            continue;
+        }
         let path = entry.path();
         let name = entry.file_name();
         let name = name.to_string_lossy();
@@ -133,7 +137,7 @@ fn collect_files(dir: &Path, recursive: bool, depth: usize, out: &mut Vec<PathBu
 }
 
 pub fn discover_file(path: &Path) -> Result<Vec<SourceTable>, ConnectorError> {
-    if !path.is_file() {
+    if path.is_symlink() || !path.is_file() {
         return Err(ConnectorError::Unavailable(format!("File is missing: {}", path.display())));
     }
     let format = FileFormat::from_path(path)
@@ -167,10 +171,22 @@ pub fn discover_file(path: &Path) -> Result<Vec<SourceTable>, ConnectorError> {
         .collect())
 }
 
+/// DuckDB expands `*`, `?` and `[..]` in file paths; wrapping each in a character class makes it literal.
+fn escape_glob(path: &str) -> String {
+    path.chars().fold(String::with_capacity(path.len()), |mut out, ch| {
+        if matches!(ch, '*' | '?' | '[') {
+            out.extend(['[', ch, ']']);
+        } else {
+            out.push(ch);
+        }
+        out
+    })
+}
+
 fn register(duck: &Analytics, table: &SourceTable, relation: &str) -> Result<(), ConnectorError> {
     match &table.locator {
         Locator::File { path, format } => {
-            let literal = sql_string(path.to_str().ok_or_else(|| ConnectorError::Unsupported("Path is not valid UTF-8".into()))?);
+            let literal = sql_string(&escape_glob(path.to_str().ok_or_else(|| ConnectorError::Unsupported("Path is not valid UTF-8".into()))?));
             let reader = match format {
                 FileFormat::Csv => format!("read_csv_auto({literal})"),
                 FileFormat::Tsv => format!("read_csv_auto({literal}, delim = '\t')"),
@@ -260,4 +276,13 @@ fn header_names(row: &[Data]) -> Result<Vec<String>, String> {
         return Err("a header row is required".into());
     }
     Ok(names)
+}
+
+#[cfg(test)]
+mod glob_tests {
+    #[test]
+    fn escapes_glob_chars() {
+        assert_eq!(super::escape_glob("/d/a[1]*?.csv"), "/d/a[[]1][*][?].csv");
+        assert_eq!(super::escape_glob("/d/plain.csv"), "/d/plain.csv");
+    }
 }

@@ -23,15 +23,66 @@ pub fn cell(value: &Value) -> Option<String> {
     }
 }
 
+/// Blanks string literals, quoted identifiers and comments so keyword checks only see real SQL tokens.
+fn strip_quoted(sql: &str) -> String {
+    let chars: Vec<char> = sql.chars().collect();
+    let mut out = String::with_capacity(sql.len());
+    let mut i = 0;
+    while i < chars.len() {
+        let c = chars[i];
+        let close = match c {
+            '\'' => Some('\''),
+            '"' => Some('"'),
+            '`' => Some('`'),
+            '[' => Some(']'),
+            _ => None,
+        };
+        if let Some(close) = close {
+            i += 1;
+            while i < chars.len() && chars[i] != close {
+                // standard SQL only (doubled quotes re-enter the loop); backslash escapes are not honoured so a
+                // misparse fails closed by exposing more text to the keyword check
+                i += 1;
+            }
+            out.push(' ');
+        } else if c == '-' && chars.get(i + 1) == Some(&'-') {
+            while i < chars.len() && chars[i] != '\n' {
+                i += 1;
+            }
+            out.push(' ');
+            continue;
+        } else if c == '/' && chars.get(i + 1) == Some(&'*') {
+            i += 2;
+            while i + 1 < chars.len() && !(chars[i] == '*' && chars[i + 1] == '/') {
+                i += 1;
+            }
+            i += 1;
+            out.push(' ');
+        } else {
+            out.push(c);
+        }
+        i += 1;
+    }
+    out
+}
+
+const BLOCKED_KEYWORDS: [&str; 8] = ["into", "insert", "update", "delete", "merge", "create", "drop", "alter"];
+
 /// Only a single SELECT / WITH statement may be sent to a remote warehouse.
 pub fn ensure_read_only(sql: &str) -> Result<(), String> {
-    let trimmed = sql.trim().trim_end_matches(';').trim();
-    let lowered = trimmed.to_ascii_lowercase();
-    let starts = lowered.starts_with("select") || lowered.starts_with("with");
-    if !starts || trimmed.contains(';') {
+    let stripped = strip_quoted(sql);
+    let body = stripped.trim().trim_end_matches(';').trim().to_ascii_lowercase();
+    let starts = body.starts_with("select") || body.starts_with("with");
+    if !starts || body.contains(';') {
         return Err("Only a single read-only SELECT statement is allowed".into());
     }
-    Ok(())
+    let blocked = body
+        .split(|ch: char| !(ch.is_ascii_alphanumeric() || ch == '_'))
+        .find(|word| BLOCKED_KEYWORDS.contains(word));
+    match blocked {
+        Some(word) => Err(format!("`{word}` is not allowed; only read-only SELECT statements may run")),
+        None => Ok(()),
+    }
 }
 
 pub fn literal(value: &str) -> String {
@@ -57,7 +108,9 @@ impl RemoteConnector {
     fn quote(&self, name: &str) -> String {
         match self.kind {
             ConnectorKind::Sqlserver => format!("[{}]", name.replace(']', "]]")),
-            ConnectorKind::Clickhouse | ConnectorKind::Bigquery | ConnectorKind::Databricks => format!("`{}`", name.replace('`', "\\`")),
+            ConnectorKind::Clickhouse => format!("`{}`", name.replace('\\', "\\\\").replace('`', "\\`")),
+            // neither accepts a backtick inside a name, so drop it rather than try to escape it
+            ConnectorKind::Bigquery | ConnectorKind::Databricks => format!("`{}`", name.replace('`', "")),
             _ => format!("\"{}\"", name.replace('"', "\"\"")),
         }
     }
@@ -69,6 +122,11 @@ impl RemoteConnector {
             (ConnectorKind::Sqlserver, None) => (Some("dbo"), table),
             (_, None) => (None, table),
         }
+    }
+
+    /// `project.dataset` with backticks removed so it cannot break out of the quoted path.
+    fn bq_scope(&self) -> String {
+        format!("{}.{}", self.config.database, self.dataset()).replace('`', "")
     }
 
     fn dataset(&self) -> &str {
@@ -84,7 +142,7 @@ impl RemoteConnector {
         let (schema, name) = self.split(table);
         match self.kind {
             ConnectorKind::Bigquery => {
-                format!("`{}.{}.{}`", self.config.database, self.dataset(), name).replace("..", ".")
+                format!("`{}.{}`", self.bq_scope(), name.replace('`', "")).replace("..", ".")
             }
             ConnectorKind::Clickhouse => format!("{}.{}", self.quote(&self.config.database), self.quote(name)),
             ConnectorKind::Databricks => {
@@ -106,9 +164,8 @@ impl RemoteConnector {
             ),
             ConnectorKind::Snowflake => "SELECT table_schema || '.' || table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema <> 'INFORMATION_SCHEMA' ORDER BY 1".into(),
             ConnectorKind::Bigquery => format!(
-                "SELECT table_name FROM `{}.{}`.INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE' ORDER BY 1",
-                self.config.database,
-                self.dataset()
+                "SELECT table_name FROM `{}`.INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE' ORDER BY 1",
+                self.bq_scope()
             ),
             _ => format!(
                 "SELECT table_name FROM {}.information_schema.tables WHERE table_schema = {} AND table_type IN ('MANAGED', 'EXTERNAL', 'BASE TABLE') ORDER BY table_name",
@@ -137,9 +194,8 @@ impl RemoteConnector {
                 literal(name)
             ),
             ConnectorKind::Bigquery => format!(
-                "SELECT column_name, data_type FROM `{}.{}`.INFORMATION_SCHEMA.COLUMNS WHERE table_name = {} ORDER BY ordinal_position",
-                self.config.database,
-                self.dataset(),
+                "SELECT column_name, data_type FROM `{}`.INFORMATION_SCHEMA.COLUMNS WHERE table_name = {} ORDER BY ordinal_position",
+                self.bq_scope(),
                 literal(name)
             ),
             _ => format!(
@@ -257,5 +313,20 @@ impl Connector for RemoteConnector {
             result.truncated = true;
         }
         Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_only_guard() {
+        for ok in ["SELECT 1", "select a from t;", "WITH x AS (SELECT 1) SELECT * FROM x", "SELECT 'drop; into' , \"update\" FROM `delete` -- insert", "SELECT [merge] FROM t /* alter */"] {
+            assert!(ensure_read_only(ok).is_ok(), "{ok}");
+        }
+        for bad in ["SELECT * INTO t2 FROM t", "SELECT 1; DROP TABLE t", "WITH x AS (SELECT 1) DELETE FROM t", "INSERT INTO t VALUES (1)", "SELECT 1 /* x */ ; alter table t", "select * from t where a = 'x\\' ; drop table t --'"] {
+            assert!(ensure_read_only(bad).is_err(), "{bad}");
+        }
     }
 }
