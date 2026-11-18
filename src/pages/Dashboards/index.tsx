@@ -345,7 +345,6 @@ export function DashboardsPage() {
         <PageLoader />
       ) : dashboards.length === 0 ? (
         <EmptyState
-          icon={LayoutDashboard}
           title="No dashboards yet"
           description="Describe what you want to see and LocalBoard builds the charts from your data."
           action={
@@ -905,7 +904,6 @@ function DashboardView({ id }: { id: string }) {
       )}
       {tiles.length === 0 && kpiTiles.length === 0 && (
         <EmptyState
-          icon={LayoutDashboard}
           title="No tiles to show"
           description="Every tile was dropped, or none is built yet. Add one from SQL, or build the dashboard again."
           action={<Button onClick={() => setAddSqlOpen(true)}>Add a tile from SQL</Button>}

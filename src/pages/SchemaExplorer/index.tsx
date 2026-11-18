@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { AlertTriangle, ArrowLeft, ArrowRight, MessageSquarePlus, SquareTerminal, Table2 } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, MessageSquarePlus, SquareTerminal } from 'lucide-react'
 import { toast } from 'sonner'
 import { SampleTable } from '../../components/data/SampleTable'
 import { DetailHeader, EmptyState, ListItemCard, PageContainer, PageHeader, PageLoader, SearchInput, SettingsSection, ViewToggle } from '../../components/layout/ui'
@@ -479,7 +479,6 @@ export function SchemaExplorerPage() {
       <PageContainer>
         <PageHeader title="Schema" description="Tables from your connected data." />
         <EmptyState
-          icon={Table2}
           title="No tables yet"
           description="Add a file, folder or database and its tables appear here."
           action={<Button onClick={() => navigate('connections')}>Add data</Button>}
@@ -514,7 +513,6 @@ export function SchemaExplorerPage() {
       />
       {listed.length === 0 ? (
         <EmptyState
-          icon={Table2}
           title="No tables from this source"
           description="Open the source in Connections and add a table."
           action={<Button onClick={() => navigate('connections')}>Go to Connections</Button>}

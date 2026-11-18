@@ -142,7 +142,7 @@ function ArtifactTabPanel({
       {loading ? (
         <PageLoader />
       ) : items.length === 0 ? (
-        <EmptyState icon={Icon} title={`No ${noun}s yet`} description="Describe what you want and it is built from your data." action={newButton} />
+        <EmptyState title={`No ${noun}s yet`} description="Describe what you want and it is built from your data." action={newButton} />
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">

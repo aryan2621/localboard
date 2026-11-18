@@ -677,7 +677,7 @@ export function AutomationsPage() {
               }
             />
             {steps.length === 0 ? (
-              <EmptyState icon={Plus} title="No steps yet" description="Start with Run SQL to fetch the data to check." action={<Button onClick={() => setPickerOpen(true)}>Add step</Button>} />
+              <EmptyState title="No steps yet" description="Start with Run SQL to fetch the data to check." action={<Button onClick={() => setPickerOpen(true)}>Add step</Button>} />
             ) : (
               <Timeline
                 items={steps.map((step, index) => ({
@@ -902,7 +902,7 @@ export function AutomationsPage() {
         </TabsContent>
         <TabsContent value="history" className="space-y-3">
           {runRows.length === 0 ? (
-            <EmptyState icon={Repeat} title="No runs yet" description="Run it now or wait for the trigger." />
+            <EmptyState title="No runs yet" description="Run it now or wait for the trigger." />
           ) : (
             <Table>
               <TableHeader>

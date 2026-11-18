@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowLeft, Check, ChevronDown, Copy, LayoutGrid, List, MoreHorizontal, Search, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, Copy, LayoutGrid, List, MoreHorizontal, Search } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { iconStroke } from '../../lib/icon'
 import { Badge } from '../ui/badge'
@@ -140,7 +140,7 @@ export function PageContainer({
   className?: string
   children: ReactNode
 }) {
-  return <div className={cn('mx-auto space-y-8 px-4 py-10 sm:px-8 md:px-12', PAGE_WIDTH[width], className)}>{children}</div>
+  return <div className={cn('mx-auto space-y-4 px-4 py-4 sm:px-6', PAGE_WIDTH[width], className)}>{children}</div>
 }
 
 export function PageHeader({
@@ -155,10 +155,10 @@ export function PageHeader({
   className?: string
 }) {
   return (
-    <header className={cn('flex flex-wrap items-end justify-between gap-4', className)}>
-      <div className="min-w-0 space-y-1">
-        <h1 className="break-words font-medium text-app-page text-foreground">{title}</h1>
-        {description && <p className="text-app-body text-muted-foreground">{description}</p>}
+    <header className={cn('flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3', className)}>
+      <div className="min-w-0">
+        <h1 className="break-words font-semibold text-app-label text-foreground">{title}</h1>
+        {description && <p className="text-app-caption text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -199,7 +199,7 @@ export function MoreMenu({ children, label = 'More actions' }: { children: React
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label={label}>
+        <Button variant="ghost" size="icon" aria-label={label}>
           <MoreHorizontal strokeWidth={iconStroke} />
         </Button>
       </DropdownMenuTrigger>
@@ -278,25 +278,18 @@ export function PageLoader({ label = 'Loading' }: { label?: string }) {
 }
 
 export function EmptyState({
-  icon: Icon,
   title,
   description,
   action,
   className,
 }: {
-  icon?: LucideIcon
   title: string
   description?: string
   action?: ReactNode
   className?: string
 }) {
   return (
-    <div className={cn('flex flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-surface/50 px-6 py-12 text-center', className)}>
-      {Icon && (
-        <span className="mb-1 flex size-11 items-center justify-center rounded-xl bg-brand/10 text-brand">
-          <Icon size={22} strokeWidth={iconStroke} />
-        </span>
-      )}
+    <div className={cn('flex flex-col items-start gap-1 px-1 py-6', className)}>
       <p className="text-app-label font-medium text-foreground">{title}</p>
       {description && <p className="max-w-sm text-app-caption text-muted-foreground">{description}</p>}
       {action && <div className="pt-2">{action}</div>}

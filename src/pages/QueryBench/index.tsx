@@ -397,7 +397,7 @@ export function QueryBenchPage() {
               <PaginationBar page={pg.page} pageSize={pg.pageSize} total={pg.total} onPageChange={pg.setPage} onPageSizeChange={pg.setPageSize} className="pt-1" />
             </div>
           ) : (
-            <EmptyState icon={Play} title="No results yet" description="Run a query to see rows here." />
+            <EmptyState title="No results yet" description="Run a query to see rows here." />
           )}
         </div>
       </div>
@@ -437,7 +437,7 @@ export function QueryBenchPage() {
           <SheetHeader title="History" description="Click a query to load it into the editor." />
           <SheetBody>
               {(history.data ?? []).length === 0 ? (
-                <EmptyState icon={History} title="No history yet" description="Queries you run appear here." />
+                <EmptyState title="No history yet" description="Queries you run appear here." />
               ) : (
                 <SearchInput value={historySearch} onChange={setHistorySearch} placeholder="Search history" />
               )}

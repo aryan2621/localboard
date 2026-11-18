@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Database } from 'lucide-react'
 import { ListItemCard } from '../../components/layout/ui'
 import { GenerationSteps } from '../../components/analyst/StepsPanel'
 import { Composer, type OutputKind } from '../../components/analyst/Composer'
@@ -46,7 +45,6 @@ export function HomePage() {
 
       {tables && !hasData ? (
         <EmptyState
-          icon={Database}
           title="No data yet"
           description="Add a file, folder or database first. Then ask anything about it."
           action={<Button onClick={() => navigate('connections')}>{'Add data'}</Button>}

@@ -865,7 +865,6 @@ export function ConnectionsPage() {
         <PageLoader label="Loading connections" />
       ) : connections.length === 0 && pending.length === 0 ? (
         <EmptyState
-          icon={Database}
           title="Connect your first data"
           description="Add a file, a folder or a database. Everything is read where it lives, and nothing leaves this computer."
           action={

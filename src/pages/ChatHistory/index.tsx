@@ -150,7 +150,7 @@ function Preview({ id }: { id: string }) {
     return (
       <>
         <SheetHeader title="Chat" />
-        <EmptyState icon={MessageSquare} title="Couldn't open this chat" description={errorMessage(error)} />
+        <EmptyState title="Couldn't open this chat" description={errorMessage(error)} />
       </>
     )
   }
@@ -278,7 +278,6 @@ export function ChatHistoryPage() {
     return (
       <PageContainer>
         <EmptyState
-          icon={MessageSquare}
           title="No chats yet"
           description="Ask a question and it will show up here."
           action={

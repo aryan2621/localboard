@@ -26,9 +26,8 @@ export function IconTile({ icon: Icon, tone = 'brand', size = 'md', className }:
   )
 }
 
-const AVATAR_TONES = ['bg-chart-1/15 text-chart-1', 'bg-chart-2/15 text-chart-2', 'bg-chart-3/15 text-chart-3', 'bg-chart-5/15 text-chart-5', 'bg-chart-6/15 text-chart-6']
 
-/** Initials in a tinted circle; the colour is stable for a given name. */
+/** Initials on a neutral tile. */
 export function Avatar({ name, size = 'md', className }: { name: string; size?: 'sm' | 'md' | 'lg'; className?: string }) {
   const initials =
     name
@@ -37,47 +36,31 @@ export function Avatar({ name, size = 'md', className }: { name: string; size?: 
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase())
       .join('') || '?'
-  const tone = AVATAR_TONES[[...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % AVATAR_TONES.length]
   const box = size === 'sm' ? 'size-8 text-app-caption' : size === 'lg' ? 'size-14 text-app-title' : 'size-10 text-app-label'
-  return <span className={cn('flex shrink-0 items-center justify-center rounded-full font-semibold', box, tone, className)}>{initials}</span>
+  return <span className={cn('flex shrink-0 items-center justify-center rounded-md bg-muted font-semibold text-muted-foreground', box, className)}>{initials}</span>
 }
 
 export type Stat = { label: string; value: ReactNode; hint?: ReactNode; icon?: LucideIcon; tone?: Tone; onClick?: () => void }
 
-/** A row of headline numbers separated by hairlines. */
-const STAT_COLUMNS: Record<number, string> = { 1: 'grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3', 4: 'lg:grid-cols-4' }
-
-/** A row of separate number cards. */
+/** Headline numbers as one quiet inline line. */
 export function StatRow({ stats, className }: { stats: Stat[]; className?: string }) {
   return (
-    <div className={cn('grid grid-cols-2 gap-3', STAT_COLUMNS[Math.min(stats.length, 4)], className)}>
+    <dl className={cn('flex flex-wrap gap-x-6 gap-y-1 text-app-body', className)}>
       {stats.map((stat) => {
         const body = (
           <>
-            <span className="flex items-center gap-1.5 text-app-caption text-muted-foreground">
-              {stat.icon && <stat.icon size={13} strokeWidth={iconStroke} className={stat.tone ? TONES[stat.tone].split(' ')[1] : undefined} />}
-              {stat.label}
-            </span>
-            <span className="mt-1 block text-app-heading tabular-nums text-foreground">{stat.value}</span>
-            {stat.hint && <span className="mt-0.5 block truncate text-app-caption text-muted-foreground">{stat.hint}</span>}
+            <dd className="inline font-medium tabular-nums text-foreground">{stat.value}</dd> <dt className="inline text-muted-foreground">{stat.label}</dt>
           </>
         )
         return stat.onClick ? (
-          <button
-            key={stat.label}
-            type="button"
-            onClick={stat.onClick}
-            className="min-w-0 rounded-xl border border-border bg-surface px-4 py-3 text-left transition-colors duration-fast hover:border-foreground/25 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
+          <button key={stat.label} type="button" onClick={stat.onClick} className="rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             {body}
           </button>
         ) : (
-          <div key={stat.label} className="min-w-0 rounded-xl border border-border bg-surface px-4 py-3">
-            {body}
-          </div>
+          <div key={stat.label}>{body}</div>
         )
       })}
-    </div>
+    </dl>
   )
 }
 

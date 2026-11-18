@@ -197,7 +197,7 @@ export function AuditPage() {
       {list.isLoading ? (
         <PageLoader />
       ) : entries.length === 0 ? (
-        <EmptyState icon={ScrollText} title="No matching entries" description="Activity appears here as you ask questions and change connections." />
+        <EmptyState title="No matching entries" description="Activity appears here as you ask questions and change connections." />
       ) : (
         <div className="space-y-3">
           <Table>

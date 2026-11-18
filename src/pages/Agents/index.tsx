@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { open } from '@tauri-apps/plugin-dialog'
-import { BookOpen, Brain, FileText, History, ListChecks, MessageSquarePlus, Plus, ScrollText, Trash2, Wrench } from 'lucide-react'
+import { BookOpen, Brain, FileText, History, ListChecks, MessageSquarePlus, Plus, Trash2, Wrench } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '../../components/ui/button'
 import { Badge } from '../../components/ui/badge'
@@ -98,7 +98,6 @@ export function AgentsPage() {
       />
       {agents.length === 0 ? (
         <EmptyState
-          icon={Brain}
           title="No analysts yet"
           description="An analyst keeps its own rules, examples and memory."
           action={<Button onClick={() => setNewOpen(true)}>New analyst</Button>}
@@ -334,7 +333,7 @@ function McpTools({ agentId }: { agentId: string }) {
   if (servers.length === 0)
     return (
       <div className="pt-2">
-        <EmptyState icon={Wrench} title="No tool servers connected" description="Connect an MCP server in Settings → Integrations to give this analyst extra tools." />
+        <EmptyState title="No tool servers connected" description="Connect an MCP server in Settings → Integrations to give this analyst extra tools." />
       </div>
     )
   return (
@@ -344,7 +343,7 @@ function McpTools({ agentId }: { agentId: string }) {
         <SegmentedControl value={selected ?? ''} options={servers.map((server) => ({ value: server.id, label: server.name }))} onChange={setServerId} />
       )}
       {tools.length === 0 ? (
-        <EmptyState icon={Wrench} title="No tools" description="This server exposes no tools." />
+        <EmptyState title="No tools" description="This server exposes no tools." />
       ) : (
         <div className="divide-y divide-border rounded-xl border border-border bg-surface">
           {toolPg.pageItems.map((tool) => {
@@ -442,7 +441,7 @@ function Profile({ agent }: { agent: Agent }) {
           }
         >
           {tables.length === 0 ? (
-            <EmptyState icon={ScrollText} title="No tables connected yet" />
+            <EmptyState title="No tables connected yet" />
           ) : (
             <div className="space-y-2">
               {tables.length > 6 && <SearchInput value={tableSearch} onChange={setTableSearch} placeholder="Search tables" />}
@@ -569,7 +568,7 @@ function Rules({ agentId }: { agentId: string }) {
         searchLabel="Search rules"
       />
       {rules.length === 0 ? (
-        <EmptyState icon={ListChecks} title="No rules yet" description="Teach the analyst a definition, like how revenue is counted." action={<Button onClick={() => setDialog({ rule: null })}>New rule</Button>} />
+        <EmptyState title="No rules yet" description="Teach the analyst a definition, like how revenue is counted." action={<Button onClick={() => setDialog({ rule: null })}>New rule</Button>} />
       ) : (
         <div className="divide-y divide-border rounded-xl border border-border bg-surface">
           {rulePg.pageItems.map((rule) => (
@@ -633,7 +632,7 @@ function RuleHistory({ rule }: { rule: Rule }) {
     onError: (failure) => toast.error(errorMessage(failure)),
   })
   if (isPending) return <PageLoader label="Loading history" />
-  if (versions.length === 0) return <EmptyState icon={History} title="No earlier versions" description="Edits are kept here from now on." />
+  if (versions.length === 0) return <EmptyState title="No earlier versions" description="Edits are kept here from now on." />
   return (
     <ul className="space-y-3">
       {versions.map((version) => (
@@ -718,7 +717,7 @@ function Examples({ agentId }: { agentId: string }) {
         searchLabel="Search examples"
       />
       {examples.length === 0 ? (
-        <EmptyState icon={BookOpen} title="No examples yet" description="Thumbs up on a good answer saves it here, or add one by hand." action={<Button onClick={() => setOpen(true)}>New example</Button>} />
+        <EmptyState title="No examples yet" description="Thumbs up on a good answer saves it here, or add one by hand." action={<Button onClick={() => setOpen(true)}>New example</Button>} />
       ) : (
         <div className="grid gap-3 xl:grid-cols-2 [&>*]:min-w-0">
           {examplePg.pageItems.map((example) => (
@@ -808,7 +807,7 @@ function Memories({ agentId }: { agentId: string }) {
         }
       />
       {memories.length === 0 && (
-        <EmptyState icon={Brain} title="No memory yet" description="Say “from now on…” in chat, or add one here." action={<Button onClick={() => setDialog({ body: '' })}>New memory</Button>} />
+        <EmptyState title="No memory yet" description="Say “from now on…” in chat, or add one here." action={<Button onClick={() => setDialog({ body: '' })}>New memory</Button>} />
       )}
       {groups.map((group) => {
         const items = memories.filter((memory) => memory.status === group.status)
@@ -915,7 +914,7 @@ function Knowledge({ agentId }: { agentId: string }) {
     <section className="space-y-4">
       <TabHeader title="Knowledge" description="PDF, Word, Markdown or text. Excerpts are used when a question is close to them." action={addButton} />
       {files.length === 0 ? (
-        <EmptyState icon={FileText} title="No documents yet" description="Add a glossary, a metrics guide or a policy for this analyst to learn from." action={addButton} />
+        <EmptyState title="No documents yet" description="Add a glossary, a metrics guide or a policy for this analyst to learn from." action={addButton} />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
           {files.map((file) => (
