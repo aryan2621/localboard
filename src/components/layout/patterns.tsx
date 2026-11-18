@@ -16,12 +16,11 @@ const TONES = {
 } as const
 export type Tone = keyof typeof TONES
 
-/** Tinted rounded square holding an icon; the visual anchor of cards and rows. */
+/** Plain tone-coloured icon; the quiet anchor of cards and rows. */
 export function IconTile({ icon: Icon, tone = 'brand', size = 'md', className }: { icon: LucideIcon; tone?: Tone; size?: 'sm' | 'md' | 'lg'; className?: string }) {
-  const box = size === 'sm' ? 'size-7 rounded-md' : size === 'lg' ? 'size-12 rounded-xl' : 'size-9 rounded-lg'
-  const glyph = size === 'sm' ? 14 : size === 'lg' ? 22 : 18
+  const glyph = size === 'sm' ? 14 : size === 'lg' ? 20 : 16
   return (
-    <span className={cn('flex shrink-0 items-center justify-center', box, TONES[tone], className)}>
+    <span className={cn('flex shrink-0 items-center justify-center', TONES[tone].split(' ')[1], className)}>
       <Icon size={glyph} strokeWidth={iconStroke} />
     </span>
   )
@@ -59,7 +58,7 @@ export function StatRow({ stats, className }: { stats: Stat[]; className?: strin
               {stat.icon && <stat.icon size={13} strokeWidth={iconStroke} className={stat.tone ? TONES[stat.tone].split(' ')[1] : undefined} />}
               {stat.label}
             </span>
-            <span className="mt-1 block font-serif text-app-heading tabular-nums text-foreground">{stat.value}</span>
+            <span className="mt-1 block text-app-heading tabular-nums text-foreground">{stat.value}</span>
             {stat.hint && <span className="mt-0.5 block truncate text-app-caption text-muted-foreground">{stat.hint}</span>}
           </>
         )
@@ -68,7 +67,7 @@ export function StatRow({ stats, className }: { stats: Stat[]; className?: strin
             key={stat.label}
             type="button"
             onClick={stat.onClick}
-            className="min-w-0 rounded-xl border border-border bg-surface px-4 py-3 text-left transition-colors duration-fast hover:border-foreground/25 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            className="min-w-0 rounded-xl border border-border bg-surface px-4 py-3 text-left transition-colors duration-fast hover:border-foreground/25 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {body}
           </button>
@@ -140,7 +139,7 @@ export function SplitView({
             <button
               type="button"
               onClick={toggle}
-              className="flex items-center gap-2 border-t border-border px-4 py-2.5 text-app-caption text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40"
+              className="flex items-center gap-2 border-t border-border px-4 py-2.5 text-app-caption text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             >
               <PanelLeftClose size={15} strokeWidth={iconStroke} /> Hide {label}
             </button>
@@ -156,7 +155,7 @@ export function SplitView({
 export function PaneHeader({ title, count, action }: { title: string; count?: number; action?: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-5">
-      <h1 className="font-serif text-app-title text-foreground">
+      <h1 className="font-medium text-app-title text-foreground">
         {title}
         {count !== undefined && <span className="ml-1.5 font-sans text-app-caption text-muted-foreground">{count}</span>}
       </h1>
@@ -187,7 +186,7 @@ export function PaneItem({
       onClick={onClick}
       aria-current={selected ? 'true' : undefined}
       className={cn(
-        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         selected ? 'bg-accent' : 'hover:bg-accent/50',
       )}
     >
@@ -226,7 +225,7 @@ export function ChoiceGrid<T extends string>({
             onClick={() => onSelect(option.value)}
             aria-pressed={active}
             className={cn(
-              'flex flex-col items-start gap-2 rounded-xl border bg-surface p-4 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50',
+              'flex flex-col items-start gap-2 rounded-xl border bg-surface p-4 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
               active ? 'border-brand ring-1 ring-brand/40' : 'border-border hover:border-foreground/25 hover:bg-accent/30',
             )}
           >
@@ -374,7 +373,7 @@ export function Panel({ title, description, actions, children, className }: { ti
 export function FilterChips<T extends string>({ options, value, onChange, allLabel = 'All' }: { options: { value: T; label: string; count?: number }[]; value: T | null; onChange: (value: T | null) => void; allLabel?: string }) {
   const chip = (active: boolean) =>
     cn(
-      'inline-flex h-9 items-center gap-1.5 rounded-lg border px-3.5 text-app-label font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+      'inline-flex h-9 items-center gap-1.5 rounded-lg border px-3.5 text-app-label font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       active ? 'border-brand/50 bg-brand/10 text-foreground' : 'border-border bg-surface text-muted-foreground hover:text-foreground',
     )
   return (

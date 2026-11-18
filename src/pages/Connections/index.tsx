@@ -542,7 +542,7 @@ function DatabaseForm({ kind, onSaved }: { kind: DatabaseKind; onSaved: () => vo
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <h3 className="font-serif text-app-title text-foreground">{spec.label}</h3>
+        <h3 className="font-medium text-app-title text-foreground">{spec.label}</h3>
         <StatusBadge variant={spec.mode === 'live' ? 'success' : 'warning'}>{spec.mode === 'live' ? 'Live' : 'Snapshot'}</StatusBadge>
       </div>
       <p className="text-app-caption text-muted-foreground">
@@ -674,7 +674,7 @@ function AddDataDialog({ open: isOpen, onOpenChange }: { open: boolean; onOpenCh
               <div className="flex items-start gap-3">
                 <IconTile icon={choice === 'files' ? FileSpreadsheet : FolderOpen} />
                 <div>
-                  <h3 className="font-serif text-app-title text-foreground">{choice === 'files' ? 'Files' : 'Folder'}</h3>
+                  <h3 className="font-medium text-app-title text-foreground">{choice === 'files' ? 'Files' : 'Folder'}</h3>
                   <p className="text-app-label text-muted-foreground">
                     {choice === 'files'
                       ? 'CSV, TSV, Excel, Parquet or JSON. Each file, or each sheet in a workbook, becomes a table.'
@@ -756,7 +756,7 @@ function ExploreDialog({
     <Sheet open={tables !== null} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <SheetContent width="xl" className="flex-row overflow-hidden">
         <aside className="flex w-44 shrink-0 flex-col border-r border-border bg-sidebar min-[700px]:w-64">
-          <p className="truncate px-5 pb-2 pt-5 font-serif text-app-title text-foreground" title={name}>{name}</p>
+          <p className="truncate px-5 pb-2 pt-5 font-medium text-app-title text-foreground" title={name}>{name}</p>
           <div className="px-3 pb-2">
             <SearchInput value={search} onChange={setSearch} placeholder="Search tables" />
           </div>

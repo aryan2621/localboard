@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Hint } from '../ui/tooltip'
 import { PaginationBar } from '../ui/pagination'
 import { usePagination } from '../../lib/usePagination'
-import { formatCell, SampleTable } from '../data/SampleTable'
+import { formatCell, numericColumns, SampleTable } from '../data/SampleTable'
 
 echarts.use([BarChart, FunnelChart, HeatmapChart, LineChart, PieChart, GridComponent, LegendComponent, TooltipComponent, VisualMapComponent, CanvasRenderer])
 
@@ -209,7 +209,7 @@ function Kpis({ spec, result }: { spec: ChartSpec; result: QueryResult }) {
         return (
           <Card key={name} className="min-w-[10rem] px-4 py-3">
             <p className="text-app-caption text-muted-foreground">{name.replace(/_/g, ' ')}</p>
-            <p className="mt-1 font-serif text-app-page tabular-nums text-foreground">{number === null ? formatCell(value) : formatNumber(number)}</p>
+            <p className="mt-1 text-app-page tabular-nums text-foreground">{number === null ? formatCell(value) : formatNumber(number)}</p>
           </Card>
         )
       })}
@@ -224,16 +224,17 @@ export function ResultTable({ result, onSelectCell }: { result: QueryResult; onS
     [result],
   )
   const pg = usePagination(rows, { initialPageSize: 10, resetKey: rows })
+  const numeric = numericColumns(columns, rows)
   return (
     <div className="space-y-1.5">
       {onSelectCell ? (
         <div className="space-y-1">
-        <div className="max-h-80 overflow-auto rounded-xl">
-          <Table className="font-mono text-app-caption">
+        <div className="max-h-80 overflow-auto rounded-lg">
+          <Table>
             <TableHeader>
               <TableRow>
                 {columns.map((column) => (
-                  <TableHead key={column} className="whitespace-nowrap">
+                  <TableHead key={column} className={numeric.has(column) ? 'whitespace-nowrap text-right' : 'whitespace-nowrap'}>
                     {column}
                   </TableHead>
                 ))}
@@ -249,7 +250,7 @@ export function ResultTable({ result, onSelectCell }: { result: QueryResult; onS
                       <TableCell
                         key={column}
                         onClick={empty ? undefined : () => onSelectCell(column, String(value))}
-                        className={empty ? 'text-muted-foreground/60' : 'max-w-[18rem] cursor-pointer truncate text-foreground hover:bg-accent'}
+                        className={`${numeric.has(column) ? 'text-right ' : ''}${empty ? 'text-muted-foreground/60' : 'max-w-[18rem] cursor-pointer truncate text-foreground hover:bg-accent'}`}
                       >
                         {formatCell(value)}
                       </TableCell>
@@ -283,6 +284,7 @@ export function ResultChart({
   onSelect,
   onSelectCell,
   tall,
+  tableFirst,
 }: {
   spec: ChartSpec
   result: QueryResult
@@ -290,15 +292,17 @@ export function ResultChart({
   onSelectCell?: (column: string, value: string) => void
   /** Gives the chart room to read, for a chart shown on its own. */
   tall?: boolean
+  /** Opens on the data table, with Table listed before Chart. */
+  tableFirst?: boolean
 }) {
-  const [asTable, setAsTable] = useState(false)
+  const [asTable, setAsTable] = useState(!!tableFirst)
   if (spec.kind === 'table') return <ResultTable result={result} onSelectCell={onSelectCell} />
   if (spec.kind === 'text') return null
   if (spec.kind === 'kpi') return <Kpis spec={spec} result={result} />
   return (
     <div className="space-y-2">
       <div className="flex justify-end gap-1">
-        {(['Chart', 'Table'] as const).map((label) => {
+        {(tableFirst ? (['Table', 'Chart'] as const) : (['Chart', 'Table'] as const)).map((label) => {
           const active = (label === 'Table') === asTable
           return (
             <Button
@@ -317,7 +321,7 @@ export function ResultChart({
       {asTable ? (
         <ResultTable result={result} onSelectCell={onSelectCell} />
       ) : (
-        <div className={`rounded-xl border border-border bg-surface p-3${tall ? ' h-[min(28rem,70vh)]' : ''}`}>
+        <div className={`rounded-lg border border-border bg-surface p-3${tall ? ' h-[min(28rem,70vh)]' : ''}`}>
           <EChart spec={spec} result={result} onSelect={onSelect} />
         </div>
       )}

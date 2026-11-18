@@ -506,7 +506,7 @@ export function AutomationsPage() {
   const welcome = (
     <div className="mx-auto flex max-w-2xl flex-col items-center px-4 py-16 text-center sm:px-8">
       <IconTile icon={Timer} size="lg" />
-      <h1 className="mt-4 font-serif text-app-page text-foreground">Put your checks on autopilot</h1>
+      <h1 className="mt-4 font-medium text-app-page text-foreground">Put your checks on autopilot</h1>
       <p className="mt-2 text-app-label text-muted-foreground">
         Jobs run on a schedule, when a file changes, or on demand, and keep running after you close the window.
       </p>
@@ -558,7 +558,7 @@ export function AutomationsPage() {
             onChange={(event) => setName(event.target.value)}
             placeholder="Name this job"
             aria-label="Job name"
-            className="-ml-3 w-[calc(100%+0.75rem)] rounded-lg border border-transparent bg-transparent px-3 py-1 font-serif text-app-page text-foreground transition-colors duration-fast placeholder:text-muted-foreground/60 hover:border-border focus:border-ring/60 focus:outline-none"
+            className="-ml-3 w-[calc(100%+0.75rem)] rounded-lg border border-transparent bg-transparent px-3 py-1 font-medium text-app-page text-foreground transition-colors duration-fast placeholder:text-muted-foreground/60 hover:border-border focus:border-ring/60 focus:outline-none"
           />
           <p className="mt-1 flex flex-wrap items-center gap-2 text-app-label text-muted-foreground">
             {triggerWords(triggerKind, trigger)}

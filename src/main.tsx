@@ -19,7 +19,6 @@ createRoot(document.getElementById('root')!).render(
 )
 
 void Promise.all([
-  import('@fontsource-variable/inter'),
-  import('@fontsource-variable/source-serif-4'),
-  import('@fontsource-variable/jetbrains-mono'),
+  import('@fontsource-variable/geist'),
+  import('@fontsource-variable/geist-mono'),
 ])

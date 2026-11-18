@@ -80,10 +80,10 @@ function NavRow({ icon, label, active, onClick, trailing }: { icon: ReactNode; l
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'relative flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-app-label transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+        'relative flex h-7 w-full items-center gap-2 rounded-md px-2 text-app-body transition-colors duration-fast ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
-          ? 'bg-accent font-medium text-foreground'
-          : 'text-foreground/80 hover:bg-accent/70 hover:text-foreground',
+          ? 'bg-accent font-medium text-primary'
+          : 'text-foreground/80 hover:bg-accent/60 hover:text-foreground',
       )}
     >
       {icon}
@@ -111,19 +111,19 @@ function NavGroup({ label, items, collapsible = false }: { label: string; items:
           type="button"
           onClick={() => setOpen((current) => !current)}
           aria-expanded={open}
-          className="flex w-full items-center gap-1 rounded-md px-2.5 pb-1 pt-2 text-app-caption font-medium text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          className="flex w-full items-center gap-1 rounded-md px-2 pb-0.5 pt-3 text-app-caption font-medium text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {label}
           <ChevronRight size={12} strokeWidth={iconStroke} className={cn('transition-transform duration-fast', open && 'rotate-90')} />
         </button>
       ) : (
-        <p className="px-2.5 pb-1 pt-2 text-app-caption font-medium text-muted-foreground">{label}</p>
+        <p className="px-2 pb-0.5 pt-3 text-app-caption font-medium text-muted-foreground">{label}</p>
       )}
       {open &&
         items.map(({ page: target, label: itemLabel, icon: Icon }) => (
           <NavRow
             key={target}
-            icon={<Icon size={17} strokeWidth={iconStroke} />}
+            icon={<Icon size={15} strokeWidth={iconStroke} />}
             label={itemLabel}
             active={page === target}
             onClick={() => navigate(target)}
@@ -163,7 +163,7 @@ function ChatHistory() {
         <button
           type="button"
           onClick={() => navigate('history')}
-          className="rounded-md text-app-caption text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          className="rounded-md text-app-caption text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           View all
         </button>
@@ -192,7 +192,7 @@ function ChatHistory() {
               title={conversation.title}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex h-8 w-full items-center rounded-lg px-2 text-left text-app-caption transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+                'flex h-8 w-full items-center rounded-lg px-2 text-left text-app-caption transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 active ? 'bg-accent text-foreground' : 'text-foreground/75 hover:bg-accent hover:text-foreground',
               )}
             >
@@ -213,7 +213,7 @@ function AiStatus() {
     <button
       type="button"
       onClick={() => openSettings('models')}
-      className="flex h-8 w-full items-center gap-2 rounded-lg px-2 text-app-caption text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      className="flex h-8 w-full items-center gap-2 rounded-lg px-2 text-app-caption text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Cpu size={14} strokeWidth={iconStroke} className={ready ? 'text-success' : 'text-warning'} />
       <span className="truncate">{ready ? 'AI provider ready' : 'SQL-only mode · no AI provider'}</span>
@@ -239,7 +239,7 @@ function WorkspaceMenu({ compact = false }: { compact?: boolean }) {
             type="button"
             aria-label={compact ? `Workspace: ${active?.name ?? 'none'}` : 'Workspaces'}
             className={cn(
-              'flex h-11 items-center gap-2.5 rounded-lg text-left transition-colors duration-fast hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+              'flex h-11 items-center gap-2.5 rounded-lg text-left transition-colors duration-fast hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               compact ? 'w-11 justify-center' : 'w-full px-2',
             )}
           >
@@ -321,18 +321,18 @@ export function Sidebar() {
   const navigate = useNavigation((state) => state.navigate)
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar min-[900px]:w-[296px]">
+    <aside className="flex w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar min-[900px]:w-[232px]">
       <div className="mac-window-space mac-drag-region shrink-0" />
-      <div className="flex items-center gap-2.5 px-6 pb-5 pt-6">
-        <img src="/app-icon.png" alt="" className="h-[26px] w-[26px] rounded-md" />
-        <h1 className="font-serif text-app-title text-foreground">LocalBoard</h1>
+      <div className="flex items-center gap-2 px-4 pb-3 pt-4">
+        <img src="/app-icon.png" alt="" className="h-5 w-5 rounded-md" />
+        <h1 className="font-medium text-app-title text-foreground">LocalBoard</h1>
       </div>
-      <nav className="flex min-h-0 flex-1 flex-col px-5">
+      <nav className="flex min-h-0 flex-1 flex-col px-2">
         <div className="space-y-0.5">
           {TOP_NAV.map(({ page: target, label, icon: Icon }) => (
             <NavRow
               key={target}
-              icon={<Icon size={17} strokeWidth={iconStroke} />}
+              icon={<Icon size={15} strokeWidth={iconStroke} />}
               label={label}
               active={page === target}
               onClick={() => navigate(target)}
@@ -343,7 +343,7 @@ export function Sidebar() {
         <NavGroup label="Workspace" items={WORKSPACE_NAV} />
         <ChatHistory />
       </nav>
-      <div className="space-y-1 border-t border-border px-5 py-3">
+      <div className="space-y-1 border-t border-border px-2 py-2">
         <AiStatus />
         <WorkspaceMenu />
       </div>

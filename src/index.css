@@ -4,106 +4,107 @@
 
 @layer base {
   :root {
-    --background: 48 33% 97%;
-    --sidebar: 53 29% 94%;
-    --foreground: 30 3% 12%;
-    --card: 48 25% 92%;
-    --card-foreground: 30 3% 12%;
+    --background: 210 20% 99%;
+    --sidebar: 220 14% 96%;
+    --foreground: 222 14% 11%;
+    --card: 220 14% 96%;
+    --card-foreground: 222 14% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 30 3% 12%;
-    --primary: 15 56% 52%;
+    --popover-foreground: 222 14% 11%;
+    --primary: 158 55% 32%;
     --primary-foreground: 0 0% 100%;
-    --brand: 15 56% 52%;
+    --brand: 158 55% 32%;
     --brand-foreground: 0 0% 100%;
-    --secondary: 48 25% 92%;
-    --secondary-foreground: 30 3% 12%;
-    --muted: 48 25% 92%;
-    --muted-foreground: 48 5% 40%;
-    --accent: 48 22% 90%;
-    --accent-foreground: 30 3% 12%;
-    --destructive: 0 56% 45%;
+    --secondary: 220 14% 95%;
+    --secondary-foreground: 222 14% 11%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 8% 38%;
+    --accent: 220 14% 93%;
+    --accent-foreground: 222 14% 11%;
+    --destructive: 0 62% 46%;
     --destructive-foreground: 0 0% 100%;
-    --success: 139 33% 37%;
-    --warning: 36 71% 39%;
-    --border: 50 21% 87%;
-    --input: 49 16% 81%;
-    --ring: 15 56% 52%;
+    --success: 140 45% 30%;
+    --warning: 36 85% 33%;
+    --border: 220 13% 91%;
+    --input: 220 12% 84%;
+    --ring: 158 55% 32%;
     --surface: 0 0% 100%;
-    --surface-foreground: 30 3% 12%;
-    --chart-1: 15 56% 52%;
-    --chart-2: 212 55% 45%;
-    --chart-3: 172 45% 34%;
-    --chart-4: 40 75% 46%;
-    --chart-5: 268 35% 55%;
-    --chart-6: 340 50% 52%;
-    --chart-7: 80 35% 38%;
-    --chart-8: 215 15% 48%;
-    --shadow-color: 30 10% 10%;
-    --radius: 0.5rem;
-    --app-text-caption: 0.8125rem;
-    --app-text-label: 0.9375rem;
-    --app-text-body: 1.0625rem;
-    --app-text-title: 1.25rem;
-    --app-text-heading: 1.625rem;
-    --app-text-page: 2rem;
-    --app-text-display: 2.5rem;
+    --surface-foreground: 222 14% 11%;
+    /* Categorical palette (Okabe-Ito based, colour-blind safe); green accent kept out of the first slots. */
+    --chart-1: 202 100% 34%;
+    --chart-2: 26 100% 42%;
+    --chart-3: 326 40% 52%;
+    --chart-4: 45 95% 40%;
+    --chart-5: 202 70% 55%;
+    --chart-6: 164 100% 28%;
+    --chart-7: 250 40% 55%;
+    --chart-8: 220 8% 45%;
+    --shadow-color: 222 14% 10%;
+    --radius: 0.375rem;
+    --app-text-caption: 0.6875rem;
+    --app-text-label: 0.75rem;
+    --app-text-body: 0.8125rem;
+    --app-text-title: 0.875rem;
+    --app-text-heading: 1rem;
+    --app-text-page: 1.25rem;
+    --app-text-display: 1.5rem;
   }
 
   html[data-font-size='sm'] {
-    --app-text-caption: 0.75rem;
-    --app-text-label: 0.875rem;
-    --app-text-body: 1rem;
-    --app-text-title: 1.125rem;
-    --app-text-heading: 1.5rem;
-    --app-text-page: 1.75rem;
-    --app-text-display: 2.125rem;
+    --app-text-caption: 0.625rem;
+    --app-text-label: 0.6875rem;
+    --app-text-body: 0.75rem;
+    --app-text-title: 0.8125rem;
+    --app-text-heading: 0.9375rem;
+    --app-text-page: 1.125rem;
+    --app-text-display: 1.375rem;
   }
 
   html[data-font-size='lg'] {
-    --app-text-caption: 0.9375rem;
-    --app-text-label: 1.0625rem;
-    --app-text-body: 1.1875rem;
-    --app-text-title: 1.4375rem;
-    --app-text-heading: 1.875rem;
-    --app-text-page: 2.375rem;
-    --app-text-display: 2.875rem;
+    --app-text-caption: 0.8125rem;
+    --app-text-label: 0.875rem;
+    --app-text-body: 0.9375rem;
+    --app-text-title: 1.0625rem;
+    --app-text-heading: 1.1875rem;
+    --app-text-page: 1.5rem;
+    --app-text-display: 1.75rem;
   }
 
   .dark {
-    --background: 60 3% 15%;
-    --sidebar: 30 3% 12%;
-    --foreground: 50 23% 95%;
-    --card: 60 2% 18%;
-    --card-foreground: 50 23% 95%;
-    --popover: 60 2% 21%;
-    --popover-foreground: 50 23% 95%;
-    --primary: 15 63% 60%;
-    --primary-foreground: 0 0% 100%;
-    --brand: 15 63% 60%;
-    --brand-foreground: 0 0% 100%;
-    --secondary: 60 2% 18%;
-    --secondary-foreground: 50 23% 95%;
-    --muted: 60 2% 18%;
-    --muted-foreground: 48 5% 60%;
-    --accent: 45 4% 22%;
-    --accent-foreground: 50 23% 95%;
-    --destructive: 6 74% 71%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 115 31% 65%;
-    --warning: 35 68% 62%;
-    --border: 48 4% 24%;
-    --input: 50 4% 29%;
-    --ring: 15 63% 60%;
-    --surface: 60 2% 18%;
-    --surface-foreground: 50 23% 95%;
-    --chart-1: 15 63% 62%;
-    --chart-2: 212 65% 66%;
-    --chart-3: 172 45% 56%;
-    --chart-4: 40 80% 62%;
-    --chart-5: 268 50% 74%;
-    --chart-6: 340 60% 70%;
-    --chart-7: 80 40% 62%;
-    --chart-8: 215 20% 68%;
+    --background: 220 8% 9%;
+    --sidebar: 220 8% 7%;
+    --foreground: 220 10% 93%;
+    --card: 220 8% 12%;
+    --card-foreground: 220 10% 93%;
+    --popover: 220 8% 13%;
+    --popover-foreground: 220 10% 93%;
+    --primary: 158 45% 48%;
+    --primary-foreground: 160 40% 7%;
+    --brand: 158 45% 48%;
+    --brand-foreground: 160 40% 7%;
+    --secondary: 220 8% 14%;
+    --secondary-foreground: 220 10% 93%;
+    --muted: 220 8% 14%;
+    --muted-foreground: 220 6% 63%;
+    --accent: 220 8% 17%;
+    --accent-foreground: 220 10% 93%;
+    --destructive: 4 72% 68%;
+    --destructive-foreground: 0 0% 8%;
+    --success: 140 38% 58%;
+    --warning: 38 75% 60%;
+    --border: 220 8% 18%;
+    --input: 220 8% 25%;
+    --ring: 158 45% 48%;
+    --surface: 220 8% 11%;
+    --surface-foreground: 220 10% 93%;
+    --chart-1: 202 80% 62%;
+    --chart-2: 26 90% 60%;
+    --chart-3: 326 50% 70%;
+    --chart-4: 45 90% 58%;
+    --chart-5: 202 60% 78%;
+    --chart-6: 164 60% 48%;
+    --chart-7: 250 60% 74%;
+    --chart-8: 220 10% 66%;
     --shadow-color: 0 0% 0%;
   }
 
@@ -126,10 +127,16 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased font-sans font-normal text-app-label;
+    @apply bg-background text-foreground antialiased font-sans font-normal text-app-body;
     height: 100dvh;
     min-height: 0;
     overflow: hidden;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  table,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 
   #root {
@@ -197,7 +204,7 @@
   summary:focus-visible,
   [role='button']:focus-visible,
   [role='tab']:focus-visible {
-    outline: 2px solid hsl(var(--ring) / 0.5);
+    outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
   }
 

@@ -213,7 +213,7 @@ function AnalystDetail({ agent, canDelete, onDeleted }: { agent: Agent; canDelet
       <header className="flex flex-wrap items-start gap-4">
         <Avatar name={agent.name} size="lg" />
         <div className="min-w-0 flex-1">
-          <h1 className="break-words font-serif text-app-page text-foreground">{agent.name}</h1>
+          <h1 className="break-words font-medium text-app-page text-foreground">{agent.name}</h1>
           <p className="break-words mt-1 text-app-label text-muted-foreground">{agent.description || 'No description yet. Add one so questions are routed here.'}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">

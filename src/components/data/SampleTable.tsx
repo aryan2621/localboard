@@ -1,3 +1,4 @@
+import { cn } from '../../lib/utils'
 import type { SampleRow } from '../../lib/api'
 import { PaginationBar } from '../ui/pagination'
 import { usePagination } from '../../lib/usePagination'
@@ -9,17 +10,24 @@ export function formatCell(value: unknown) {
   return String(value)
 }
 
+/** Columns whose non-empty values are all numbers; shown right-aligned. */
+export function numericColumns(columns: string[], rows: SampleRow[]) {
+  const isNum = (v: unknown) => typeof v === 'number' || (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v.trim()))
+  return new Set(columns.filter((c) => { const vals = rows.map((r) => r[c]).filter((v) => v !== null && v !== undefined); return vals.length > 0 && vals.every(isNum) }))
+}
+
 export function SampleTable({ columns, rows }: { columns: string[]; rows: SampleRow[] }) {
   const pg = usePagination(rows, { initialPageSize: 10, resetKey: rows })
+  const numeric = numericColumns(columns, rows)
   if (rows.length === 0) return <p className="text-app-label text-muted-foreground">No rows to preview.</p>
   return (
     <div className="space-y-1">
-    <div className="max-h-80 overflow-auto rounded-xl">
-      <Table className="font-mono text-app-caption">
+    <div className="max-h-80 overflow-auto rounded-lg">
+      <Table>
         <TableHeader>
           <TableRow>
             {columns.map((column) => (
-              <TableHead key={column} className="whitespace-nowrap">
+              <TableHead key={column} className={numeric.has(column) ? 'whitespace-nowrap text-right' : 'whitespace-nowrap'}>
                 {column}
               </TableHead>
             ))}
@@ -33,7 +41,7 @@ export function SampleTable({ columns, rows }: { columns: string[]; rows: Sample
                 return (
                   <TableCell
                     key={column}
-                    className={value === null || value === undefined ? 'text-muted-foreground/60' : 'max-w-[18rem] truncate text-foreground'}
+                    className={cn(numeric.has(column) && 'text-right', value === null || value === undefined ? 'text-muted-foreground/60' : 'max-w-[18rem] truncate text-foreground')}
                   >
                     {formatCell(value)}
                   </TableCell>

@@ -650,7 +650,7 @@ export function SettingsModal() {
     <Dialog open={settingsOpen} onOpenChange={(open) => !open && closeSettings()}>
       <DialogContent className="flex h-[min(640px,85vh)] max-w-4xl gap-0 overflow-hidden p-0">
         <aside className="flex w-36 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar p-3 min-[700px]:w-[14rem]">
-          <p className="px-2 pb-4 pt-2 font-serif text-app-title text-foreground">Settings</p>
+          <p className="px-2 pb-4 pt-2 font-medium text-app-title text-foreground">Settings</p>
           <nav className="space-y-4">
             {SECTIONS.map((group) => (
               <div key={group.group} className="space-y-0.5">

@@ -38,7 +38,7 @@ export function HomePage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col px-6 pb-10 pt-[12vh] md:px-8">
       <header className="space-y-2 pb-8 text-center">
-        <h1 className="font-serif text-app-display text-foreground">{'Ask about your business'}</h1>
+        <h1 className="font-medium text-app-display text-foreground">{'Ask about your business'}</h1>
         <p className="text-app-label text-muted-foreground">{'Answers are computed from your data on this machine. Nothing leaves it.'}</p>
       </header>
 

@@ -65,12 +65,13 @@ export default {
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        sm: 'calc(var(--radius) - 3px)',
+        xl: 'var(--radius)',
+        '2xl': 'var(--radius)',
       },
       fontFamily: {
-        serif: ['"Source Serif 4 Variable"', 'Georgia', ...defaultTheme.fontFamily.serif],
-        sans: ['"Inter Variable"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', ...defaultTheme.fontFamily.sans],
-        mono: ['"JetBrains Mono Variable"', 'ui-monospace', 'SFMono-Regular', 'Menlo', ...defaultTheme.fontFamily.mono],
+        sans: ['"Geist Variable"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', ...defaultTheme.fontFamily.sans],
+        mono: ['"Geist Mono Variable"', 'ui-monospace', 'SFMono-Regular', 'Menlo', ...defaultTheme.fontFamily.mono],
       },
       fontSize: {
         'app-caption': ['var(--app-text-caption)', { lineHeight: '1.33' }],
@@ -82,17 +83,18 @@ export default {
         'app-display': ['var(--app-text-display)', { lineHeight: '1.11' }],
       },
       transitionDuration: {
-        fast: '150ms',
-        base: '220ms',
+        fast: '120ms',
+        base: '150ms',
       },
       transitionTimingFunction: {
-        'out-soft': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'out-soft': 'ease-out',
       },
+      // Borders, not shadows: only floating layers (popovers, dialogs, sheets) keep one.
       boxShadow: {
-        xs: '0 1px 2px 0 hsl(var(--shadow-color) / 0.05)',
-        sm: '0 1px 3px 0 hsl(var(--shadow-color) / 0.08), 0 1px 2px -1px hsl(var(--shadow-color) / 0.06)',
-        md: '0 4px 12px -2px hsl(var(--shadow-color) / 0.10), 0 2px 4px -2px hsl(var(--shadow-color) / 0.06)',
-        lg: '0 12px 32px -8px hsl(var(--shadow-color) / 0.18), 0 4px 8px -4px hsl(var(--shadow-color) / 0.08)',
+        xs: 'none',
+        sm: 'none',
+        md: 'none',
+        lg: '0 8px 24px -6px hsl(var(--shadow-color) / 0.16)',
       },
       keyframes: {
         'overlay-in': { from: { opacity: '0' }, to: { opacity: '1' } },
@@ -110,14 +112,14 @@ export default {
       animation: {
         'overlay-in': 'overlay-in 150ms ease-out',
         'overlay-out': 'overlay-out 120ms ease-in',
-        'content-in': 'content-in 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+        'content-in': 'content-in 150ms ease-out',
         'content-out': 'content-out 140ms ease-in',
-        'pop-in': 'pop-in 140ms cubic-bezier(0.16, 1, 0.3, 1)',
+        'pop-in': 'pop-in 140ms ease-out',
         'pop-out': 'pop-out 100ms ease-in',
-        'rise-in': 'rise-in 220ms cubic-bezier(0.16, 1, 0.3, 1)',
-        'sheet-in': 'sheet-in 260ms cubic-bezier(0.16, 1, 0.3, 1)',
+        'rise-in': 'rise-in 150ms ease-out',
+        'sheet-in': 'sheet-in 150ms ease-out',
         'sheet-out': 'sheet-out 180ms ease-in',
-        'step-in': 'step-in 280ms cubic-bezier(0.16, 1, 0.3, 1)',
+        'step-in': 'step-in 150ms ease-out',
         shimmer: 'shimmer 2.2s linear infinite',
       },
     },

@@ -229,9 +229,9 @@ export function QueryBenchPage() {
   return (
     <div className="flex flex-col">
       <div className="min-w-0">
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-3 sm:px-8 backdrop-blur">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-background px-4 py-3 sm:px-8">
               <div className="min-w-0">
-                <h1 className="font-serif text-app-title text-foreground">Query Bench</h1>
+                <h1 className="font-medium text-app-title text-foreground">Query Bench</h1>
                 <p className="truncate text-app-caption text-muted-foreground">Read-only SELECT. Parameters use :name and are bound, never pasted in.</p>
               </div>
               <span className="hidden shrink-0 items-center gap-1.5 text-app-caption text-muted-foreground md:flex">

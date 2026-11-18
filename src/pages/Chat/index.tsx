@@ -47,7 +47,7 @@ function ChatHeader({ conversation }: { conversation: ConversationDetail }) {
   return (
     <header className="flex items-center gap-2 border-b border-border pb-4">
       <Hint text={conversation.title}>
-        <h1 className="min-w-0 flex-1 truncate font-serif text-app-heading text-foreground" title={conversation.title}>{conversation.title}</h1>
+        <h1 className="min-w-0 flex-1 truncate font-medium text-app-heading text-foreground" title={conversation.title}>{conversation.title}</h1>
       </Hint>
       <Button variant="ghost" size="sm" onClick={() => exportChat.mutate()} disabled={exportChat.isPending}>
         <Download strokeWidth={iconStroke} /> {'Export'}

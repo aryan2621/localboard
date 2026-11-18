@@ -12,7 +12,7 @@ const AlertDialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Portal>
-    <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[hsl(var(--shadow-color)/0.4)] backdrop-blur-[2px] data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out" />
+    <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[hsl(var(--shadow-color)/0.4)]-[2px] data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out" />
     <AlertDialogPrimitive.Content
       ref={ref}
       className={cn(
@@ -37,7 +37,7 @@ const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
 >(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Title ref={ref} className={cn('font-serif text-app-title font-medium text-foreground', className)} {...props} />
+  <AlertDialogPrimitive.Title ref={ref} className={cn('text-app-title font-medium text-foreground', className)} {...props} />
 ))
 AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName
 

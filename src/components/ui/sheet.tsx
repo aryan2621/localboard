@@ -37,7 +37,7 @@ SheetContent.displayName = 'SheetContent'
 function SheetHeader({ title, description, children }: { title: React.ReactNode; description?: React.ReactNode; children?: React.ReactNode }) {
   return (
     <div className="space-y-1 border-b border-border px-6 pb-4 pr-12 pt-5">
-      <DialogPrimitive.Title className="font-serif text-app-title font-medium text-foreground">{title}</DialogPrimitive.Title>
+      <DialogPrimitive.Title className="text-app-title font-medium text-foreground">{title}</DialogPrimitive.Title>
       {description ? (
         <DialogPrimitive.Description className="text-app-caption text-muted-foreground">{description}</DialogPrimitive.Description>
       ) : (

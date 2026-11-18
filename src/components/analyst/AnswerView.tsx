@@ -434,7 +434,7 @@ export function AnswerView({
         return (
           <div key={spec.queryId} className="space-y-2">
             {title && <p className="text-app-label text-foreground">{title}</p>}
-            <ResultChart spec={spec} result={result} />
+            <ResultChart spec={spec} result={result} tableFirst />
           </div>
         )
       })}

@@ -37,7 +37,7 @@ const PROMISES = [
 function Heading({ title, description }: { title: string; description?: string }) {
   return (
     <div className="space-y-2">
-      <h2 className="font-serif text-app-page text-foreground">{title}</h2>
+      <h2 className="font-medium text-app-page text-foreground">{title}</h2>
       {description && <p className="max-w-lg text-app-label leading-relaxed text-muted-foreground">{description}</p>}
     </div>
   )
@@ -149,7 +149,7 @@ export function Onboarding() {
         <div className="flex items-center gap-3 px-5 pb-10 pt-6 min-[900px]:px-8">
           <img src="/app-icon.png" alt="" className="h-10 w-10 rounded-lg" />
           <div>
-            <p className="font-serif text-app-title text-foreground">LocalBoard</p>
+            <p className="font-medium text-app-title text-foreground">LocalBoard</p>
             <p className="text-app-caption text-muted-foreground">Set up</p>
           </div>
         </div>

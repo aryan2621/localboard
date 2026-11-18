@@ -468,7 +468,7 @@ function ReportView({ id }: { id: string }) {
             <div className="mx-auto h-full max-w-3xl space-y-6 overflow-y-auto rounded-xl border border-border bg-card px-5 py-8 shadow-md sm:px-10">
               {blocks.map((block) => (
                 <section key={block.id} id={`block-${block.id}`} className="space-y-1">
-                  <h2 className="font-serif text-app-title">{block.title}</h2>
+                  <h2 className="text-app-title">{block.title}</h2>
                   <p className="whitespace-pre-wrap text-app-label text-muted-foreground">{block.body}</p>
                 </section>
               ))}
@@ -596,7 +596,7 @@ function DeckView({ id }: { id: string }) {
       <DetailHeader
         title={
           <div className="flex min-w-0 items-center gap-2">
-            <h1 className="truncate font-serif text-app-title text-foreground" title={live.data.deck.name}>{live.data.deck.name}</h1>
+            <h1 className="truncate font-medium text-app-title text-foreground" title={live.data.deck.name}>{live.data.deck.name}</h1>
             <Badge variant={outline ? 'warning' : 'secondary'}>{outline ? 'Unsaved' : `${slides.length} slides`}</Badge>
           </div>
         }
@@ -642,7 +642,7 @@ function DeckView({ id }: { id: string }) {
                       index === selectedIndex ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-foreground/30',
                     )}
                   >
-                    <span className="line-clamp-2 font-serif text-[11px] leading-tight text-foreground">{slide.title || 'Untitled'}</span>
+                    <span className="line-clamp-2 text-[11px] leading-tight text-foreground">{slide.title || 'Untitled'}</span>
                     {withData.has(slide.id) ? (
                       <span className="mt-auto flex h-5 items-end gap-0.5" aria-hidden>
                         {[40, 70, 55, 90, 65].map((height, bar) => (
@@ -685,7 +685,7 @@ function DeckView({ id }: { id: string }) {
                 </div>
               </div>
               <div className="flex aspect-video flex-col gap-4 overflow-hidden rounded-xl border border-border bg-card p-10 shadow-md">
-                <h2 className="font-serif text-2xl leading-tight text-foreground">{selected.title || 'Untitled'}</h2>
+                <h2 className="text-2xl leading-tight text-foreground">{selected.title || 'Untitled'}</h2>
                 {withData.has(selected.id) ? (
                   <div className="flex min-h-0 flex-1 items-end gap-3 border-b border-l border-border px-4 pb-0" aria-label="Chart placeholder">
                     {[35, 60, 45, 80, 55, 70].map((height, bar) => (

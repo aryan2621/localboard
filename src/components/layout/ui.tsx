@@ -157,7 +157,7 @@ export function PageHeader({
   return (
     <header className={cn('flex flex-wrap items-end justify-between gap-4', className)}>
       <div className="min-w-0 space-y-1">
-        <h1 className="break-words font-serif text-app-page text-foreground">{title}</h1>
+        <h1 className="break-words font-medium text-app-page text-foreground">{title}</h1>
         {description && <p className="text-app-body text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
@@ -181,13 +181,13 @@ export function DetailHeader({
   children?: ReactNode
 }) {
   return (
-    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-border bg-background/85 px-6 py-3 backdrop-blur">
+    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-2 border-b border-border bg-background px-6 py-3">
       <Hint text="Back">
         <Button variant="ghost" size="icon" aria-label="Back" onClick={onBack}>
           <ArrowLeft strokeWidth={iconStroke} />
         </Button>
       </Hint>
-      <div className="min-w-0 flex-1">{typeof title === 'string' ? <h1 className="truncate font-serif text-app-title text-foreground">{title}</h1> : title}</div>
+      <div className="min-w-0 flex-1">{typeof title === 'string' ? <h1 className="truncate font-medium text-app-title text-foreground">{title}</h1> : title}</div>
       {children}
       {actions}
       {menu && <MoreMenu>{menu}</MoreMenu>}
@@ -232,7 +232,7 @@ export function SectionHeader({ title, description, actions, className }: { titl
   return (
     <div className={cn('flex flex-wrap items-end justify-between gap-3', className)}>
       <div className="min-w-0 space-y-0.5">
-        <h2 className="font-serif text-app-title text-foreground">{title}</h2>
+        <h2 className="font-medium text-app-title text-foreground">{title}</h2>
         {description && <p className="text-app-caption text-muted-foreground">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
@@ -326,7 +326,7 @@ export function ListItemCard({
       onClick={onClick}
       aria-current={selected ? 'true' : undefined}
       className={cn(
-        'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+        'flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         selected ? 'border-brand/40 bg-accent' : 'border-border bg-surface hover:border-foreground/25 hover:bg-accent/40',
         className,
       )}
@@ -436,7 +436,7 @@ export function ViewToggle({ value, onChange }: { value: 'cards' | 'list'; onCha
             aria-pressed={value === option.value}
             onClick={() => onChange(option.value)}
             className={cn(
-              'flex h-7 w-8 items-center justify-center rounded-md transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+              'flex h-7 w-8 items-center justify-center rounded-md transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
               value === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
             )}
           >

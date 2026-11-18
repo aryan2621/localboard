@@ -82,7 +82,7 @@ function Markdown({ source }: { source: string }) {
     if (heading) {
       const size = ['text-app-title', 'text-app-title', 'text-app-label font-semibold'][heading[1].length - 1]
       blocks.push(
-        <p key={i} className={`${size} font-serif font-medium`}>
+        <p key={i} className={`${size} font-medium`}>
           {inlineMarkdown(heading[2], `h-${i}`)}
         </p>,
       )
@@ -864,7 +864,7 @@ function DashboardView({ id }: { id: string }) {
         </Alert>
       ))}
       {dashboard.filters.length > 0 && (
-        <div className="sticky top-[3.55rem] z-[5] -mx-6 flex flex-wrap items-end gap-3 border-b border-border bg-background/85 px-6 py-2.5 backdrop-blur">
+        <div className="sticky top-[3.55rem] z-[5] -mx-6 flex flex-wrap items-end gap-3 border-b border-border bg-background px-6 py-2.5">
           {dashboard.filters.map((filter) => (
             <label key={filter.name} className="flex flex-col gap-1">
               <span className="text-app-caption font-medium text-muted-foreground">{filter.label || filter.name}</span>
