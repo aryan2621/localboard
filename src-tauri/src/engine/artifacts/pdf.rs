@@ -2,7 +2,7 @@
 
 use serde_json::Value;
 
-use super::{BRAND_NAME, BRAND_HEX};
+use super::{as_f32, bar_extent, BRAND_NAME, BRAND_HEX};
 use crate::engine::query::QueryResult;
 use crate::error::{AppError, AppResult};
 use crate::storage::artifacts::ReportRecord;
@@ -170,7 +170,6 @@ impl Doc {
         if values.is_empty() {
             return;
         }
-        let max = values.iter().map(|v| v.abs()).fold(1.0_f32, f32::max);
         self.ensure(90.0);
         self.y -= 80.0;
         let base = self.y;
@@ -178,9 +177,10 @@ impl Doc {
         let bar_w = ((PAGE_W - MARGIN * 2.0) / values.len().max(1) as f32).min(22.0);
         self.current.push_str("q\n");
         for (index, value) in values.iter().enumerate() {
-            let h = (value.abs() / max * 70.0).max(2.0);
+            let (bottom, h) = bar_extent(*value, &values, 70.0);
             let x = MARGIN + index as f32 * (bar_w + 4.0);
-            self.current.push_str(&format!("{r:.3} {g:.3} {b:.3} rg {x:.1} {base:.1} {bar_w:.1} {h:.1} re f\n"));
+            let y = base + bottom;
+            self.current.push_str(&format!("{r:.3} {g:.3} {b:.3} rg {x:.1} {y:.1} {bar_w:.1} {h:.1} re f\n"));
         }
         self.current.push_str("Q\n");
         self.y -= 8.0;
@@ -317,9 +317,19 @@ fn wrap(text: &str, width: usize) -> Vec<String> {
     for paragraph in text.split('\n') {
         let mut current = String::new();
         for word in paragraph.split_whitespace() {
+            let mut word = word;
+            // A word longer than a line is split so it cannot run off the page.
+            while word.chars().count() > width {
+                let cut = word.char_indices().nth(width).map_or(word.len(), |(i, _)| i);
+                if !current.is_empty() {
+                    lines.push(std::mem::take(&mut current));
+                }
+                lines.push(word[..cut].to_owned());
+                word = &word[cut..];
+            }
             if current.is_empty() {
                 current = word.to_owned();
-            } else if current.len() + 1 + word.len() > width {
+            } else if current.chars().count() + 1 + word.chars().count() > width {
                 lines.push(std::mem::take(&mut current));
                 current = word.to_owned();
             } else {
@@ -351,10 +361,13 @@ fn cell(value: &Value) -> String {
     }
 }
 
-fn as_f32(value: &Value) -> Option<f32> {
-    match value {
-        Value::Number(number) => number.as_f64().map(|n| n as f32),
-        Value::String(text) => text.parse().ok(),
-        _ => None,
+#[cfg(test)]
+mod wrap_tests {
+    use super::wrap;
+
+    #[test]
+    fn long_words_are_split() {
+        assert_eq!(wrap("aaaaaaaaaa b", 4), vec!["aaaa", "aaaa", "aa b"]);
+        assert_eq!(wrap("hello world", 20), vec!["hello world"]);
     }
 }

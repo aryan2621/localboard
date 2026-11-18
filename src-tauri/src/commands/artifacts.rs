@@ -1,7 +1,7 @@
 //! Generate, convert, serve and export datasites, PDF reports and decks.
 
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Component, Path, PathBuf};
 use std::time::Instant;
 
 use serde::Serialize;
@@ -543,6 +543,58 @@ pub async fn datasite_delete(state: State<'_, AppState>, id: String) -> AppResul
     blocking(move || workspace.db()?.delete_datasite(&id)).await
 }
 
+/// Absolute, no `..`, and inside the home folder once the nearest existing ancestor is
+/// canonicalized (so symlinks cannot escape). Nothing is created. Shared by exports and the
+/// automation write_file step.
+pub(crate) fn safe_export_path(path: &Path) -> AppResult<PathBuf> {
+    if !path.is_absolute() || path.components().any(|part| matches!(part, Component::ParentDir)) {
+        return Err(AppError::invalid("The path must be absolute and must not contain .."));
+    }
+    let home = std::env::var_os("HOME")
+        .or_else(|| std::env::var_os("USERPROFILE"))
+        .map(PathBuf::from)
+        .and_then(|home| home.canonicalize().ok())
+        .ok_or_else(|| AppError::invalid("Could not find the home folder"))?;
+    resolve_under(path, &home)
+}
+
+fn resolve_under(path: &Path, home: &Path) -> AppResult<PathBuf> {
+    let mut existing = path;
+    let mut tail = Vec::new();
+    while !existing.exists() {
+        let (Some(parent), Some(name)) = (existing.parent(), existing.file_name()) else {
+            return Err(AppError::invalid("The path has no existing folder"));
+        };
+        tail.push(name.to_owned());
+        existing = parent;
+    }
+    let mut resolved = existing.canonicalize()?;
+    resolved.extend(tail.iter().rev());
+    if !resolved.starts_with(home) {
+        return Err(AppError::invalid("Files can only be written under your home folder"));
+    }
+    Ok(resolved)
+}
+
+#[cfg(test)]
+mod export_path_tests {
+    use super::*;
+
+    #[test]
+    fn rejects_relative_and_parent() {
+        assert!(safe_export_path(Path::new("rel/x.pdf")).is_err());
+        assert!(safe_export_path(Path::new("/a/../b.pdf")).is_err());
+    }
+
+    #[test]
+    fn resolves_missing_tail_under_home_only() {
+        let home = std::env::temp_dir().canonicalize().unwrap();
+        let ok = resolve_under(&home.join("lb-no-such/dir/x.pdf"), &home).unwrap();
+        assert_eq!(ok, home.join("lb-no-such/dir/x.pdf"));
+        assert!(resolve_under(Path::new("/definitely/other/x.pdf"), &home.join("sub")).is_err());
+    }
+}
+
 #[tauri::command]
 pub async fn datasite_export(state: State<'_, AppState>, id: String, mode: String, path: PathBuf) -> AppResult<()> {
     let workspace = state.workspace()?;
@@ -566,7 +618,7 @@ pub async fn datasite_export(state: State<'_, AppState>, id: String, mode: Strin
         "static" => html::datasite_bundle(&site, html::SiteMode::Static, &theme.brand, &theme.name),
         _ => return Err(AppError::invalid("Export is static or live.")),
     };
-    std::fs::write(path, html)?;
+    std::fs::write(safe_export_path(&path)?, html)?;
     Ok(())
 }
 
@@ -817,7 +869,7 @@ pub async fn report_export_pdf(state: State<'_, AppState>, id: String, path: Pat
         }
     }
     let bytes = pdf::write(&report)?;
-    std::fs::write(path, bytes)?;
+    std::fs::write(safe_export_path(&path)?, bytes)?;
     Ok(())
 }
 
@@ -1047,6 +1099,6 @@ pub async fn deck_export_pptx(state: State<'_, AppState>, id: String, path: Path
         }
     }
     let bytes = pptx::write(&deck)?;
-    std::fs::write(path, bytes)?;
+    std::fs::write(safe_export_path(&path)?, bytes)?;
     Ok(())
 }

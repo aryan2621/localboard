@@ -77,6 +77,8 @@ async fn policy(workspace: &std::sync::Arc<Workspace>) -> AppResult<GuardPolicy>
     blocking(move || Ok(GuardPolicy::new(workspace.db()?.list_tables()?.into_iter().map(|table| table.relation)))).await
 }
 
+const MIN_REFRESH_SECS: i64 = 60;
+
 /// Cross-filters travel in the filter map as `__xf.<column>` entries.
 const CROSS_PREFIX: &str = "__xf.";
 
@@ -95,11 +97,19 @@ fn run_sql(workspace: &Workspace, sql: &str, policy: &GuardPolicy, raw: &serde_j
             wrapped_raw.insert(format!("xf{i}"), (*value).clone());
         }
         let wrapped = format!("SELECT * FROM ({}) AS xf_src WHERE {}", validated.sql.trim().trim_end_matches(';'), clauses.join(" AND "));
-        if let Ok(checked) = sql_guard::validate(&wrapped, policy) {
-            if let Ok(wrapped_bound) = bind_params(&checked.parameters, &wrapped_raw) {
-                if let Ok(result) = query::run(&conn, &checked, &wrapped_bound, &CancelToken::default()) {
-                    return Ok((validated.sql, result, validated.relations));
+        let filtered = sql_guard::validate(&wrapped, policy)
+            .map_err(|error| error.to_string())
+            .and_then(|checked| Ok((bind_params(&checked.parameters, &wrapped_raw)?, checked)))
+            .and_then(|(wrapped_bound, checked)| query::run(&conn, &checked, &wrapped_bound, &CancelToken::default()).map_err(|error| error.to_string()));
+        match filtered {
+            Ok(result) => return Ok((validated.sql, result, validated.relations)),
+            Err(error) => {
+                // A tile without the column is meant to stay unfiltered; any other failure must not hide the filter.
+                let unfiltered = query::run(&conn, &validated, &bound, &CancelToken::default()).map_err(|error| error.to_string())?;
+                if crosses.iter().all(|(column, _)| unfiltered.columns.iter().any(|c| c.name == *column)) {
+                    return Err(format!("Could not apply the filter: {error}"));
                 }
+                return Ok((validated.sql, unfiltered, validated.relations));
             }
         }
     }
@@ -719,7 +729,8 @@ pub fn resume_dashboards(app: &AppHandle) {
 
 fn schedule(state: &AppState, app: &AppHandle, id: &str, secs: Option<i64>) {
     state.refresh.stop(id);
-    let Some(secs) = secs.filter(|value| *value > 0) else { return };
+    // shortcut: clamps rather than rejects values under a minute; reject in dashboard_update if the UI should say so.
+    let Some(secs) = secs.filter(|value| *value > 0).map(|value| value.max(MIN_REFRESH_SECS)) else { return };
     let app = app.clone();
     let dashboard_id = id.to_owned();
     let handle = tauri::async_runtime::spawn({

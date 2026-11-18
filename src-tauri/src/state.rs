@@ -310,6 +310,8 @@ pub struct AppState {
     pub analyst_runs: AnalystRuns,
     pub refresh: DashboardRefresh,
     pub jobs: DashboardRefresh,
+    /// Automation ids with a run in flight, so overlapping triggers skip.
+    pub running_automations: Mutex<std::collections::HashSet<String>>,
     file_jobs: Mutex<Option<CatalogWatcher>>,
     server: Mutex<ServerSlot>,
     active: RwLock<Option<Arc<Workspace>>>,
@@ -330,6 +332,7 @@ impl AppState {
             analyst_runs: AnalystRuns::default(),
             refresh: DashboardRefresh::default(),
             jobs: DashboardRefresh::default(),
+            running_automations: Mutex::new(Default::default()),
             file_jobs: Mutex::new(None),
             server: Mutex::new(ServerSlot { status: ServerStatus::Off, handle: None }),
             active: RwLock::new(None),

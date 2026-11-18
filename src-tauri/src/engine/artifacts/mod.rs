@@ -14,6 +14,27 @@ use crate::engine::query::QueryResult;
 use crate::storage::conversations::{QueryRecord, QueryStatus};
 use crate::storage::conversations::snapshot;
 
+/// Number cell as a finite f32; NaN and infinity would poison the chart scale.
+pub(crate) fn as_f32(value: &Value) -> Option<f32> {
+    let n = match value {
+        Value::Number(number) => number.as_f64()? as f32,
+        Value::String(text) => text.parse().ok()?,
+        _ => return None,
+    };
+    n.is_finite().then_some(n)
+}
+
+/// Bar position for a signed value: (offset of the bar's bottom above the chart floor, height).
+/// The zero line sits above the floor when any value is negative.
+pub(crate) fn bar_extent(value: f32, values: &[f32], height: f32) -> (f32, f32) {
+    let lo = values.iter().copied().fold(0.0_f32, f32::min);
+    let hi = values.iter().copied().fold(0.0_f32, f32::max);
+    let span = (hi - lo).max(1.0);
+    let zero = -lo / span * height;
+    let h = (value.abs() / span * height).max(2.0);
+    (if value >= 0.0 { zero } else { zero - h }, h)
+}
+
 pub const ARTIFACT_MAX_TOKENS: u32 = 2_048;
 pub const BRAND_HEX: &str = "#C96240";
 pub const BRAND_NAME: &str = "LocalBoard";
@@ -289,4 +310,26 @@ pub fn json_script(value: &Value) -> String {
 pub fn display_name(name: &str, fallback: &str) -> String {
     let name = name.trim();
     if name.is_empty() { fallback.to_owned() } else { name.to_owned() }
+}
+
+#[cfg(test)]
+mod chart_tests {
+    use super::*;
+
+    #[test]
+    fn bars_are_signed() {
+        let values = [10.0, -10.0];
+        let (up_bottom, up_h) = bar_extent(10.0, &values, 100.0);
+        let (down_bottom, down_h) = bar_extent(-10.0, &values, 100.0);
+        assert_eq!((up_bottom, up_h), (50.0, 50.0));
+        assert_eq!((down_bottom, down_h), (0.0, 50.0));
+        assert_eq!(bar_extent(5.0, &[5.0], 100.0).0, 0.0);
+    }
+
+    #[test]
+    fn non_finite_numbers_are_dropped() {
+        assert_eq!(as_f32(&json!("NaN")), None);
+        assert_eq!(as_f32(&json!("inf")), None);
+        assert_eq!(as_f32(&json!("1.5")), Some(1.5));
+    }
 }

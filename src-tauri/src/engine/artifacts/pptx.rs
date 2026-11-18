@@ -4,10 +4,10 @@ use std::io::{Cursor, Write};
 
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
-use serde_json::Value;
 use zip::write::SimpleFileOptions;
 use zip::ZipWriter;
 
+use super::{as_f32, bar_extent};
 use crate::engine::query::{ColumnKind, QueryResult};
 use crate::error::{AppError, AppResult};
 use crate::storage::artifacts::DeckRecord;
@@ -218,13 +218,13 @@ fn bar_png(values: &[f32]) -> Vec<u8> {
     const W: u32 = 640;
     const H: u32 = 360;
     let mut pixels = vec![255u8; (W * H * 3) as usize];
-    let max = values.iter().map(|v| v.abs()).fold(1.0_f32, f32::max);
     let bar_w = ((W as usize - 40) / values.len().max(1)).min(36);
     for (index, value) in values.iter().enumerate() {
-        let h = ((value.abs() / max) * (H as f32 - 40.0)).max(2.0) as u32;
+        let (bottom, h) = bar_extent(*value, values, H as f32 - 40.0);
         let x0 = 20 + index * (bar_w + 4);
-        let y0 = H - 20 - h;
-        for y in y0..H.saturating_sub(20) {
+        let y1 = (H as f32 - 20.0 - bottom) as u32;
+        let y0 = y1.saturating_sub(h as u32);
+        for y in y0..y1.min(H) {
             for x in x0 as u32..(x0 as u32 + bar_w as u32).min(W) {
                 let i = ((y * W + x) * 3) as usize;
                 if i + 2 < pixels.len() {
@@ -283,14 +283,6 @@ fn crc32(data: &[u8]) -> u32 {
         }
     }
     !crc
-}
-
-fn as_f32(value: &Value) -> Option<f32> {
-    match value {
-        Value::Number(number) => number.as_f64().map(|n| n as f32),
-        Value::String(text) => text.parse().ok(),
-        _ => None,
-    }
 }
 
 const RELS: &str = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\

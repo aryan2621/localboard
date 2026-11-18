@@ -50,6 +50,14 @@ pub fn apply(conn: &mut Connection, migrations: &[Migration]) -> AppResult<u32> 
             "This data was written by a newer LocalBoard (schema {current}, this build knows {latest}). Update LocalBoard."
         )));
     }
+    if current > 0 && current < latest {
+        if let Some(path) = conn.path().filter(|path| !path.is_empty()) {
+            // Consistent copy (WAL included) so a bad migration can be rolled back by hand.
+            let backup = format!("{path}.bak-v{current}");
+            let _ = std::fs::remove_file(&backup);
+            conn.execute("VACUUM INTO ?1", params![backup])?;
+        }
+    }
     for migration in migrations.iter().filter(|migration| migration.version > current) {
         let tx = conn.transaction()?;
         tx.execute_batch(migration.sql)?;

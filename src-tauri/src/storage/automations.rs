@@ -252,6 +252,21 @@ impl WorkspaceDb {
         Ok(())
     }
 
+    /// Runs left `running` by a crash or quit; `live` ids are genuinely in flight and kept.
+    pub fn fail_stale_runs(&self, live: &[String]) -> AppResult<()> {
+        let live = serde_json::to_string(live)?;
+        let msg = "Interrupted before it finished";
+        self.conn.execute(
+            &format!("UPDATE automation_runs SET status = 'error', summary = ?1, finished_at = {now} WHERE status = 'running' AND automation_id NOT IN (SELECT value FROM json_each(?2))", now = now()),
+            params![msg, live],
+        )?;
+        self.conn.execute(
+            &format!("UPDATE automation_step_runs SET status = 'error', summary = ?1, finished_at = {now} WHERE status = 'running' AND run_id IN (SELECT id FROM automation_runs WHERE status = 'error' AND summary = ?1)", now = now()),
+            params![msg],
+        )?;
+        Ok(())
+    }
+
     pub fn last_ok_facts(&self, automation_id: &str) -> AppResult<Option<Value>> {
         let raw: Option<String> = self
             .conn

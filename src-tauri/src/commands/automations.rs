@@ -184,6 +184,10 @@ pub fn resume(app: &AppHandle) {
     state.jobs.stop_all();
     let _ = state.set_file_jobs(None);
     let Ok(workspace) = state.workspace() else { return };
+    let live: Vec<String> = state.running_automations.lock().map(|set| set.iter().cloned().collect()).unwrap_or_default();
+    if let Err(error) = workspace.db().and_then(|db| db.fail_stale_runs(&live)) {
+        tracing::warn!("automation stale runs: {error}");
+    }
     let Ok(items) = workspace.db().and_then(|db| db.enabled_automations()) else { return };
     let mut watches = Vec::new();
     for item in items {
@@ -233,6 +237,7 @@ fn schedule(state: &AppState, app: &AppHandle, item: &AutomationRecord) {
                 let id = id.clone();
                 async move {
                     let mut interval = tokio::time::interval(Duration::from_secs(secs as u64));
+                    interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
                     interval.tick().await;
                     loop {
                         interval.tick().await;
@@ -272,7 +277,22 @@ fn schedule(state: &AppState, app: &AppHandle, item: &AutomationRecord) {
     }
 }
 
+struct InFlight<'a>(&'a AppState, String);
+
+impl Drop for InFlight<'_> {
+    fn drop(&mut self) {
+        if let Ok(mut set) = self.0.running_automations.lock() {
+            set.remove(&self.1);
+        }
+    }
+}
+
 pub async fn run_one(app: &AppHandle, state: &AppState, id: &str, trigger_kind: &str) -> AppResult<()> {
+    let inserted = state.running_automations.lock().map_err(|_| AppError::Internal("automation registry poisoned".into()))?.insert(id.to_owned());
+    if !inserted {
+        return Err(AppError::Conflict("This automation is already running".into()));
+    }
+    let _in_flight = InFlight(state, id.to_owned());
     let workspace = state.workspace()?;
     let automation = blocking({
         let workspace = workspace.clone();
@@ -1291,7 +1311,11 @@ async fn run_webhook(state: &AppState, step: &AutomationStep, name: &str, summar
         return Err(step_err("Offline mode is on. This webhook would leave the device."));
     }
     let workspace = state.workspace().map_err(step_err)?;
-    let secret = if step.config.get("secret").and_then(Value::as_bool).unwrap_or(false) {
+    let carries_secret = step.config.get("secret").and_then(Value::as_bool).unwrap_or(false);
+    if carries_secret && !url.starts_with("https://") && !crate::engine::mcp::is_loopback(&url) {
+        return Err(step_denied("A webhook that sends a secret must use https://"));
+    }
+    let secret = if carries_secret {
         let reference = webhook_secret_ref(&workspace.id, &step.id);
         Some(blocking(move || secrets::get(&reference)).await.map_err(|_| step_err("The webhook secret is not in the keychain. Save it again in the editor."))?)
     } else {
@@ -1322,10 +1346,6 @@ async fn run_webhook(state: &AppState, step: &AutomationStep, name: &str, summar
     Ok(plain_out(format!("Posted to {host} ({status})"), json!({ "input": { "url": host, "rows": data.map(|(_, rows)| rows.len()) }, "output": status.as_u16() })))
 }
 
-fn home_dir() -> Option<PathBuf> {
-    std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")).map(PathBuf::from).and_then(|path| path.canonicalize().ok())
-}
-
 fn csv_cell(value: &Value) -> String {
     let text = match value {
         Value::Null => String::new(),
@@ -1342,16 +1362,8 @@ fn csv_cell(value: &Value) -> String {
 fn run_write_file(step: &AutomationStep, name: &str, data: Option<&(Vec<String>, Vec<Vec<Value>>)>) -> StepResult {
     let (columns, rows) = data.ok_or_else(|| step_err("Writing a file needs a SQL step before it"))?;
     let dir = cfg_str(step, "dir").ok_or_else(|| step_err("Choose a folder"))?;
-    let dir = PathBuf::from(dir);
-    if !dir.is_absolute() || dir.components().any(|part| matches!(part, std::path::Component::ParentDir)) {
-        return Err(step_denied("The folder must be an absolute path without .."));
-    }
-    let home = home_dir().ok_or_else(|| step_err("Could not find the home folder"))?;
+    let dir = crate::commands::artifacts::safe_export_path(&PathBuf::from(dir)).map_err(step_denied)?;
     std::fs::create_dir_all(&dir).map_err(|error| step_err(format!("Could not create the folder: {error}")))?;
-    let dir = dir.canonicalize().map_err(step_err)?;
-    if !dir.starts_with(&home) {
-        return Err(step_denied("Files can only be written under your home folder"));
-    }
     let format = if cfg_str(step, "format") == Some("json") { "json" } else { "csv" };
     let overwrite = step.config.get("overwrite").and_then(Value::as_bool).unwrap_or(false);
     let base: String = cfg_str(step, "filename")
