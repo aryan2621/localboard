@@ -1,6 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ListItemCard } from '../../components/layout/ui'
 import { GenerationSteps } from '../../components/analyst/StepsPanel'
 import { Composer, type OutputKind } from '../../components/analyst/Composer'
 import { Button } from '../../components/ui/button'
@@ -29,9 +28,9 @@ export function HomePage() {
   const submit = (question: string, output: OutputKind) => generate.mutateAsync({ question, conversationId: null, output })
 
   return (
-    <div className="mx-auto flex max-w-[720px] flex-col gap-10 px-6 pb-12 pt-[10vh] md:px-8">
-      <header className="space-y-1">
-        <h1 className="text-app-title font-semibold text-foreground">Ask about your data</h1>
+    <div className="mx-auto flex min-h-full max-w-[760px] flex-col justify-center gap-8 px-6 py-12 md:px-8">
+      <header className="space-y-2 text-center">
+        <h1 className="text-app-display font-semibold text-foreground">What do you want to know?</h1>
         <p className="text-app-label text-muted-foreground">Answers are computed on this machine. Nothing leaves it.</p>
       </header>
 
@@ -57,31 +56,25 @@ export function HomePage() {
             <GenerationSteps running={generate.isPending} />
           </div>
           {!generate.isPending && (
-            <HomeSection title="Try">
+            <div className="flex flex-wrap justify-center gap-2">
               {STARTS.map((start) => (
-                <ListItemCard
+                <button
                   key={start.title}
-                  title={start.title}
-                  meta={start.prompt}
+                  type="button"
+                  title={start.prompt}
                   onClick={() => {
                     setPreset(start.output)
                     setComposerText(start.prompt)
                   }}
-                />
+                  className="rounded-full border border-border px-3.5 py-1.5 text-app-label text-foreground transition-colors duration-fast hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {start.title}
+                </button>
               ))}
-            </HomeSection>
+            </div>
           )}
         </>
       )}
     </div>
-  )
-}
-
-function HomeSection({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section>
-      <h2 className="border-b border-border px-2 pb-1.5 text-app-caption font-medium text-muted-foreground">{title}</h2>
-      <div className="pt-1">{children}</div>
-    </section>
   )
 }
