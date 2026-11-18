@@ -514,6 +514,9 @@ impl Run {
         context::fence_preview(&mut computed.preview);
         self.answer.anomalies.extend(computed.anomalies.iter().cloned());
         let mut facts = serde_json::to_value(&computed).map_err(AppError::from)?;
+        for pointer in ["/extremes/highest/0", "/extremes/lowest/0"] {
+            context::fence_at(&mut facts, pointer);
+        }
         let mut chart = chart::pick(&record.id, &result, hint);
         if let Some(projection) = projection {
             facts["forecast"] = projection;
@@ -680,12 +683,11 @@ impl Run {
             format: ResponseFormat::Text,
         };
         let (tokens, mut received) = mpsc::channel::<String>(64);
-        let sink = self.sink.clone();
+        // Held back: the draft is only shown once numcheck has passed (or the strict rewrite replaced it).
         let forward = async move {
             let mut text = String::new();
             while let Some(delta) = received.recv().await {
                 text.push_str(&delta);
-                sink(AnalystEvent::Token { text: delta });
             }
             text
         };
@@ -715,6 +717,7 @@ impl Run {
                 missing.join(", ")
             ));
         }
+        (self.sink)(AnalystEvent::Token { text: content.clone() });
         self.content = content;
         self.finish_step("summary", StepStatus::Done, None);
         Ok(())

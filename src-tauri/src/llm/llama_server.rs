@@ -121,8 +121,9 @@ impl Supervisor {
         self.stop_leftover_slot(&self.embed);
     }
 
+    /// Never waits: while a model is loading (the lock is held for the whole startup) nothing is reported running.
     async fn alive(&self, slot: &Slot) -> Option<Endpoint> {
-        let mut running = slot.running.lock().await;
+        let mut running = slot.running.try_lock().ok()?;
         let live = matches!(running.as_mut().map(|state| state.child.try_wait()), Some(Ok(None)));
         if !live {
             *running = None;
@@ -173,13 +174,14 @@ impl Supervisor {
         let pid = child.id().unwrap_or(0);
         slot.pid.store(pid, Ordering::SeqCst);
         let _ = std::fs::write(self.data_dir.join(slot.pid_file), pid.to_string());
+        // Clears the pid on every early exit, including this future being dropped mid-startup.
+        let mut pid_guard = PidGuard { supervisor: self, slot, armed: true };
 
         let endpoint = Endpoint { base_url: format!("http://127.0.0.1:{port}/v1"), api_key, model_id: model_id.to_owned() };
         let health = format!("http://127.0.0.1:{port}/health");
         let deadline = Instant::now() + STARTUP_DEADLINE;
         while Instant::now() < deadline {
             if let Ok(Some(status)) = child.try_wait() {
-                self.forget_pid(slot);
                 let reason = last_error(&log_path).unwrap_or_else(|| format!("it exited with {status}"));
                 return Err(LlmError::Runtime(format!("the AI model could not start: {reason}")));
             }
@@ -192,13 +194,13 @@ impl Supervisor {
                 .is_ok_and(|response| response.status().is_success());
             if ready {
                 tracing::info!("llama-server ready with {model_id} on port {port}");
+                pid_guard.armed = false;
                 *running = Some(Running { child, endpoint: endpoint.clone() });
                 return Ok(endpoint);
             }
             tokio::time::sleep(HEALTH_POLL).await;
         }
         let _ = child.kill().await;
-        self.forget_pid(slot);
         Err(LlmError::Runtime("the AI model took too long to load; try again or pick a smaller model".into()))
     }
 
@@ -240,6 +242,20 @@ impl Supervisor {
     fn forget_pid(&self, slot: &Slot) {
         slot.pid.store(0, Ordering::SeqCst);
         let _ = std::fs::remove_file(self.data_dir.join(slot.pid_file));
+    }
+}
+
+struct PidGuard<'a> {
+    supervisor: &'a Supervisor,
+    slot: &'a Slot,
+    armed: bool,
+}
+
+impl Drop for PidGuard<'_> {
+    fn drop(&mut self) {
+        if self.armed {
+            self.supervisor.forget_pid(self.slot);
+        }
     }
 }
 

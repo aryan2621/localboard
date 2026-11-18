@@ -78,7 +78,9 @@ pub fn sql_facts(result: &QueryResult) -> (Facts, Value, String) {
 fn metric(facts: &Facts, column: Option<&str>) -> Option<(String, f64)> {
     if let Some(name) = column.map(str::trim).filter(|text| !text.is_empty()) {
         if let Some(summary) = facts.summaries.iter().find(|item| item.column.eq_ignore_ascii_case(name)) {
-            return Some((summary.column.clone(), summary.total));
+            if let Some(total) = summary.total {
+                return Some((summary.column.clone(), total));
+            }
         }
         if let Some(row) = facts.preview.first() {
             if let Some(value) = row.get(name).and_then(as_f64) {
@@ -87,7 +89,7 @@ fn metric(facts: &Facts, column: Option<&str>) -> Option<(String, f64)> {
         }
         return None;
     }
-    facts.summaries.first().map(|item| (item.column.clone(), item.total)).or_else(|| {
+    facts.summaries.first().and_then(|item| Some((item.column.clone(), item.total?))).or_else(|| {
         facts.trend.as_ref().map(|trend| (trend.measure.clone(), trend.last.1))
     })
 }
@@ -217,9 +219,9 @@ pub fn sql_alert(result: &QueryResult) -> Alert {
             trend.change,
             computed.row_count
         ),
-        None if !computed.summaries.is_empty() => {
+        None if computed.summaries.first().is_some_and(|first| first.total.is_some()) => {
             let first = &computed.summaries[0];
-            format!("{} totals {} across {} rows.", first.column, first.total, computed.row_count)
+            format!("{} totals {} across {} rows.", first.column, first.total.unwrap_or_default(), computed.row_count)
         }
         None => format!("{} rows.", computed.row_count),
     };

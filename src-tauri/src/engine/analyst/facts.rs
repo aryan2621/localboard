@@ -35,7 +35,9 @@ pub struct Anomaly {
 #[derive(Clone, Serialize)]
 pub struct ColumnSummary {
     pub column: String,
-    pub total: f64,
+    /// Left out when the result was cut short, since a partial sum is not the total.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total: Option<f64>,
     pub min: f64,
     pub max: f64,
     pub average: f64,
@@ -91,7 +93,11 @@ fn column_values(result: &QueryResult, index: usize) -> Vec<f64> {
 }
 
 fn pairs(result: &QueryResult, axis: usize, measure: usize) -> Vec<(Value, f64)> {
-    result.rows.iter().filter_map(|row| Some((row.get(axis)?.clone(), as_f64(row.get(measure)?)?))).collect()
+    result
+        .rows
+        .iter()
+        .filter_map(|row| Some((row.get(axis).filter(|cell| !cell.is_null())?.clone(), as_f64(row.get(measure)?)?)))
+        .collect()
 }
 
 /// The first temporal column and the first numeric column after it, if the result is a time series.
@@ -168,7 +174,7 @@ pub fn compute(result: &QueryResult) -> Facts {
                 let total: f64 = values.iter().sum();
                 Some(ColumnSummary {
                     column: columns[index].name.clone(),
-                    total: round(total),
+                    total: (!result.truncated).then(|| round(total)),
                     min: round(values.iter().copied().fold(f64::INFINITY, f64::min)),
                     max: round(values.iter().copied().fold(f64::NEG_INFINITY, f64::max)),
                     average: round(total / values.len() as f64),
@@ -184,7 +190,9 @@ pub fn compute(result: &QueryResult) -> Facts {
 
     let trend = time_series(result).and_then(|(axis, measure)| {
         let mut points = pairs(result, axis, measure);
-        if points.len() < 2 {
+        // Several rows per period mean several series mixed together; first-to-last would be meaningless.
+        let mut seen = HashSet::new();
+        if points.len() < 2 || !points.iter().all(|(period, _)| seen.insert(period.to_string())) {
             return None;
         }
         points.sort_by(|a, b| a.0.as_str().unwrap_or_default().cmp(b.0.as_str().unwrap_or_default()));
@@ -260,4 +268,36 @@ pub fn sanity_warnings(sql: &str, result: &QueryResult, largest_source_rows: Opt
         }
     }
     warnings
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::engine::query::ResultColumn;
+    use serde_json::json;
+
+    fn result(rows: Vec<Vec<Value>>, truncated: bool) -> QueryResult {
+        let column = |name: &str, kind| ResultColumn { name: name.into(), data_type: String::new(), kind };
+        QueryResult {
+            columns: vec![column("day", ColumnKind::Temporal), column("sales", ColumnKind::Number)],
+            rows,
+            truncated,
+        }
+    }
+
+    #[test]
+    fn truncated_result_has_no_total() {
+        let facts = compute(&result(vec![vec![json!("2024-01-01"), json!(1)], vec![json!("2024-01-02"), json!(2)]], true));
+        assert_eq!(facts.summaries[0].total, None);
+        let facts = compute(&result(vec![vec![json!("2024-01-01"), json!(1)], vec![json!("2024-01-02"), json!(2)]], false));
+        assert_eq!(facts.summaries[0].total, Some(3.0));
+    }
+
+    #[test]
+    fn trend_needs_unique_periods_and_ignores_null_axes() {
+        let dup = result(vec![vec![json!("2024-01-01"), json!(1)], vec![json!("2024-01-01"), json!(2)]], false);
+        assert!(compute(&dup).trend.is_none());
+        let nulls = result(vec![vec![Value::Null, json!(9)], vec![json!("2024-01-01"), json!(1)], vec![json!("2024-01-02"), json!(3)]], false);
+        assert_eq!(compute(&nulls).trend.unwrap().first.1, 1.0);
+    }
 }

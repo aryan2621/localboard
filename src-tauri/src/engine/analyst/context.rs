@@ -64,12 +64,29 @@ fn score(question: &HashSet<String>, candidate: &Candidate) -> u32 {
     total
 }
 
+const DESCRIPTION_CHARS: usize = 200;
+
 fn clip(value: &str) -> String {
+    clip_to(value, SAMPLE_CHARS)
+}
+
+fn clip_to(value: &str, max: usize) -> String {
     let flat: String = value.chars().filter(|c| *c != DATA_OPEN && *c != DATA_CLOSE && !c.is_control()).collect();
-    if flat.chars().count() <= SAMPLE_CHARS {
+    if flat.chars().count() <= max {
         flat
     } else {
-        format!("{}…", flat.chars().take(SAMPLE_CHARS).collect::<String>())
+        format!("{}…", flat.chars().take(max).collect::<String>())
+    }
+}
+
+pub fn fence_text(text: &str) -> String {
+    format!("{DATA_OPEN}{}{DATA_CLOSE}", clip(text))
+}
+
+/// Fences the text at `pointer` (a JSON pointer) of a facts value, if it is a string.
+pub fn fence_at(facts: &mut serde_json::Value, pointer: &str) {
+    if let Some(serde_json::Value::String(text)) = facts.pointer_mut(pointer) {
+        *text = fence_text(text);
     }
 }
 
@@ -77,7 +94,7 @@ fn clip(value: &str) -> String {
 pub fn fence_preview(rows: &mut [serde_json::Map<String, serde_json::Value>]) {
     for cell in rows.iter_mut().flat_map(|row| row.values_mut()) {
         if let serde_json::Value::String(text) = cell {
-            *text = format!("{DATA_OPEN}{}{DATA_CLOSE}", clip(text));
+            *text = fence_text(text);
         }
     }
 }
@@ -89,20 +106,20 @@ fn render(candidates: &[&Candidate], relationships: &[RelationshipRecord], by_id
         let rows = table.row_count.map_or_else(|| "unknown rows".to_owned(), |count| format!("{count} rows"));
         let _ = write!(out, "TABLE \"{}\" ({rows})", table.relation);
         if !table.description.is_empty() {
-            let _ = write!(out, " -- {}", table.description);
+            let _ = write!(out, " -- {DATA_OPEN}{}{DATA_CLOSE}", clip_to(&table.description, DESCRIPTION_CHARS));
         }
         out.push('\n');
         for column in candidate.columns.iter().take(MAX_COLUMNS) {
             let _ = write!(out, "  \"{}\" {}", column.name, column.data_type);
             if !column.description.is_empty() {
-                let _ = write!(out, " -- {}", column.description);
+                let _ = write!(out, " -- {DATA_OPEN}{}{DATA_CLOSE}", clip_to(&column.description, DESCRIPTION_CHARS));
             }
             if let Some(profile) = &column.profile {
                 let samples: Vec<String> = profile
                     .sample_values
                     .iter()
                     .take(SAMPLE_VALUES)
-                    .map(|value| format!("{DATA_OPEN}{}{DATA_CLOSE}", clip(value)))
+                    .map(|value| fence_text(value))
                     .collect();
                 if !samples.is_empty() {
                     let _ = write!(out, " e.g. {}", samples.join(", "));

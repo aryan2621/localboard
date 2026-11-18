@@ -176,9 +176,9 @@ fn skipped_partial(result: &QueryResult) -> bool {
 /// (start, value) for the previous and current periods, if both have data.
 fn periods(result: &QueryResult) -> Option<((Value, f64), (Value, f64))> {
     let find = |label: &str| {
-        result.rows.iter().find(|row| row.first().and_then(Value::as_str) == Some(label)).map(|row| {
-            (row.get(1).cloned().unwrap_or(Value::Null), row.get(2).and_then(as_f64).unwrap_or(0.0))
-        })
+        let row = result.rows.iter().find(|row| row.first().and_then(Value::as_str) == Some(label))?;
+        // A NULL aggregate (no data, or an all-NULL measure) is unknown, not zero.
+        Some((row.get(1).cloned().unwrap_or(Value::Null), row.get(2).and_then(as_f64)?))
     };
     Some((find("previous")?, find("current")?))
 }
@@ -235,8 +235,11 @@ impl Run {
                     }
                 };
                 for row in &result.rows {
-                    let now = row.get(1).and_then(as_f64).unwrap_or(0.0);
-                    let before = row.get(2).and_then(as_f64).unwrap_or(0.0);
+                    // For sum and count a missing side means no rows (zero); for an average it is unknown.
+                    let missing = if plan.aggregate == Aggregate::Avg { None } else { Some(0.0) };
+                    let (Some(now), Some(before)) = (row.get(1).and_then(as_f64).or(missing), row.get(2).and_then(as_f64).or(missing)) else {
+                        continue;
+                    };
                     let change = now - before;
                     if biggest.as_ref().is_none_or(|(size, _)| change.abs() > *size) {
                         biggest = Some((change.abs(), record.id.clone()));
@@ -307,6 +310,10 @@ impl Run {
         });
         self.answer.drivers = drivers;
 
+        let mut drivers_json = serde_json::to_value(&self.answer.drivers).unwrap_or(Value::Null);
+        for index in 0..self.answer.drivers.len() {
+            super::context::fence_at(&mut drivers_json, &format!("/{index}/segment"));
+        }
         let facts = json!({
             "metric": plan.metric_label(),
             "period": plan.unit(),
@@ -316,7 +323,7 @@ impl Run {
             "current": round(current),
             "change": round(total_change),
             "change_pct": (previous != 0.0).then(|| round(100.0 * total_change / previous.abs())),
-            "biggest_drivers": self.answer.drivers,
+            "biggest_drivers": drivers_json,
             "assumptions": self.answer.assumptions,
             "warnings": self.answer.warnings,
         });

@@ -11,7 +11,14 @@ struct Found {
     percent: bool,
     plain_int: bool,
     dated: bool,
+    /// Printed as a year: after a month name or a word like "in"/"since"/"year".
+    year_context: bool,
 }
+
+const YEAR_WORDS: [&str; 24] = [
+    "in", "since", "year", "fy", "by", "during", "until", "through", "of", "january", "february", "march", "april", "may", "june",
+    "july", "august", "september", "october", "november", "december", "sept", "from", "to",
+];
 
 fn scan(text: &str) -> Vec<Found> {
     let chars: Vec<char> = text.chars().collect();
@@ -56,6 +63,8 @@ fn scan(text: &str) -> Vec<Found> {
         let after = chars.get(end).copied().unwrap_or(' ');
         let dated = (matches!(before, '-' | '/') && start > 1 && chars[start - 2].is_ascii_digit())
             || (matches!(after, '-' | '/' | ':') && chars.get(end + 1).is_some_and(char::is_ascii_digit));
+        let previous_word: String = chars[..start].iter().rev().skip_while(|c| c.is_whitespace()).take_while(|c| c.is_alphabetic()).collect::<Vec<_>>().into_iter().rev().collect::<String>().to_lowercase();
+        let year_context = YEAR_WORDS.contains(&previous_word.as_str());
         found.push(Found {
             raw: chars[start..end + suffix_len.min(chars.len() - end)].iter().collect(),
             value,
@@ -63,6 +72,7 @@ fn scan(text: &str) -> Vec<Found> {
             percent,
             plain_int: decimals == 0 && multiplier == 1.0 && !percent && !had_separator,
             dated,
+            year_context,
         });
     }
     found
@@ -84,20 +94,20 @@ fn traced(found: &Found, known: &[f64]) -> bool {
     known.iter().any(|fact| {
         let fact = fact.abs();
         (target - fact).abs() <= slack
-            || (target - fact * 100.0).abs() <= slack
+            || (found.percent && (target - fact * 100.0).abs() <= slack)
             || (found.percent && (target / 100.0 - fact).abs() <= slack / 100.0)
     })
 }
 
 /// Numbers in `text` that appear in neither `facts` nor the user's `question`. Years, dates and small
-/// whole numbers (10 or less) are ignored, so the check only fires on figures that look computed.
+/// whole numbers (10 or less) are ignored (years only after a year-like word), so the check only fires on figures that look computed.
 pub fn untraced(text: &str, facts: &Value, question: &str) -> Vec<String> {
     let mut known = Vec::new();
     collect(facts, &mut known);
     known.extend(scan(question).into_iter().map(|found| found.value));
     let mut missing: Vec<String> = Vec::new();
     for found in scan(text) {
-        if found.dated || (found.plain_int && (found.value <= 10.0 || (1900.0..=2100.0).contains(&found.value))) {
+        if found.dated || (found.plain_int && (found.value <= 10.0 || (found.year_context && (1900.0..=2100.0).contains(&found.value)))) {
             continue;
         }
         if !traced(&found, &known) && !missing.contains(&found.raw) {
@@ -105,4 +115,27 @@ pub fn untraced(text: &str, facts: &Value, question: &str) -> Vec<String> {
         }
     }
     missing
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn years_skip_only_in_year_context() {
+        assert!(untraced("Sales peaked in 2023.", &json!({}), "").is_empty());
+        assert_eq!(untraced("There were 2023 orders.", &json!({}), ""), vec!["2023"]);
+    }
+
+    #[test]
+    fn times_100_only_for_percents() {
+        assert!(untraced("Growth was 12%.", &json!({"g": 0.12}), "").is_empty());
+        assert_eq!(untraced("Total was 1200.", &json!({"g": 12}), ""), vec!["1200"]);
+    }
+
+    #[test]
+    fn rounding_and_suffixes_trace() {
+        assert!(untraced("About 1.2M units.", &json!({"n": 1_204_000}), "").is_empty());
+    }
 }

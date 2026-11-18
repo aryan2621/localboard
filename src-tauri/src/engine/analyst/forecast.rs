@@ -58,7 +58,8 @@ fn series(result: &QueryResult) -> Result<Series, String> {
 
 /// Periods are indexed by their real offset from the first one (not row position), so gaps in the
 /// history don't distort the trend. The period step and season length come from the median gap
-/// (day → weekly season, week → yearly, month → yearly, quarter → yearly, year → none).
+/// (day → weekly season, week → yearly, month → yearly, quarter → yearly, year → none). Sub-daily and
+/// 9-27 day cadences have no clean step, so they yield no projected rows.
 fn sql(history: &str, series: &Series, periods: u32) -> String {
     format!(
         "WITH lb_history AS ({history}), \
@@ -67,6 +68,8 @@ fn sql(history: &str, series: &Series, periods: u32) -> String {
          lb_gaps AS (SELECT lb_period, lb_value, min(lb_period) OVER () AS lb_first, \
            date_diff('day', lag(lb_period) OVER (ORDER BY lb_period), lb_period) AS lb_gap FROM lb_points), \
          lb_step AS (SELECT median(lb_gap) AS lb_median_gap, \
+           coalesce(median(lb_gap) >= 1 AND NOT (median(lb_gap) > 8 AND median(lb_gap) < 28), false) AS lb_supported, \
+           count(*) AS lb_n, \
            CASE WHEN median(lb_gap) <= 1 THEN 7 WHEN median(lb_gap) <= 8 THEN 52 WHEN median(lb_gap) <= 31 THEN 12 \
              WHEN median(lb_gap) <= 92 THEN 4 ELSE 0 END AS lb_season, \
            CASE WHEN median(lb_gap) <= 1 THEN 1 WHEN median(lb_gap) <= 8 THEN 7 ELSE 0 END AS lb_step_days, \
@@ -78,9 +81,9 @@ fn sql(history: &str, series: &Series, periods: u32) -> String {
            FROM lb_gaps g, lb_step s), \
          lb_fit AS (SELECT regr_slope(lb_value, lb_t) AS lb_slope, regr_intercept(lb_value, lb_t) AS lb_intercept, \
            max(lb_t) AS lb_last_t, max(lb_period) AS lb_last_period FROM lb_indexed), \
-         lb_shape AS (SELECT f.*, s.lb_season, s.lb_step_days, s.lb_step_months FROM lb_fit f, lb_step s), \
-         lb_method AS (SELECT *, lb_season > 0 AND lb_last_t + 1 >= 2 * lb_season AS lb_seasonal FROM lb_shape), \
-         lb_future AS (SELECT unnest(generate_series(1, {periods})) AS lb_k, * FROM lb_method) \
+         lb_shape AS (SELECT f.*, s.lb_season, s.lb_step_days, s.lb_step_months, s.lb_n, s.lb_supported FROM lb_fit f, lb_step s), \
+         lb_method AS (SELECT *, lb_season > 0 AND lb_n >= 2 * lb_season AS lb_seasonal FROM lb_shape), \
+         lb_future AS (SELECT unnest(generate_series(1, {periods})) AS lb_k, * FROM lb_method WHERE lb_supported) \
          SELECT h.lb_period AS period, h.lb_value AS actual, \
            CASE WHEN h.lb_t = m.lb_last_t THEN h.lb_value END AS {forecast}, CAST(NULL AS VARCHAR) AS method \
          FROM lb_indexed h, lb_method m \
@@ -89,7 +92,7 @@ fn sql(history: &str, series: &Series, periods: u32) -> String {
            NULL, \
            CASE WHEN f.lb_seasonal AND s.lb_value IS NOT NULL THEN s.lb_value + f.lb_slope * f.lb_season * ceil(f.lb_k / f.lb_season) \
              ELSE f.lb_intercept + f.lb_slope * (f.lb_last_t + f.lb_k) END, \
-           CASE WHEN f.lb_seasonal THEN 'seasonal' ELSE 'linear' END \
+           CASE WHEN f.lb_seasonal AND s.lb_value IS NOT NULL THEN 'seasonal' ELSE 'linear' END \
          FROM lb_future f LEFT JOIN lb_indexed s \
            ON f.lb_seasonal AND s.lb_t = f.lb_last_t + f.lb_k - f.lb_season * CAST(ceil(f.lb_k / f.lb_season) AS BIGINT) \
          ORDER BY 1",
@@ -103,8 +106,10 @@ fn projected_rows(result: &QueryResult) -> impl Iterator<Item = &Vec<Value>> {
     result.rows.iter().filter(|row| row.get(METHOD).is_some_and(|method| !method.is_null()))
 }
 
+/// Seasonal only when every projected row used last season's value; one fallback row makes it a mix.
 fn method_of(result: &QueryResult) -> &str {
-    projected_rows(result).next().and_then(|row| row.get(METHOD)).and_then(Value::as_str).unwrap_or("linear")
+    let mut methods = projected_rows(result).filter_map(|row| row.get(METHOD).and_then(Value::as_str));
+    if methods.all(|method| method == "seasonal") && projected_rows(result).next().is_some() { "seasonal" } else { "linear" }
 }
 
 /// The projected values, for the narration.
@@ -114,6 +119,7 @@ pub fn summary(result: &QueryResult) -> Value {
             json!({
                 "period": row.get(PERIOD).cloned().unwrap_or(Value::Null),
                 "forecast": row.get(FORECAST).and_then(as_f64).map(round),
+                "method": row.get(METHOD).cloned().unwrap_or(Value::Null),
             })
         })
         .collect();
@@ -141,6 +147,12 @@ impl Run {
         };
         let periods = if periods == 0 { DEFAULT_PERIODS } else { periods.min(MAX_PERIODS) };
         match self.execute_once(QueryPurpose::Answer, &sql(&history.sql, &series, periods)).await? {
+            Ok((_, projected)) if projected_rows(&projected).next().is_none() => {
+                let reason = "A forecast needs daily, weekly, monthly, quarterly or yearly data.".to_owned();
+                self.finish_step(step, StepStatus::Skipped, Some(reason.clone()));
+                self.answer.warnings.push(reason);
+                Ok(None)
+            }
             Ok((record, projected)) => {
                 let method = match method_of(&projected) {
                     "seasonal" => "the same period one season earlier plus the overall trend",
@@ -156,5 +168,42 @@ impl Run {
                 Ok(None)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// (projected rows, distinct methods) for a history of `count` points `step` apart.
+    fn run(count: u32, step: &str) -> (i64, String) {
+        let conn = duckdb::Connection::open_in_memory().unwrap();
+        let history = format!("SELECT TIMESTAMP '2020-01-01' + i * INTERVAL '{step}' AS d, CAST(i AS DOUBLE) AS v FROM range({count}) t(i)");
+        let wrapped = sql(&history, &Series { period: "d".into(), value: "v".into() }, 3);
+        conn.query_row(
+            &format!("SELECT count(*), coalesce(string_agg(DISTINCT method, ','), '') FROM ({wrapped}) WHERE method IS NOT NULL"),
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?)),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn unsupported_cadences_project_nothing() {
+        assert_eq!(run(10, "1 hour").0, 0);
+        assert_eq!(run(10, "14 days").0, 0);
+        assert_eq!(run(10, "10 days").0, 0);
+    }
+
+    #[test]
+    fn supported_cadences_project() {
+        assert_eq!(run(10, "1 day"), (3, "linear".into()));
+        assert_eq!(run(10, "1 month").0, 3);
+    }
+
+    #[test]
+    fn seasonality_needs_enough_points() {
+        assert_eq!(run(30, "1 day").1, "seasonal");
+        assert_eq!(run(13, "1 day").1, "linear");
     }
 }
