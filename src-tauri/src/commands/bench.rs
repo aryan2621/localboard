@@ -238,10 +238,17 @@ pub async fn bench_export(state: State<'_, AppState>, sql: String, params: Value
     blocking(move || {
         let conn = workspace.query_connection_unmasked()?;
         let result = query::run(&conn, &validated, &bound, &CancelToken::default()).map_err(|error| AppError::invalid(error.to_string()))?;
+        if result.truncated && kind != "json" {
+            return Err(AppError::invalid(format!("The result has more than {} rows. Add a LIMIT or filter before exporting.", query::MAX_ROWS)));
+        }
         match kind.as_str() {
             "csv" => write_csv(&target, &result),
             "json" => std::fs::write(&target, serde_json::to_vec_pretty(&result)?).map_err(AppError::from),
             "xlsx" => write_xlsx(&target, &result),
+            // COPY writes straight from DuckDB and would skip the result-boundary masks.
+            "parquet" if crate::engine::mask::applies(&validated.relations) => {
+                Err(AppError::invalid("Parquet export is unavailable for tables with masked columns. Use CSV, JSON or XLSX."))
+            }
             "parquet" => write_parquet(&conn, &validated, &bound, &target),
             _ => Err(AppError::invalid("Export as csv, json, xlsx or parquet.")),
         }
@@ -342,6 +349,14 @@ fn write_csv(path: &PathBuf, result: &QueryResult) -> AppResult<()> {
 }
 
 fn csv_cell(value: &str) -> String {
+    // Spreadsheet apps run cells starting with these as formulas; a leading quote makes them text.
+    let guarded;
+    let value = if value.starts_with(['=', '+', '-', '@', '\t', '\r']) {
+        guarded = format!("'{value}");
+        guarded.as_str()
+    } else {
+        value
+    };
     if value.contains([',', '"', '\n']) { format!("\"{}\"", value.replace('"', "\"\"")) } else { value.to_owned() }
 }
 

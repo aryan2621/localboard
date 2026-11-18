@@ -112,10 +112,15 @@ pub fn run(
     let bound: HashMap<String, DuckValue> =
         query.parameters.iter().filter_map(|name| params.get(name).map(|value| (name.clone(), value.clone()))).collect();
     let rendered = duck_placeholders(&query.sql);
-    let sql = if query.has_limit { rendered } else { format!("{rendered} LIMIT {}", MAX_ROWS + 1) };
+    // EXPLAIN cannot be a subquery; everything else is capped here rather than trusting its own LIMIT.
+    let sql = if rendered.starts_with("EXPLAIN") { rendered } else { format!("SELECT * FROM ({rendered}) LIMIT {}", MAX_ROWS + 1) };
 
     let handle = conn.interrupt_handle();
     cancel.track(Some(handle.clone()));
+    if cancel.is_cancelled() {
+        cancel.track(None);
+        return Err(QueryError::Cancelled);
+    }
     let timed_out = Arc::new(AtomicBool::new(false));
     let (finished, wait) = mpsc::channel::<()>();
     let timer = {

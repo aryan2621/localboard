@@ -49,6 +49,13 @@ impl AccessPolicy {
                 continue;
             }
             let name = mask.column_name.to_lowercase();
+            let bare_count = uses.iter().filter(|item| item.name == name && item.bare_output).count();
+            if bare_count > 1 || uses.iter().any(|item| item.name == crate::sql_guard::ANY_COLUMN) {
+                return Err(AppError::invalid(format!(
+                    "{}.{} is masked. Select it once, by name, and do not refer to whole rows or sort/group by position.",
+                    mask.relation, mask.column_name
+                )));
+            }
             if uses.iter().any(|item| item.name == name && !item.bare_output) {
                 return Err(AppError::invalid(format!(
                     "{}.{} is masked. You can select it as is, but not filter, sort, rename or compute with it.",
@@ -74,6 +81,13 @@ pub fn authorize_query(query: &crate::sql_guard::ValidatedQuery) -> AppResult<()
     ACTIVE.with(|slot| {
         let policy = slot.borrow();
         policy.check_columns(&query.relations, &query.columns)
+    })
+}
+
+/// Whether any active mask covers a relation the query reads.
+pub fn applies(relations: &[String]) -> bool {
+    ACTIVE.with(|slot| {
+        slot.borrow().query_masks().iter().any(|mask| relations.iter().any(|relation| relation.eq_ignore_ascii_case(&mask.relation)))
     })
 }
 
@@ -130,4 +144,43 @@ fn mask_email(value: &str) -> String {
     };
     let first = user.chars().next().unwrap_or('*');
     format!("{first}***@{domain}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sql_guard::{validate, GuardPolicy};
+
+    fn check(sql: &str) -> AppResult<()> {
+        let policy = AccessPolicy {
+            masks: vec![ColumnMask { id: "m".into(), relation: "users".into(), column_name: "email".into(), strategy: MaskStrategy::Redact }],
+        };
+        let guard = GuardPolicy::new(["users".to_string()]);
+        match validate(sql, &guard) {
+            Ok(query) => policy.check_columns(&query.relations, &query.columns),
+            Err(error) => Err(AppError::invalid(error.to_string())),
+        }
+    }
+
+    #[test]
+    fn allows_plain_masked_select() {
+        assert!(check("SELECT email, name FROM users").is_ok());
+        assert!(check("SELECT * FROM users").is_ok());
+    }
+
+    #[test]
+    fn rejects_masking_bypasses() {
+        for sql in [
+            "SELECT COLUMNS('em.*') FROM users",
+            "SELECT email, email FROM users",
+            "SELECT u FROM users u",
+            "SELECT users FROM users",
+            "SELECT name, email FROM users ORDER BY 2",
+            "SELECT email, count(*) FROM users GROUP BY 1",
+            "SELECT email FROM users ORDER BY ALL",
+            "SELECT email AS e FROM users",
+        ] {
+            assert!(check(sql).is_err(), "{sql} should be rejected");
+        }
+    }
 }

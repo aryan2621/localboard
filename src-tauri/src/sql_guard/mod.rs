@@ -5,7 +5,7 @@
 use std::collections::{BTreeSet, HashMap};
 use std::ops::ControlFlow;
 
-use sqlparser::ast::{Expr, ObjectName, Query, Select, SetExpr, Statement, TableFactor, Value, Visit, Visitor};
+use sqlparser::ast::{Expr, GroupByExpr, ObjectName, OrderByKind, Query, Select, SetExpr, Statement, TableFactor, Value, Visit, Visitor};
 use sqlparser::dialect::DuckDbDialect;
 use sqlparser::parser::Parser;
 
@@ -56,17 +56,71 @@ pub struct ColumnUse {
     pub bare_output: bool,
 }
 
+/// Name of the synthetic use recorded for references that can reach any column (whole-row alias,
+/// positional ORDER BY / GROUP BY, ALL), which masking cannot follow.
+pub const ANY_COLUMN: &str = "*";
+
 struct ColumnCollector {
     bare: std::collections::HashSet<*const Expr>,
     uses: Vec<ColumnUse>,
+    /// Table names and aliases in scope; a bare one used as a value is the whole row.
+    tables: std::collections::HashSet<String>,
+    /// Single-part identifiers used as values.
+    idents: Vec<String>,
+}
+
+impl ColumnCollector {
+    fn any_column(&mut self) {
+        self.uses.push(ColumnUse { name: ANY_COLUMN.into(), bare_output: false });
+    }
+}
+
+fn is_number(expr: &Expr) -> bool {
+    matches!(expr, Expr::Value(value) if matches!(value.value, Value::Number(..)))
 }
 
 impl Visitor for ColumnCollector {
     type Break = ();
 
+    fn pre_visit_table_factor(&mut self, factor: &TableFactor) -> ControlFlow<()> {
+        let alias = match factor {
+            TableFactor::Table { name, alias, .. } => {
+                self.tables.extend(single_part(name));
+                alias
+            }
+            TableFactor::Derived { alias, .. } | TableFactor::NestedJoin { alias, .. } | TableFactor::UNNEST { alias, .. } => alias,
+            _ => &None,
+        };
+        if let Some(alias) = alias {
+            self.tables.insert(alias.name.value.to_lowercase());
+        }
+        ControlFlow::Continue(())
+    }
+
+    fn pre_visit_query(&mut self, query: &Query) -> ControlFlow<()> {
+        match query.order_by.as_ref().map(|order| &order.kind) {
+            Some(OrderByKind::All(_)) => self.any_column(),
+            Some(OrderByKind::Expressions(items)) if items.iter().any(|item| is_number(&item.expr)) => self.any_column(),
+            _ => {}
+        }
+        ControlFlow::Continue(())
+    }
+
+    fn pre_visit_select(&mut self, select: &Select) -> ControlFlow<()> {
+        match &select.group_by {
+            GroupByExpr::All(_) => self.any_column(),
+            GroupByExpr::Expressions(items, _) if items.iter().any(is_number) => self.any_column(),
+            _ => {}
+        }
+        ControlFlow::Continue(())
+    }
+
     fn pre_visit_expr(&mut self, expr: &Expr) -> ControlFlow<()> {
         let name = match expr {
-            Expr::Identifier(ident) => Some(ident.value.to_lowercase()),
+            Expr::Identifier(ident) => {
+                self.idents.push(ident.value.to_lowercase());
+                Some(ident.value.to_lowercase())
+            }
             Expr::CompoundIdentifier(parts) => parts.last().map(|ident| ident.value.to_lowercase()),
             _ => None,
         };
@@ -92,8 +146,13 @@ fn collect_columns(statement: &Statement) -> Vec<ColumnUse> {
             }
         }
     }
-    let mut collector = ColumnCollector { bare, uses: Vec::new() };
+    let mut collector = ColumnCollector { bare, uses: Vec::new(), tables: Default::default(), idents: Vec::new() };
     let _ = statement.visit(&mut collector);
+    // A bare table name or alias used as a value is the whole row (a struct holding every column).
+    let whole_row = collector.idents.iter().any(|name| collector.tables.contains(name));
+    if whole_row {
+        collector.any_column();
+    }
     collector.uses
 }
 
@@ -315,7 +374,7 @@ const ALLOWED_FUNCTIONS: &[&str] = &[
     "covar_samp", "regr_slope", "regr_intercept", "regr_r2", "regr_count", "product", "fsum", "sumkahan", "histogram",
     "entropy", "kurtosis", "skewness", "bit_and", "bit_or", "bit_xor", "percentile_cont", "percentile_disc", "mad",
     "arbitrary", "count_star", "reservoir_quantile", "approx_top_k", "regr_avgx", "regr_avgy", "regr_sxx", "regr_syy",
-    "regr_sxy", "columns",
+    "regr_sxy",
     // Window
     "row_number", "rank", "dense_rank", "percent_rank", "cume_dist", "ntile", "lag", "lead", "first_value",
     "last_value", "nth_value",
