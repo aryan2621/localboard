@@ -166,7 +166,7 @@ function Workspace() {
           {page === 'audit' && <AuditPage />}
         </Suspense>
       </main>
-      {dragging && <div className="pointer-events-none fixed inset-2 z-30 rounded-xl border-2 border-brand bg-brand/5" />}
+      {dragging && <div className="pointer-events-none fixed inset-2 z-30 rounded-lg border-2 border-brand bg-brand/5" />}
       <Suspense fallback={null}>
         <SettingsModal />
         <CommandPalette />

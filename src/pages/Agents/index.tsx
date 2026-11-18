@@ -117,7 +117,7 @@ export function AgentsPage() {
                   key={agent.id}
                   type="button"
                   onClick={() => setSelectedId(agent.id)}
-                  className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                 >
                   <span className="flex items-center gap-3">
                     <Avatar name={agent.name} />
@@ -134,7 +134,7 @@ export function AgentsPage() {
               ))}
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-surface">
+            <div className="overflow-hidden rounded-lg border border-border bg-surface">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -305,7 +305,7 @@ function AnalystDetail({ agent, canDelete, onDeleted }: { agent: Agent; canDelet
 
 function TabCount({ n }: { n: number }) {
   if (!n) return null
-  return <span className="ml-1.5 rounded-full bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground">{n}</span>
+  return <span className="ml-1.5 rounded-sm bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground">{n}</span>
 }
 
 function McpTools({ agentId }: { agentId: string }) {
@@ -345,7 +345,7 @@ function McpTools({ agentId }: { agentId: string }) {
       {tools.length === 0 ? (
         <EmptyState title="No tools" description="This server exposes no tools." />
       ) : (
-        <div className="divide-y divide-border rounded-xl border border-border bg-surface">
+        <div className="divide-y divide-border rounded-lg border border-border bg-surface">
           {toolPg.pageItems.map((tool) => {
             const rule = rules.find((item) => item.serverId === selected && item.toolName === tool.name)
             const allowed = rule ? rule.allow : tool.readOnly
@@ -570,7 +570,7 @@ function Rules({ agentId }: { agentId: string }) {
       {rules.length === 0 ? (
         <EmptyState title="No rules yet" description="Teach the analyst a definition, like how revenue is counted." action={<Button onClick={() => setDialog({ rule: null })}>New rule</Button>} />
       ) : (
-        <div className="divide-y divide-border rounded-xl border border-border bg-surface">
+        <div className="divide-y divide-border rounded-lg border border-border bg-surface">
           {rulePg.pageItems.map((rule) => (
             <div key={rule.id} className="group flex items-start gap-3 px-4 py-3">
               <IconTile icon={ListChecks} size="sm" tone="muted" />
@@ -647,7 +647,7 @@ function VersionRow({ version, rule, onRollback, busy }: { version: RuleVersion;
   const removed = version.snapshot.body.split('\n').filter((line) => !rule.body.split('\n').includes(line))
   const added = rule.body.split('\n').filter((line) => !version.snapshot.body.split('\n').includes(line))
   return (
-    <li className="rounded-xl border border-border bg-surface px-4 py-3">
+    <li className="rounded-lg border border-border bg-surface px-4 py-3">
       <div className="flex items-center justify-between gap-2">
         <span className="text-app-caption text-muted-foreground">{relativeTime(version.createdAt)}</span>
         {same ? (
@@ -721,7 +721,7 @@ function Examples({ agentId }: { agentId: string }) {
       ) : (
         <div className="grid gap-3 xl:grid-cols-2 [&>*]:min-w-0">
           {examplePg.pageItems.map((example) => (
-            <div key={example.id} className="group flex flex-col rounded-xl border border-border bg-surface">
+            <div key={example.id} className="group flex flex-col rounded-lg border border-border bg-surface">
               <div className="flex items-start gap-2 px-4 pt-3">
                 <p className="min-w-0 flex-1 break-words text-app-label font-medium text-foreground">{example.question}</p>
                 {example.origin === 'thumbs_up' && <Badge variant="brand">From a liked answer</Badge>}
@@ -818,7 +818,7 @@ function Memories({ agentId }: { agentId: string }) {
               {group.title} · {items.length}
               <span className="ml-2 font-normal">{group.description}</span>
             </p>
-            <div className={`divide-y divide-border rounded-xl border bg-surface ${group.status === 'proposed' ? 'border-warning/40' : 'border-border'}`}>
+            <div className={`divide-y divide-border rounded-lg border bg-surface ${group.status === 'proposed' ? 'border-warning/40' : 'border-border'}`}>
               {items.map((memory) => (
                 <div key={memory.id} className="group flex items-center gap-3 px-4 py-3">
                   <span className={`size-2 shrink-0 rounded-full ${memory.status === 'active' ? 'bg-success' : memory.status === 'proposed' ? 'bg-warning' : 'bg-muted-foreground/40'}`} aria-hidden />
@@ -918,7 +918,7 @@ function Knowledge({ agentId }: { agentId: string }) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
           {files.map((file) => (
-            <div key={file.id} className="group flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3">
+            <div key={file.id} className="group flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
               <IconTile icon={FileText} tone="muted" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-app-label font-medium text-foreground" title={file.name}>{file.name}</p>

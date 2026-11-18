@@ -173,7 +173,7 @@ function Preview({ id }: { id: string }) {
           {data.messages.map((message) =>
             message.role === 'user' ? (
               <li key={message.id} className="flex justify-end">
-                <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-accent px-4 py-2.5 text-app-label text-foreground">{message.content}</p>
+                <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-lg bg-accent px-4 py-2.5 text-app-label text-foreground">{message.content}</p>
               </li>
             ) : (
               <li key={message.id} className="space-y-1">
@@ -324,7 +324,7 @@ export function ChatHistoryPage() {
         <p className="py-10 text-center text-app-label text-muted-foreground">No chats match. Try a different search.</p>
       ) : (
         <div className="space-y-3">
-          <div className="overflow-hidden rounded-xl border border-border bg-surface">
+          <div className="overflow-hidden rounded-lg border border-border bg-surface">
             <Table>
               <TableHeader>
                 <TableRow>

@@ -30,7 +30,7 @@ export function SettingsSection({
 }) {
   if (collapsible && title) {
     return (
-      <details open={defaultOpen} className={cn('group rounded-xl border border-border bg-surface/40', className)}>
+      <details open={defaultOpen} className={cn('group rounded-lg border border-border bg-surface/40', className)}>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
           <span className="min-w-0">
             <span className="block text-app-label font-semibold text-foreground">{title}</span>
@@ -61,7 +61,7 @@ export function SettingsAction({ children, className }: { children: ReactNode; c
 }
 
 export function SettingsCard({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('rounded-xl border border-border bg-surface divide-y divide-border', className)}>{children}</div>
+  return <div className={cn('rounded-lg border border-border bg-surface divide-y divide-border', className)}>{children}</div>
 }
 
 export function SettingsRow({
@@ -76,7 +76,7 @@ export function SettingsRow({
   className?: string
 }) {
   return (
-    <div className={cn('flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5 first:rounded-t-xl last:rounded-b-xl', className)}>
+    <div className={cn('flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5 first:rounded-t-lg last:rounded-b-xl', className)}>
       <div className="min-w-[10rem] flex-1">
         <p className="break-words text-app-label text-foreground">{label}</p>
         {description && <p className="mt-0.5 break-words text-app-caption leading-relaxed text-muted-foreground">{description}</p>}
@@ -259,10 +259,10 @@ export function PageLoader({ label = 'Loading' }: { label?: string }) {
       <Skeleton className="h-8 w-1/3" />
       <Skeleton className="h-4 w-2/3" />
       <div className="grid gap-3 pt-2 sm:grid-cols-2 [&>*]:min-w-0">
-        <Skeleton className="h-20 rounded-xl" />
-        <Skeleton className="h-20 rounded-xl" />
-        <Skeleton className="h-20 rounded-xl" />
-        <Skeleton className="h-20 rounded-xl" />
+        <Skeleton className="h-20 rounded-lg" />
+        <Skeleton className="h-20 rounded-lg" />
+        <Skeleton className="h-20 rounded-lg" />
+        <Skeleton className="h-20 rounded-lg" />
       </div>
       <span className="sr-only">{label}</span>
     </div>

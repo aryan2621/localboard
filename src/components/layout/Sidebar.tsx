@@ -183,7 +183,7 @@ function WorkspaceMenu({ compact = false }: { compact?: boolean }) {
               compact ? 'w-11 justify-center' : 'w-full px-2',
             )}
           >
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-app-caption font-semibold text-brand-foreground">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-app-caption font-semibold text-foreground">
               {(active?.name ?? '?').charAt(0).toUpperCase()}
             </span>
             {!compact && (

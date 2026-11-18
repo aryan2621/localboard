@@ -135,7 +135,7 @@ function SqlPanel({ queries, primaryId }: { queries: QueryRecord[]; primaryId: s
       {queries.map((query) => (
         <div
           key={query.id}
-          className={cn('rounded-xl border bg-surface', query.id === primaryId ? 'border-brand/40' : 'border-border')}
+          className={cn('rounded-lg border bg-surface', query.id === primaryId ? 'border-brand/40' : 'border-border')}
         >
           <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2 text-app-caption text-muted-foreground">
             <span className="text-foreground">
@@ -184,7 +184,7 @@ function MemoryBanner({ proposal, agentId }: { proposal: { id: string; body: str
   })
   if (memories?.find((memory) => memory.id === proposal.id)?.status !== 'proposed') return null
   return (
-    <div className="rounded-xl border border-border bg-card px-3 py-2.5">
+    <div className="rounded-lg border border-border bg-card px-3 py-2.5">
       <p className="text-app-caption text-muted-foreground">{'Remember this for future questions?'}</p>
       <p className="mt-1 break-words text-app-label text-foreground">{proposal.body}</p>
       <div className="mt-2 flex flex-wrap gap-2">
@@ -209,7 +209,7 @@ function LineagePanel({ message, queries }: { message: MessageRecord; queries: Q
   const primary = queries.find((query) => query.id === answer?.primaryQueryId) ?? queries.find((query) => query.status === 'ok')
   const columns = primary?.result?.columns ?? []
   return (
-    <div className="space-y-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-app-caption">
+    <div className="space-y-3 rounded-lg border border-border bg-surface px-3 py-2.5 text-app-caption">
       <dl className="flex flex-wrap gap-x-6 gap-y-1">
         <div className="flex gap-1.5">
           <dt className="text-muted-foreground">{'Model'}</dt>

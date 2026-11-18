@@ -82,7 +82,7 @@ export function DatasitesPage() {
                 <TabsTrigger key={item.value} value={item.value} title={EXPLAINER[item.value]} className="group gap-2">
                   <Icon size={15} strokeWidth={iconStroke} />
                   {item.label}
-                  <span className="rounded-full bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground group-data-[state=active]:bg-brand/15 group-data-[state=active]:text-brand">
+                  <span className="rounded-sm bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground group-data-[state=active]:bg-brand/15 group-data-[state=active]:text-brand">
                     {counts[item.value] ?? 0}
                   </span>
                 </TabsTrigger>
@@ -156,18 +156,8 @@ function ArtifactTabPanel({
                 key={item.id}
                 type="button"
                 onClick={() => onOpen(item.id)}
-                className="group flex flex-col rounded-xl border border-border bg-surface text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="group flex flex-col rounded-lg border border-border bg-surface text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
-                <span className="flex h-28 flex-col justify-center gap-2 rounded-t-xl border-b border-border bg-muted/40 px-6" aria-hidden>
-                  <span className="h-2.5 w-2/3 rounded-full bg-foreground/15" />
-                  <span className="h-2 w-full rounded-full bg-foreground/10" />
-                  <span className="h-2 w-5/6 rounded-full bg-foreground/10" />
-                  <span className="mt-1 flex items-end gap-1">
-                    {[40, 70, 55, 85].map((height, index) => (
-                      <span key={index} className="w-4 rounded-t-sm bg-chart-2/30 group-hover:bg-chart-2/50" style={{ height: `${height * 0.24}px` }} />
-                    ))}
-                  </span>
-                </span>
                 <span className="flex items-center gap-3 px-4 py-3">
                   <IconTile icon={Icon} size="sm" />
                   <span className="min-w-0 flex-1">
@@ -392,13 +382,9 @@ function DatasiteView({ id }: { id: string }) {
         }
         detail={
           <div className="flex h-full flex-col bg-muted/30 p-4">
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-md">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-md">
               <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-                <span className="flex gap-1" aria-hidden>
-                  <span className="size-2.5 rounded-full bg-border" />
-                  <span className="size-2.5 rounded-full bg-border" />
-                  <span className="size-2.5 rounded-full bg-border" />
-                </span>
+                
                 <span className="min-w-0 flex-1 truncate rounded-md bg-muted px-2 py-0.5 font-mono text-app-caption text-muted-foreground" title={pageUrl}>{pageUrl}</span>
               </div>
               <iframe key={pageUrl} title={page?.title ?? live.data.datasite.name} src={pageUrl} className="min-h-0 w-full flex-1 bg-white" sandbox="allow-scripts" />
@@ -463,9 +449,9 @@ function ReportView({ id }: { id: string }) {
       <div className="flex min-h-0 flex-1">
         <div className="min-w-0 flex-1 bg-muted/30 p-4">
           {preview ? (
-            <iframe title={live.data.report.name} src={preview} className="h-full w-full rounded-xl border border-border bg-white shadow-md" sandbox="allow-scripts" />
+            <iframe title={live.data.report.name} src={preview} className="h-full w-full rounded-lg border border-border bg-white shadow-md" sandbox="allow-scripts" />
           ) : (
-            <div className="mx-auto h-full max-w-3xl space-y-6 overflow-y-auto rounded-xl border border-border bg-card px-5 py-8 shadow-md sm:px-10">
+            <div className="mx-auto h-full max-w-3xl space-y-6 overflow-y-auto rounded-lg border border-border bg-card px-5 py-8 shadow-md sm:px-10">
               {blocks.map((block) => (
                 <section key={block.id} id={`block-${block.id}`} className="space-y-1">
                   <h2 className="text-app-title">{block.title}</h2>
@@ -684,7 +670,7 @@ function DeckView({ id }: { id: string }) {
                   </Hint>
                 </div>
               </div>
-              <div className="flex aspect-video flex-col gap-4 overflow-hidden rounded-xl border border-border bg-card p-10 shadow-md">
+              <div className="flex aspect-video flex-col gap-4 overflow-hidden rounded-lg border border-border bg-card p-10 shadow-md">
                 <h2 className="text-2xl leading-tight text-foreground">{selected.title || 'Untitled'}</h2>
                 {withData.has(selected.id) ? (
                   <div className="flex min-h-0 flex-1 items-end gap-3 border-b border-l border-border px-4 pb-0" aria-label="Chart placeholder">

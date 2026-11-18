@@ -446,7 +446,7 @@ export function AutomationsPage() {
                 key={item.id}
                 type="button"
                 onClick={() => load(item)}
-                className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 <span className="flex items-start gap-3">
                   <IconTile icon={Icon} tone={item.enabled && !item.needsReview ? 'brand' : 'muted'} />
@@ -465,7 +465,7 @@ export function AutomationsPage() {
           })}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="overflow-hidden rounded-lg border border-border bg-surface">
           <Table>
             <TableHeader>
               <TableRow>
@@ -506,7 +506,7 @@ export function AutomationsPage() {
       <p className="mt-2 text-app-label text-muted-foreground">
         Jobs run on a schedule, when a file changes, or on demand, and keep running after you close the window.
       </p>
-      <div className="mt-8 w-full rounded-2xl border border-input bg-surface p-3 text-left shadow-sm">
+      <div className="mt-8 w-full rounded-lg border border-input bg-surface p-3 text-left shadow-sm">
         <Textarea
           value={idea}
           onChange={(event) => setIdea(event.target.value)}
@@ -535,7 +535,7 @@ export function AutomationsPage() {
             key={text}
             type="button"
             onClick={() => setIdea(text)}
-            className="rounded-full border border-border bg-surface px-3 py-1 text-app-caption text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            className="rounded-md border border-border bg-surface px-3 py-1 text-app-caption text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
           >
             {text}
           </button>
@@ -615,7 +615,7 @@ export function AutomationsPage() {
             Setup
           </TabsTrigger>
           <TabsTrigger variant="underline" value="history" disabled={!job}>
-            History {runRows.length > 0 && <span className="ml-1.5 rounded-full bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground">{runRows.length}</span>}
+            History {runRows.length > 0 && <span className="ml-1.5 rounded-sm bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground">{runRows.length}</span>}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="setup" className="space-y-6">
@@ -993,7 +993,7 @@ export function AutomationsPage() {
           <Textarea value={idea} onChange={(event) => setIdea(event.target.value)} rows={4} placeholder="Every Monday, email me revenue by region if it dropped more than 10%" aria-label="Describe the job" />
           <div className="flex flex-wrap gap-2">
             {IDEAS.map((text) => (
-              <button key={text} type="button" onClick={() => setIdea(text)} className="rounded-full border border-border px-3 py-1 text-app-caption text-muted-foreground hover:text-foreground">
+              <button key={text} type="button" onClick={() => setIdea(text)} className="rounded-md border border-border px-3 py-1 text-app-caption text-muted-foreground hover:text-foreground">
                 {text}
               </button>
             ))}

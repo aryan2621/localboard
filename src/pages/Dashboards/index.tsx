@@ -196,9 +196,9 @@ function DashboardGroups({
                   key={item.id}
                   type="button"
                   onClick={() => onOpen(item.id)}
-                  className="group flex flex-col rounded-xl border border-border bg-surface text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="group flex flex-col rounded-lg border border-border bg-surface text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                 >
-                  <span className="flex h-24 items-end gap-1.5 rounded-t-xl border-b border-border bg-muted/40 px-5 pb-4" aria-hidden>
+                  <span className="flex h-24 items-end gap-1.5 rounded-t-lg border-b border-border bg-muted/40 px-5 pb-4" aria-hidden>
                     {[38, 64, 46, 80, 56, 72, 90].map((height, index) => (
                       <span key={index} className="w-full rounded-t-sm bg-chart-1/25 transition-colors duration-fast group-hover:bg-chart-1/45" style={{ height: `${height}%` }} />
                     ))}
@@ -408,7 +408,7 @@ export function DashboardsPage() {
                     key={example}
                     type="button"
                     onClick={() => setPrompt(example)}
-                    className="rounded-full border border-border bg-surface px-3 py-1 text-left text-app-caption text-muted-foreground transition-colors duration-fast hover:text-foreground"
+                    className="rounded-md border border-border bg-surface px-3 py-1 text-left text-app-caption text-muted-foreground transition-colors duration-fast hover:text-foreground"
                   >
                     {example}
                   </button>

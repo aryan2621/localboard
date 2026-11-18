@@ -289,7 +289,7 @@ function useConnectionAction() {
 
 function PendingSources({ paths }: { paths: string[] }) {
   return (
-    <div role="status" aria-live="polite" className="space-y-1.5 rounded-xl border border-border bg-surface px-4 py-3">
+    <div role="status" aria-live="polite" className="space-y-1.5 rounded-lg border border-border bg-surface px-4 py-3">
       <p className="flex items-center gap-2 text-app-label text-foreground">
         <Loader2 size={15} strokeWidth={iconStroke} className="animate-spin text-brand" />
         Reading {paths.length === 1 ? '1 source' : `${paths.length} sources`} and profiling columns…
@@ -421,7 +421,7 @@ function SourceRow({ connection, onExplore, layout = 'card' }: { connection: Con
   }
 
   return (
-    <div className="group flex flex-col rounded-xl border border-border bg-surface transition-colors duration-fast hover:border-foreground/25">
+    <div className="group flex flex-col rounded-lg border border-border bg-surface transition-colors duration-fast hover:border-foreground/25">
       <div className="flex items-start gap-3 px-4 pt-4">
         <IconTile icon={icon} tone={database ? 'brand' : 'muted'} />
         <button
@@ -903,7 +903,7 @@ export function ConnectionsPage() {
                 ))}
               </div>
             ) : (
-              <div className="overflow-hidden rounded-xl border border-border bg-surface">
+              <div className="overflow-hidden rounded-lg border border-border bg-surface">
                 <Table>
                   <TableHeader>
                     <TableRow>

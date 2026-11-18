@@ -428,7 +428,7 @@ function TableOverview({ tables }: { tables: TableRecord[] }) {
           ))}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="overflow-hidden rounded-lg border border-border bg-surface">
           <Table>
             <TableHeader>
               <TableRow>

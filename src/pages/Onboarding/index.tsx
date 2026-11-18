@@ -47,7 +47,7 @@ function FeatureList({ items }: { items: typeof POINTS }) {
   return (
     <div className="grid gap-3">
       {items.map(({ icon, title, body }) => (
-        <div key={title} className="flex gap-4 rounded-xl border border-border bg-surface p-4">
+        <div key={title} className="flex gap-4 rounded-lg border border-border bg-surface p-4">
           <IconTile icon={icon} />
           <div className="space-y-0.5">
             <p className="text-app-label font-semibold text-foreground">{title}</p>

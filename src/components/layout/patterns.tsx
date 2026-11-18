@@ -195,7 +195,7 @@ export function ChoiceGrid<T extends string>({
             onClick={() => onSelect(option.value)}
             aria-pressed={active}
             className={cn(
-              'flex flex-col items-start gap-2 rounded-xl border bg-surface p-4 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+              'flex flex-col items-start gap-2 rounded-lg border bg-surface p-4 text-left transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
               active ? 'border-brand ring-1 ring-brand/40' : 'border-border hover:border-foreground/25 hover:bg-accent/30',
             )}
           >
@@ -230,7 +230,7 @@ export function Timeline({ items }: { items: TimelineItem[] }) {
             ) : (
               <IconTile icon={item.icon} tone={tone} />
             )}
-            <div className="min-w-0 flex-1 rounded-xl border border-border bg-surface px-4 py-3">
+            <div className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-4 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-app-label font-medium text-foreground">{item.title}</div>
@@ -268,7 +268,7 @@ export function Kbd({ children, className }: { children: ReactNode; className?: 
 /** Soft full-width notice with actions. */
 export function Banner({ icon: Icon, tone = 'brand', title, description, actions, className }: { icon: LucideIcon; tone?: Tone; title: ReactNode; description?: ReactNode; actions?: ReactNode; className?: string }) {
   return (
-    <div className={cn('flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface px-4 py-3', className)}>
+    <div className={cn('flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3', className)}>
       <IconTile icon={Icon} tone={tone} size="sm" />
       <div className="min-w-0 flex-1">
         <p className="text-app-label font-medium text-foreground">{title}</p>
@@ -283,7 +283,7 @@ export function Banner({ icon: Icon, tone = 'brand', title, description, actions
 export function SaveBar({ dirty, saving, onSave, onDiscard, label = 'Unsaved changes' }: { dirty: boolean; saving?: boolean; onSave: () => void; onDiscard: () => void; label?: string }) {
   if (!dirty && !saving) return null
   return (
-    <div className="sticky bottom-4 z-10 mx-auto flex w-full max-w-xl flex-wrap animate-rise-in items-center gap-3 rounded-xl border border-border bg-popover px-4 py-2.5 shadow-lg">
+    <div className="sticky bottom-4 z-10 mx-auto flex w-full max-w-xl flex-wrap animate-rise-in items-center gap-3 rounded-lg border border-border bg-popover px-4 py-2.5 shadow-lg">
       <span className="size-2 rounded-full bg-warning" aria-hidden />
       <span className="min-w-0 flex-1 truncate text-app-label text-foreground" title={label}>{label}</span>
       <Button variant="ghost" size="sm" disabled={saving} onClick={onDiscard}>
@@ -299,7 +299,7 @@ export function SaveBar({ dirty, saving, onSave, onDiscard, label = 'Unsaved cha
 /** A titled card that groups related fields. */
 export function Panel({ title, description, actions, children, className }: { title: string; description?: string; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={cn('rounded-xl border border-border bg-surface', className)}>
+    <section className={cn('rounded-lg border border-border bg-surface', className)}>
       <header className="flex items-start justify-between gap-3 border-b border-border px-5 py-3.5">
         <div className="min-w-0">
           <h3 className="text-app-label font-semibold text-foreground">{title}</h3>

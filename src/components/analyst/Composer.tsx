@@ -170,7 +170,7 @@ export function Composer({
               disabled={busy || unavailable}
               onClick={() => setOutput(chip.value)}
               className={cn(
-                'rounded-full border px-3 py-1 text-app-caption font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50',
+                'rounded-md border px-3 py-1 text-app-caption font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-not-allowed disabled:opacity-50',
                 active ? 'border-brand/50 bg-brand/10 text-foreground' : 'border-border bg-surface text-muted-foreground hover:text-foreground',
               )}
             >

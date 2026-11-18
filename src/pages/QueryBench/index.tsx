@@ -260,7 +260,7 @@ export function QueryBenchPage() {
                 <TabsTrigger key={value} value={value} className="group gap-2">
                   <Icon size={15} strokeWidth={iconStroke} />
                   {label}
-                  <span className="rounded-full bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground group-data-[state=active]:bg-brand/15 group-data-[state=active]:text-brand">
+                  <span className="rounded-sm bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground group-data-[state=active]:bg-brand/15 group-data-[state=active]:text-brand">
                     {count}
                   </span>
                 </TabsTrigger>
@@ -331,7 +331,7 @@ export function QueryBenchPage() {
             </Alert>
           )}
           {explanation && (
-            <div className="relative rounded-xl border border-border bg-muted/40 px-4 py-3 pr-10 text-app-label text-foreground">
+            <div className="relative rounded-lg border border-border bg-muted/40 px-4 py-3 pr-10 text-app-label text-foreground">
               <p className="mb-1 text-app-caption font-medium text-muted-foreground">What this query does</p>
               {explanation}
               <Button variant="ghost" size="icon" className="absolute right-1.5 top-1.5 h-7 w-7" aria-label="Dismiss explanation" onClick={() => setExplanation('')}>
@@ -362,7 +362,7 @@ export function QueryBenchPage() {
                   </DropdownMenu>
                 </div>
               </div>
-              <div className="max-h-[32rem] overflow-auto rounded-xl">
+              <div className="max-h-[32rem] overflow-auto rounded-lg">
                 <Table>
                   <TableHeader className="sticky top-0 bg-muted">
                     <TableRow>
