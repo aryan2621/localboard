@@ -82,7 +82,7 @@ function NavRow({ icon, label, active, onClick, trailing }: { icon: ReactNode; l
       className={cn(
         'relative flex h-7 w-full items-center gap-2 rounded-md px-2 text-app-body transition-colors duration-fast ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
-          ? 'bg-accent/70 font-medium text-foreground before:absolute before:inset-y-1 before:left-0 before:w-0.5 before:bg-primary'
+          ? 'bg-accent font-medium text-foreground'
           : 'text-foreground/80 hover:bg-accent/60 hover:text-foreground',
       )}
     >

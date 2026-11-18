@@ -19,5 +19,5 @@ createRoot(document.getElementById('root')!).render(
 )
 
 void Promise.all([
-  import('@fontsource-variable/hanken-grotesk'),
+  import('@fontsource-variable/inter'),
 ])

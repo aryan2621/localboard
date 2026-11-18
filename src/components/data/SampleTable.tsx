@@ -41,7 +41,7 @@ export function SampleTable({ columns, rows }: { columns: string[]; rows: Sample
                 return (
                   <TableCell
                     key={column}
-                    className={cn(numeric.has(column) && 'text-right font-mono text-app-label', value === null || value === undefined ? 'text-muted-foreground/60' : 'max-w-[18rem] truncate text-foreground')}
+                    className={cn(numeric.has(column) && 'text-right', value === null || value === undefined ? 'text-muted-foreground/60' : 'max-w-[18rem] truncate text-foreground')}
                   >
                     {formatCell(value)}
                   </TableCell>
