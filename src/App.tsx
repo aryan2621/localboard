@@ -116,7 +116,7 @@ function LockScreen() {
         <p className="text-app-label text-muted-foreground">LocalBoard is locked. Enter your app lock passphrase.</p>
         <Input type="password" value={passphrase} onChange={(event) => setPassphrase(event.target.value)} aria-label="Passphrase" autoFocus />
         <Button type="submit" disabled={!passphrase || unlock.isPending}>
-          Unlock
+          Open
         </Button>
       </form>
     </div>
@@ -129,7 +129,7 @@ function WorkspacePassphraseScreen({ id }: { id: string }) {
   return (
     <div className="flex h-full items-center justify-center p-8">
       <div className="w-full max-w-sm space-y-4">
-        <h1 className="font-medium text-app-page text-foreground">Unlock workspace</h1>
+        <h1 className="font-medium text-app-page text-foreground">Open workspace</h1>
         <p className="text-app-label text-muted-foreground">{name ? `${name} is encrypted.` : 'This workspace is encrypted.'} Enter its passphrase to open it.</p>
         <UnlockWorkspaceForm id={id} />
       </div>
