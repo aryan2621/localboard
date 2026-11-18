@@ -22,20 +22,6 @@ export function handleAnalystEvent({ conversationId, messageId, event }: Analyst
     .finally(() => clear(messageId))
 }
 
-export function useAsk() {
-  const openConversation = useNavigation((state) => state.openConversation)
-  return useMutation({
-    mutationFn: ({ question, conversationId }: { question: string; conversationId: string | null }) =>
-      api.ask(question, conversationId),
-    onSuccess: ({ conversationId }) => {
-      openConversation(conversationId)
-      void queryClient.invalidateQueries({ queryKey: queryKeys.conversation(conversationId) })
-      void queryClient.invalidateQueries({ queryKey: queryKeys.conversations })
-    },
-    onError: (failure) => toast.error(errorMessage(failure)),
-  })
-}
-
 export function useGenerate() {
   const openDashboard = useNavigation((state) => state.openDashboard)
   const openDatasite = useNavigation((state) => state.openDatasite)

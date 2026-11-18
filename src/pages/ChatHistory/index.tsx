@@ -1,6 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
-import { save } from '@tauri-apps/plugin-dialog'
 import { ArrowRight, Check, Database, MessageSquare, MessageSquarePlus, Table2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { ConfirmDialog, EmptyState, PageContainer, PageHeader, PageLoader, RowMenu, SearchInput } from '../../components/layout/ui'
@@ -13,10 +12,11 @@ import { Input } from '../../components/ui/input'
 import { PaginationBar } from '../../components/ui/pagination'
 import { Sheet, SheetBody, SheetContent, SheetFooter, SheetHeader } from '../../components/ui/sheet'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
+import { exportChat, invalidateConversations, useDeleteChat, useExportChat } from '../../lib/conversations'
 import { usePagination } from '../../lib/usePagination'
 import { api, errorMessage, type ConversationSummary } from '../../lib/api'
 import { iconStroke } from '../../lib/icon'
-import { queryClient, queryKeys } from '../../lib/queryClient'
+import { queryKeys } from '../../lib/queryClient'
 import { relativeTime } from '../../lib/time'
 import { useNavigation } from '../../stores/navigation'
 
@@ -32,22 +32,6 @@ function groupKey(updatedAt: string): string {
   if (age <= 7 * DAY_MS) return 'Previous 7 days'
   if (age <= 30 * DAY_MS) return 'Previous 30 days'
   return 'Older'
-}
-
-function fileName(title: string) {
-  return `${title.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'LocalBoard chat'}.md`
-}
-
-function invalidate(id?: string) {
-  void queryClient.invalidateQueries({ queryKey: queryKeys.conversations })
-  if (id) void queryClient.invalidateQueries({ queryKey: queryKeys.conversation(id) })
-}
-
-async function exportOne(conversation: ConversationSummary) {
-  const path = await save({ defaultPath: fileName(conversation.title), filters: [{ name: 'Markdown', extensions: ['md'] }] })
-  if (!path) return false
-  await api.exportConversation(conversation.id, path)
-  return true
 }
 
 function Row({
@@ -70,24 +54,13 @@ function Row({
     mutationFn: () => api.renameConversation(conversation.id, title.trim()),
     onSuccess: () => {
       setEditing(false)
-      invalidate(conversation.id)
+      invalidateConversations(conversation.id)
       window.setTimeout(() => renameButton.current?.focus(), 0)
     },
     onError: (failure) => toast.error(errorMessage(failure)),
   })
-  const exportChat = useMutation({
-    mutationFn: () => exportOne(conversation),
-    onSuccess: (saved) => saved && toast.success('Chat exported'),
-    onError: (failure) => toast.error(errorMessage(failure)),
-  })
-  const remove = useMutation({
-    mutationFn: () => api.deleteConversation(conversation.id),
-    onSuccess: () => {
-      queryClient.removeQueries({ queryKey: queryKeys.conversation(conversation.id) })
-      invalidate()
-    },
-    onError: (failure) => toast.error(errorMessage(failure)),
-  })
+  const exporter = useExportChat(conversation)
+  const remove = useDeleteChat(conversation)
 
   const cancelEdit = () => {
     setEditing(false)
@@ -140,7 +113,7 @@ function Row({
         <RowMenu label={`Actions for ${conversation.title}`}>
           <DropdownMenuItem onSelect={() => onPreview(conversation.id)}>Preview</DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setEditing(true)}>Rename</DropdownMenuItem>
-          <DropdownMenuItem disabled={exportChat.isPending} onSelect={() => exportChat.mutate()}>
+          <DropdownMenuItem disabled={exporter.isPending} onSelect={() => exporter.mutate()}>
             Export as Markdown
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -283,7 +256,7 @@ export function ChatHistoryPage() {
     onSuccess: () => {
       toast.success(`${picked.size} ${picked.size === 1 ? 'chat' : 'chats'} deleted`)
       setPicked(new Set())
-      invalidate()
+      invalidateConversations()
     },
     onError: (failure) => toast.error(errorMessage(failure)),
   })
@@ -292,7 +265,7 @@ export function ChatHistoryPage() {
       let saved = 0
       for (const id of picked) {
         const conversation = all.find((item) => item.id === id)
-        if (conversation && (await exportOne(conversation))) saved += 1
+        if (conversation && (await exportChat(conversation))) saved += 1
       }
       return saved
     },

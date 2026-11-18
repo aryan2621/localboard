@@ -3,7 +3,7 @@ import { listen } from '@tauri-apps/api/event'
 import { useGeneration } from '../stores/generation'
 import { handleAnalystEvent } from './analyst'
 import type { AnalystEventPayload, Step } from './api'
-import { invalidateConnectionData, invalidateWorkspaceData, queryClient, queryKeys } from './queryClient'
+import { invalidateConnectionData, queryClient, queryKeys } from './queryClient'
 
 const ANALYST_EVENT = 'analyst://event'
 const GENERATE_PROGRESS = 'generate://progress'

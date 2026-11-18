@@ -2,7 +2,7 @@ import { useMutation, useMutationState } from '@tanstack/react-query'
 import { open } from '@tauri-apps/plugin-dialog'
 import { toast } from 'sonner'
 import { api, DATA_EXTENSIONS, errorMessage } from './api'
-import { invalidateConnectionData, queryClient, queryKeys } from './queryClient'
+import { invalidateConnectionData } from './queryClient'
 
 type AddRequest = { paths: string[]; recursive: boolean }
 

@@ -13,7 +13,7 @@ import { usePagination } from '../../lib/usePagination'
 import { Input } from '../../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs'
 import { Alert, AlertDescription } from '../../components/ui/alert'
 import { ConfirmDialog, EmptyState, FormField, ListItemCard, RowMenu, SearchInput, StatusBadge } from '../../components/layout/ui'
 import { Kbd } from '../../components/layout/patterns'
@@ -49,7 +49,6 @@ export function QueryBenchPage() {
   useEffect(() => {
     if (benchSql) setSql(benchSql)
   }, [benchSql])
-  const [rangeName, setRangeName] = useState('')
   const [values, setValues] = useState<Record<string, string>>({})
   const [result, setResult] = useState<QueryResult | null>(null)
   const [rendered, setRendered] = useState('')

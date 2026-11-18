@@ -39,7 +39,7 @@ type NavigationState = {
   resetForWorkspace: () => void
 }
 
-export const useNavigation = create<NavigationState>((set, get) => ({
+export const useNavigation = create<NavigationState>((set) => ({
   page: 'home',
   selectedTableId: null,
   schemaSource: null,

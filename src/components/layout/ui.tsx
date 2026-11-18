@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { ArrowLeft, Check, ChevronDown, Copy, LayoutGrid, List, Loader2, MoreHorizontal, Search, type LucideIcon } from 'lucide-react'
+import { ArrowLeft, Check, ChevronDown, Copy, LayoutGrid, List, MoreHorizontal, Search, type LucideIcon } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { iconStroke } from '../../lib/icon'
 import { Badge } from '../ui/badge'
@@ -7,7 +7,7 @@ import { Button } from '../ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog'
+import { AlertDialog, ConfirmContent } from '../ui/alert-dialog'
 import { Hint } from '../ui/tooltip'
 import { Skeleton } from '../ui/skeleton'
 
@@ -401,18 +401,7 @@ export function ConfirmDialog({
 }) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            {confirmLabel}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+      <ConfirmContent title={title} description={description} confirmLabel={confirmLabel} onConfirm={onConfirm} />
     </AlertDialog>
   )
 }

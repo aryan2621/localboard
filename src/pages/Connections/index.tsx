@@ -6,7 +6,7 @@ import { cn } from '../../lib/utils'
 import { useViewMode } from '../../lib/useViewMode'
 import { toast } from 'sonner'
 import { SampleTable } from '../../components/data/SampleTable'
-import { EmptyState, FormField, PageContainer, PageHeader, PageLoader, RowMenu, SearchInput, SectionHeader, SegmentedControl, StatusBadge, ViewToggle } from '../../components/layout/ui'
+import { EmptyState, FormField, PageContainer, PageHeader, PageLoader, RowMenu, SearchInput, SectionHeader, StatusBadge, ViewToggle } from '../../components/layout/ui'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
 import {
   AlertDialog,

@@ -4,7 +4,6 @@ import {
   Check,
   Power,
   PowerOff,
-  ChevronRight,
   Lock,
   ChevronsUpDown,
   Cpu,
@@ -72,66 +71,6 @@ const THEME_LABEL: Record<ThemeMode, { label: string; icon: ReactNode }> = {
   light: { label: 'Light', icon: <Sun strokeWidth={iconStroke} /> },
   dark: { label: 'Dark', icon: <Moon strokeWidth={iconStroke} /> },
   system: { label: 'Match system', icon: <Monitor strokeWidth={iconStroke} /> },
-}
-
-function NavRow({ icon, label, active, onClick, trailing }: { icon: ReactNode; label: string; active: boolean; onClick: () => void; trailing?: ReactNode }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-current={active ? 'page' : undefined}
-      className={cn(
-        'relative flex h-7 w-full items-center gap-2 rounded-md px-2 text-app-body transition-colors duration-fast ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        active
-          ? 'bg-accent font-medium text-foreground'
-          : 'text-foreground/80 hover:bg-accent/60 hover:text-foreground',
-      )}
-    >
-      {icon}
-      <span className="flex-1 truncate text-left" title={label}>{label}</span>
-      {trailing}
-    </button>
-  )
-}
-
-function NavGroup({ label, items, collapsible = false }: { label: string; items: NavItem[]; collapsible?: boolean }) {
-  const page = useNavigation((state) => state.page)
-  const navigate = useNavigation((state) => state.navigate)
-  const hasActive = items.some((item) => item.page === page)
-  const [open, setOpen] = useState(!collapsible || hasActive)
-
-  // Following a link (command palette, deep link) opens the group that holds the page.
-  useEffect(() => {
-    if (hasActive) setOpen(true)
-  }, [hasActive])
-
-  return (
-    <div className="space-y-0.5">
-      {collapsible ? (
-        <button
-          type="button"
-          onClick={() => setOpen((current) => !current)}
-          aria-expanded={open}
-          className="flex w-full items-center gap-1 rounded-md px-2 pb-0.5 pt-3 text-app-caption font-medium text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {label}
-          <ChevronRight size={12} strokeWidth={iconStroke} className={cn('transition-transform duration-fast', open && 'rotate-90')} />
-        </button>
-      ) : (
-        <p className="px-2 pb-0.5 pt-3 text-app-caption font-medium text-muted-foreground">{label}</p>
-      )}
-      {open &&
-        items.map(({ page: target, label: itemLabel, icon: Icon }) => (
-          <NavRow
-            key={target}
-            icon={<Icon size={15} strokeWidth={iconStroke} />}
-            label={itemLabel}
-            active={page === target}
-            onClick={() => navigate(target)}
-          />
-        ))}
-    </div>
-  )
 }
 
 const SEARCH_DEBOUNCE_MS = 200
@@ -317,11 +256,7 @@ function WorkspaceMenu({ compact = false }: { compact?: boolean }) {
   )
 }
 
-const RAIL: NavItem[][] = [
-  [TOP_NAV[0], ...TOP_NAV.slice(1)],
-  DATA_NAV,
-  WORKSPACE_NAV,
-]
+const RAIL: NavItem[][] = [TOP_NAV, DATA_NAV, WORKSPACE_NAV]
 
 /** Slim icon rail: every page one click away, labels on hover. */
 export function Sidebar() {

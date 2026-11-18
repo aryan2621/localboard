@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { Check, Loader2, PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react'
+import { Loader2, PanelLeftClose, PanelLeftOpen, type LucideIcon } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { iconStroke } from '../../lib/icon'
 import { Button } from '../ui/button'
@@ -151,19 +151,6 @@ export function SplitView({
   )
 }
 
-/** Header strip of a list pane: title, count and an action. */
-export function PaneHeader({ title, count, action }: { title: string; count?: number; action?: ReactNode }) {
-  return (
-    <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-5">
-      <h1 className="font-medium text-app-title text-foreground">
-        {title}
-        {count !== undefined && <span className="ml-1.5 font-sans text-app-caption text-muted-foreground">{count}</span>}
-      </h1>
-      {action}
-    </div>
-  )
-}
-
 /** A selectable row in a list pane. */
 export function PaneItem({
   selected,
@@ -239,33 +226,6 @@ export function ChoiceGrid<T extends string>({
         )
       })}
     </div>
-  )
-}
-
-/** Numbered wizard steps: done, current, upcoming. */
-export function Stepper({ steps, current }: { steps: string[]; current: number }) {
-  return (
-    <ol className="flex items-center gap-2" aria-label="Progress">
-      {steps.map((label, index) => {
-        const done = index < current
-        const active = index === current
-        return (
-          <li key={label} className="flex min-w-0 items-center gap-2">
-            <span
-              className={cn(
-                'flex size-6 shrink-0 items-center justify-center rounded-full border text-app-caption font-semibold tabular-nums',
-                done ? 'border-brand bg-brand text-brand-foreground' : active ? 'border-brand text-brand' : 'border-border text-muted-foreground',
-              )}
-              aria-current={active ? 'step' : undefined}
-            >
-              {done ? <Check size={13} strokeWidth={2.5} /> : index + 1}
-            </span>
-            <span className={cn('truncate text-app-caption', active ? 'font-medium text-foreground' : 'text-muted-foreground')}>{label}</span>
-            {index < steps.length - 1 && <span className="h-px w-6 shrink-0 bg-border" aria-hidden />}
-          </li>
-        )
-      })}
-    </ol>
   )
 }
 

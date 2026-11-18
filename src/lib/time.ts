@@ -1,5 +1,5 @@
 /** Parses a stored timestamp; values saved without a timezone are UTC. */
-export function parseStamp(stamp: string): Date {
+function parseStamp(stamp: string): Date {
   return new Date(/(Z|[+-]\d\d:?\d\d)$/.test(stamp) ? stamp : `${stamp}Z`)
 }
 

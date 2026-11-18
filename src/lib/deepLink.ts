@@ -1,7 +1,7 @@
 import { useNavigation } from '../stores/navigation'
 
 /** `localboard://dashboard/<id>` and `localboard://chat/<id>` open that item; anything else is ignored. */
-export function handleDeepLink(raw: string) {
+function handleDeepLink(raw: string) {
   let url: URL
   try {
     url = new URL(raw)

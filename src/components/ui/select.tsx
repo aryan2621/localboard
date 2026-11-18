@@ -4,7 +4,6 @@ import { Check, ChevronDown } from 'lucide-react'
 import { cn } from '../../lib/utils'
 
 const Select = SelectPrimitive.Root
-const SelectGroup = SelectPrimitive.Group
 const SelectValue = SelectPrimitive.Value
 
 const SelectTrigger = React.forwardRef<
@@ -74,12 +73,5 @@ const SelectItem = React.forwardRef<
 ))
 SelectItem.displayName = 'SelectItem'
 
-const SelectLabel = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Label>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
->(({ className, ...props }, ref) => (
-  <SelectPrimitive.Label ref={ref} className={cn('px-2 py-1.5 text-app-caption text-muted-foreground', className)} {...props} />
-))
-SelectLabel.displayName = 'SelectLabel'
 
-export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectItem, SelectLabel }
+export { Select, SelectValue, SelectTrigger, SelectContent, SelectItem }

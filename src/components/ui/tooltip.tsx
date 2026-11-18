@@ -32,4 +32,4 @@ function Hint({ text, children, side }: { text?: React.ReactNode; children: Reac
   )
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider, Hint }
+export { TooltipProvider, Hint }

@@ -63,6 +63,24 @@ const AlertDialogCancel = React.forwardRef<
 ))
 AlertDialogCancel.displayName = AlertDialogPrimitive.Cancel.displayName
 
+/** The shared body of every destructive confirmation. */
+function ConfirmContent({ title, description, confirmLabel, onConfirm }: { title: string; description: string; confirmLabel: string; onConfirm: () => void }) {
+  return (
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{title}</AlertDialogTitle>
+        <AlertDialogDescription>{description}</AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          {confirmLabel}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  )
+}
+
 /** A destructive action behind a confirmation, in the ai-agents style. */
 function ConfirmAction({
   trigger,
@@ -84,24 +102,14 @@ function ConfirmAction({
       <Hint text={hint}>
         <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       </Hint>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-            {confirmLabel}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+      <ConfirmContent title={title} description={description} confirmLabel={confirmLabel} onConfirm={onConfirm} />
     </AlertDialog>
   )
 }
 
 export {
   ConfirmAction,
+  ConfirmContent,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,

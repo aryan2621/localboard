@@ -7,7 +7,7 @@ function call<T>(command: string, args?: Record<string, unknown>) {
   return invoke<T>(command, args)
 }
 
-export type Hardware = {
+type Hardware = {
   ramGb: number
   cpu: string
   cores: number
@@ -16,7 +16,7 @@ export type Hardware = {
   accelerator: string
 }
 
-export type LocalServerInfo = { port: number; url: string }
+type LocalServerInfo = { port: number; url: string }
 
 export type AppStatus = {
   version: string
@@ -61,7 +61,7 @@ export type DatabaseKind =
   | 'snowflake'
   | 'bigquery'
   | 'databricks'
-export type ConnectorKind = 'file' | 'folder' | DatabaseKind
+type ConnectorKind = 'file' | 'folder' | DatabaseKind
 export type AccessMode = 'live' | 'snapshot'
 
 export type Connection = {
@@ -114,7 +114,7 @@ export type TableRecord = {
   profiled_at: string | null
 }
 
-export type ColumnProfile = {
+type ColumnProfile = {
   name: string
   data_type: string
   null_pct: number
@@ -133,7 +133,7 @@ export type ColumnRecord = {
   profile: ColumnProfile | null
 }
 
-export type Relationship = {
+type Relationship = {
   direction: 'outgoing' | 'incoming'
   column: string
   otherTableId: string
@@ -143,9 +143,9 @@ export type Relationship = {
   origin: 'detected' | 'user'
 }
 
-export type UsageRef = { id: string; name: string }
-export type TileUsage = { id: string; name: string; dashboardId: string; dashboardName: string }
-export type ArtifactUsage = { id: string; name: string; parentId: string; parentName: string }
+type UsageRef = { id: string; name: string }
+type TileUsage = { id: string; name: string; dashboardId: string; dashboardName: string }
+type ArtifactUsage = { id: string; name: string; parentId: string; parentName: string }
 export type TableUsage = {
   lastAuditAt: string | null
   chats: UsageRef[]
@@ -173,12 +173,12 @@ export type LlmSettings = { kind: LlmKind; base_url: string; model: string; embe
 // routing is read from the config if the backend returns it.
 export type LlmConfig = LlmSettings & { has_key: boolean; routing?: TaskRouting }
 
-export type ColumnKind = 'number' | 'temporal' | 'text' | 'boolean' | 'other'
-export type ResultColumn = { name: string; dataType: string; kind: ColumnKind }
+type ColumnKind = 'number' | 'temporal' | 'text' | 'boolean' | 'other'
+type ResultColumn = { name: string; dataType: string; kind: ColumnKind }
 export type QueryResult = { columns: ResultColumn[]; rows: unknown[][]; truncated: boolean }
 
-export type QueryPurpose = 'answer' | 'comparison' | 'breakdown'
-export type QueryStatus = 'ok' | 'error' | 'denied'
+type QueryPurpose = 'answer' | 'comparison' | 'breakdown'
+type QueryStatus = 'ok' | 'error' | 'denied'
 
 export type QueryRecord = {
   id: string
@@ -195,12 +195,12 @@ export type QueryRecord = {
   createdAt: string
 }
 
-export type AnswerMode = 'ai' | 'sql' | 'why' | 'clarification'
-export type StepStatus = 'running' | 'done' | 'error' | 'skipped'
+type AnswerMode = 'ai' | 'sql' | 'why' | 'clarification'
+type StepStatus = 'running' | 'done' | 'error' | 'skipped'
 export type Step = { id: string; label: string; status: StepStatus; detail: string | null }
 export type ChartKind = 'kpi' | 'line' | 'bar' | 'stacked' | 'area' | 'pie' | 'table' | 'funnel' | 'heatmap' | 'text'
 export type ChartSpec = { kind: ChartKind; queryId: string; x: string | null; y: string[]; dashed?: string[] }
-export type AnswerPart = { question: string; chart: ChartSpec }
+type AnswerPart = { question: string; chart: ChartSpec }
 export type Anomaly = { period: unknown; measure: string; value: number; zScore: number; rule: 'zscore' | 'iqr' | 'both' }
 export type CompletionSources = { questions: string[]; terms: string[] }
 
@@ -213,7 +213,7 @@ export type Driver = {
   shareOfChange: number | null
 }
 
-export type Answer = {
+type Answer = {
   mode: AnswerMode
   steps: Step[]
   explanation: string | null
@@ -262,7 +262,7 @@ export type Rule = {
   promoted: boolean
 }
 
-export type RuleSnapshot = { title: string; body: string; tableName: string | null }
+type RuleSnapshot = { title: string; body: string; tableName: string | null }
 export type RuleVersion = {
   id: string
   snapshot: RuleSnapshot
@@ -307,7 +307,7 @@ export type Memory = {
 export type KnowledgeFile = { id: string; name: string; chunkCount: number; createdAt: string }
 
 export type FilterDef = { name: string; label: string; kind: string }
-export type TileLayout = { x: number; y: number; w: number; h: number }
+type TileLayout = { x: number; y: number; w: number; h: number }
 export type DashboardFolder = { id: string; name: string }
 export type DashboardSummary = { id: string; name: string; folderId: string | null; folderName: string | null; tileCount: number; updatedAt: string }
 export type DashboardTile = {
@@ -333,10 +333,9 @@ export type LiveTile = DashboardTile & { result: QueryResult | null; error: stri
 export type LiveDashboard = { dashboard: DashboardRecord; tiles: LiveTile[]; warnings: string[] }
 export type DashboardVersion = { id: string; createdAt: string }
 
-export type OutputKind = 'answer' | 'dashboard' | 'datasite' | 'report' | 'deck' | 'automation'
 export type WorkspaceTheme = { brand: string; name: string }
 export type ArtifactSummary = { id: string; name: string; updatedAt: string; itemCount: number }
-export type DatasiteChart = {
+type DatasiteChart = {
   id: string
   pageId: string
   title: string
@@ -346,7 +345,7 @@ export type DatasiteChart = {
   facts: unknown
   sort: number
 }
-export type DatasitePage = {
+type DatasitePage = {
   id: string
   datasiteId: string
   slug: string
@@ -355,7 +354,7 @@ export type DatasitePage = {
   narrative: string
   charts: DatasiteChart[]
 }
-export type DatasiteRecord = {
+type DatasiteRecord = {
   id: string
   name: string
   prompt: string
@@ -363,7 +362,7 @@ export type DatasiteRecord = {
   pages: DatasitePage[]
 }
 export type GeneratedDatasite = { datasite: DatasiteRecord; url: string; warnings: string[] }
-export type ReportBlock = {
+type ReportBlock = {
   id: string
   reportId: string
   kind: string
@@ -375,7 +374,7 @@ export type ReportBlock = {
   facts: unknown
   sort: number
 }
-export type ReportRecord = {
+type ReportRecord = {
   id: string
   name: string
   prompt: string
@@ -385,7 +384,7 @@ export type ReportRecord = {
 }
 export type GeneratedReport = { report: ReportRecord; warnings: string[] }
 export type OutlineSlide = { id: string; title: string; body: string }
-export type DeckSlide = {
+type DeckSlide = {
   id: string
   deckId: string
   title: string
@@ -407,7 +406,7 @@ export type GeneratedDeck = { deck: DeckRecord; warnings: string[] }
 
 export type TriggerKind = 'cron' | 'interval' | 'file_change' | 'manual' | 'webhook'
 export type StepKind = 'sql' | 'ask' | 'dashboard' | 'compare' | 'threshold' | 'anomaly' | 'report' | 'email' | 'mcp_tool' | 'webhook' | 'write_file' | 'notify' | 'branch'
-export type AutomationStep = { id: string; sort: number; kind: StepKind; config: Record<string, unknown> }
+type AutomationStep = { id: string; sort: number; kind: StepKind; config: Record<string, unknown> }
 export type Automation = {
   id: string
   name: string
@@ -437,7 +436,7 @@ export type SmtpSettings = {
 }
 export type SearchHit = { kind: string; id: string; title: string; subtitle: string | null }
 export type WebhookCreated = { url: string; token: string }
-export type AuditStatusFilter = 'ok' | 'error' | 'denied'
+type AuditStatusFilter = 'ok' | 'error' | 'denied'
 export type AuditEntry = {
   id: number
   ts: string
@@ -454,7 +453,7 @@ export type AuditEntry = {
 export type AuditPage = { entries: AuditEntry[]; hasMore: boolean }
 export type AuditFilter = { kind?: string; status?: string; search?: string }
 
-export type AutomationStepRun = {
+type AutomationStepRun = {
   id: string
   stepId: string
   sort: number
@@ -476,7 +475,7 @@ export type AutomationRun = {
   steps: AutomationStepRun[]
 }
 
-export type MessageStatus = 'pending' | 'done' | 'error' | 'cancelled'
+type MessageStatus = 'pending' | 'done' | 'error' | 'cancelled'
 export type Feedback = 1 | -1
 
 export type MessageRecord = {

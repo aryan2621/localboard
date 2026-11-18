@@ -6,8 +6,6 @@ import { cn } from '../../lib/utils'
 
 /** A panel that slides in from the right, for inspecting or editing one item without leaving the page. */
 const Sheet = DialogPrimitive.Root
-const SheetTrigger = DialogPrimitive.Trigger
-const SheetClose = DialogPrimitive.Close
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
@@ -106,4 +104,4 @@ function FormSheet({
   )
 }
 
-export { Sheet, SheetTrigger, SheetClose, SheetContent, SheetHeader, SheetBody, SheetFooter, FormSheet }
+export { Sheet, SheetContent, SheetHeader, SheetBody, SheetFooter, FormSheet }

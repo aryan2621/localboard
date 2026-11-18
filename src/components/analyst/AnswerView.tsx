@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { AlertTriangle, BookmarkPlus, Check, ChevronDown, Code2, GitBranch, Loader2, RotateCw, SquareTerminal, Square, ThumbsDown, ThumbsUp, X } from 'lucide-react'
+import { AlertTriangle, BookmarkPlus, ChevronDown, Code2, GitBranch, RotateCw, SquareTerminal, Square, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { save } from '@tauri-apps/plugin-dialog'
 import { toast } from 'sonner'
 import {
@@ -12,7 +12,6 @@ import {
   type Feedback,
   type MessageRecord,
   type QueryRecord,
-  type Step,
 } from '../../lib/api'
 import { iconStroke } from '../../lib/icon'
 import { queryClient, queryKeys } from '../../lib/queryClient'

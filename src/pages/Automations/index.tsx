@@ -387,10 +387,6 @@ export function AutomationsPage() {
     setCreating(true)
   }
 
-  const updateStep = (index: number, patch: Partial<DraftStep>) => {
-    setSteps((current) => current.map((step, i) => (i === index ? { ...step, ...patch } : step)))
-  }
-
   const setConfig = (index: number, key: string, value: unknown) => {
     setSteps((current) =>
       current.map((step, i) => (i === index ? { ...step, config: { ...step.config, [key]: value } } : step)),

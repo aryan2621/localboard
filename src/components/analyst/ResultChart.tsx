@@ -217,7 +217,7 @@ function Kpis({ spec, result }: { spec: ChartSpec; result: QueryResult }) {
   )
 }
 
-export function ResultTable({ result, onSelectCell }: { result: QueryResult; onSelectCell?: (column: string, value: string) => void }) {
+function ResultTable({ result, onSelectCell }: { result: QueryResult; onSelectCell?: (column: string, value: string) => void }) {
   const columns = result.columns.map((column) => column.name)
   const rows = useMemo(
     () => result.rows.map((row) => Object.fromEntries(result.columns.map((column, i) => [column.name, row[i]])) as SampleRow),

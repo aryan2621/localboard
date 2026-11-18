@@ -18,7 +18,7 @@ import { PaginationBar } from '../../components/ui/pagination'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { Textarea } from '../../components/ui/textarea'
 import { Hint } from '../../components/ui/tooltip'
-import { api, errorMessage, type ChartKind, type DashboardSummary, type LiveDashboard, type LiveTile } from '../../lib/api'
+import { api, errorMessage, type ChartKind, type DashboardSummary, type LiveTile } from '../../lib/api'
 import { iconStroke } from '../../lib/icon'
 import { usePagination } from '../../lib/usePagination'
 import { queryClient, queryKeys } from '../../lib/queryClient'
@@ -27,7 +27,6 @@ import { useGeneration } from '../../stores/generation'
 import { relativeTime } from '../../lib/time'
 import { IconTile } from '../../components/layout/patterns'
 import { useNavigation } from '../../stores/navigation'
-import 'react-resizable/css/styles.css'
 
 /** Renders a safe markdown subset as React nodes, so no raw HTML is ever injected. */
 function inlineMarkdown(text: string, keyBase: string): ReactNode[] {

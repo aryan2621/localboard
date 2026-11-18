@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { save } from '@tauri-apps/plugin-dialog'
+import { useQuery } from '@tanstack/react-query'
 import { Download, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
 import { AnswerView } from '../../components/analyst/AnswerView'
 import { GenerationSteps } from '../../components/analyst/StepsPanel'
 import { Composer, type OutputKind } from '../../components/analyst/Composer'
@@ -12,37 +10,17 @@ import { Alert, AlertDescription } from '../../components/ui/alert'
 import { Hint } from '../../components/ui/tooltip'
 import { PageLoader } from '../../components/layout/ui'
 import { useGenerate } from '../../lib/analyst'
+import { useDeleteChat, useExportChat } from '../../lib/conversations'
 import { api, errorMessage, type ConversationDetail } from '../../lib/api'
 import { iconStroke } from '../../lib/icon'
 import { queryClient, queryKeys } from '../../lib/queryClient'
 import { useAnalyst } from '../../stores/analyst'
 import { useNavigation } from '../../stores/navigation'
 
-function fileName(title: string) {
-  return `${title.replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'LocalBoard chat'}.md`
-}
-
 function ChatHeader({ conversation }: { conversation: ConversationDetail }) {
   const navigate = useNavigation((state) => state.navigate)
-  const exportChat = useMutation({
-    mutationFn: async () => {
-      const path = await save({ defaultPath: fileName(conversation.title), filters: [{ name: 'Markdown', extensions: ['md'] }] })
-      if (!path) return false
-      await api.exportConversation(conversation.id, path)
-      return true
-    },
-    onSuccess: (saved) => saved && toast.success('Chat exported'),
-    onError: (failure) => toast.error(errorMessage(failure)),
-  })
-  const remove = useMutation({
-    mutationFn: () => api.deleteConversation(conversation.id),
-    onSuccess: () => {
-      navigate('home')
-      queryClient.removeQueries({ queryKey: queryKeys.conversation(conversation.id) })
-      void queryClient.invalidateQueries({ queryKey: queryKeys.conversations })
-    },
-    onError: (failure) => toast.error(errorMessage(failure)),
-  })
+  const exportChat = useExportChat(conversation)
+  const remove = useDeleteChat(conversation, () => navigate('home'))
 
   return (
     <header className="flex items-center gap-2 border-b border-border pb-4">
