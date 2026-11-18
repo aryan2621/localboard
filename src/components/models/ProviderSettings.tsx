@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { api, errorMessage, type LlmKind, type LlmSettings } from '../../lib/api'
+import { api, errorMessage, type LlmKind, type LlmSettings, type ModelParams } from '../../lib/api'
 import { queryClient, queryKeys } from '../../lib/queryClient'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { FormField } from '../layout/ui'
 
 const KINDS: { kind: LlmKind; label: string; baseUrl: string }[] = [
@@ -16,6 +17,18 @@ const KINDS: { kind: LlmKind; label: string; baseUrl: string }[] = [
   { kind: 'compat', label: 'OpenAI-compatible server', baseUrl: '' },
 ]
 
+const NO_PARAMS: ModelParams = { temperature: null, top_p: null, num_ctx: null, timeout_secs: null }
+const toNumber = (text: string) => (text.trim() === '' || Number.isNaN(Number(text)) ? null : Number(text))
+
+/** A blank box means "use the default", which is stored as null. */
+function ParamField({ id, label, hint, value, onChange }: { id: string; label: string; hint: string; value: number | null; onChange: (value: number | null) => void }) {
+  return (
+    <FormField label={label} htmlFor={id} hint={hint}>
+      <Input id={id} inputMode="decimal" placeholder="Default" value={value ?? ''} onChange={(event) => onChange(toNumber(event.target.value))} />
+    </FormField>
+  )
+}
+
 /** Provider, model and key for the AI analyst. Shared by Settings and Onboarding. */
 export function ProviderSettings() {
   const { data: config } = useQuery({ queryKey: queryKeys.models, queryFn: api.llmConfig })
@@ -23,6 +36,7 @@ export function ProviderSettings() {
   const [baseUrl, setBaseUrl] = useState(KINDS[0].baseUrl)
   const [model, setModel] = useState('')
   const [embedModel, setEmbedModel] = useState('')
+  const [params, setParams] = useState<ModelParams>(NO_PARAMS)
   const [apiKey, setApiKey] = useState('')
   const [installed, setInstalled] = useState<string[]>([])
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null)
@@ -33,10 +47,11 @@ export function ProviderSettings() {
     setBaseUrl(config.base_url)
     setModel(config.model)
     setEmbedModel(config.embed_model ?? '')
+    setParams(config.params ?? NO_PARAMS)
     setApiKey('')
   }, [config])
 
-  const settings = (): LlmSettings => ({ kind, base_url: baseUrl.trim(), model: model.trim(), embed_model: embedModel.trim() || null })
+  const settings = (): LlmSettings => ({ kind, base_url: baseUrl.trim(), model: model.trim(), embed_model: embedModel.trim() || null, params })
   const refresh = () => void queryClient.invalidateQueries({ queryKey: queryKeys.models })
   const onError = (failure: unknown) => toast.error(errorMessage(failure))
 
@@ -67,6 +82,7 @@ export function ProviderSettings() {
     onError,
   })
 
+  const setParam = (key: keyof ModelParams) => (value: number | null) => setParams((current) => ({ ...current, [key]: value }))
   const remote = kind !== 'ollama' && kind !== 'compat'
   const changeKind = (next: LlmKind) => {
     setKind(next)
@@ -77,7 +93,13 @@ export function ProviderSettings() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
+      <Tabs defaultValue="basic">
+        <TabsList>
+          <TabsTrigger value="basic">Basic</TabsTrigger>
+          <TabsTrigger value="advanced">Advanced</TabsTrigger>
+        </TabsList>
+        <TabsContent value="basic" className="mt-4">
+        <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
         <FormField label="Provider" htmlFor="llm-kind">
           <Select value={kind} onValueChange={(value) => changeKind(value as LlmKind)}>
             <SelectTrigger id="llm-kind">
@@ -140,6 +162,18 @@ export function ProviderSettings() {
           </FormField>
         )}
       </div>
+        </TabsContent>
+        <TabsContent value="advanced" className="mt-4">
+          <div className="grid gap-4 sm:grid-cols-2 [&>*]:min-w-0">
+            <ParamField id="llm-temp" label="Temperature" hint="0 is precise, 1 is varied. Blank keeps each task's own value (SQL is low, narration is higher)." value={params.temperature} onChange={setParam('temperature')} />
+            <ParamField id="llm-top-p" label="Top P" hint="Nucleus sampling, 0 to 1. Blank uses the model default." value={params.top_p} onChange={setParam('top_p')} />
+            {kind === 'ollama' && (
+              <ParamField id="llm-ctx" label="Context size (tokens)" hint="How much of the schema and history the model can see. Larger uses more memory. Blank uses the Ollama default." value={params.num_ctx} onChange={setParam('num_ctx')} />
+            )}
+            <ParamField id="llm-timeout" label="Timeout (seconds)" hint="How long to wait for one answer. 10 to 3600." value={params.timeout_secs} onChange={setParam('timeout_secs')} />
+          </div>
+        </TabsContent>
+      </Tabs>
       <p className="text-app-caption text-muted-foreground">
         {remote
           ? 'Your questions, table schema, sample rows and query results are sent to this provider.'

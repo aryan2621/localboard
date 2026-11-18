@@ -7,6 +7,7 @@ use futures_util::StreamExt;
 use serde_json::{json, Value};
 use tokio::sync::mpsc;
 
+use super::ModelParams;
 use super::provider::{ChatRequest, ChatResponse, LlmError, LlmProvider, ResponseFormat, Role, Usage};
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(300);
@@ -18,6 +19,7 @@ pub struct AnthropicProvider {
     base_url: String,
     api_key: Option<String>,
     model: String,
+    params: ModelParams,
 }
 
 /// Structured output is a single forced tool call; tool names allow only `[a-zA-Z0-9_-]`, max 64.
@@ -102,12 +104,13 @@ fn apply_stream_event(data: &str, result: &mut ChatResponse) -> Result<Option<St
 }
 
 impl AnthropicProvider {
-    pub fn new(base_url: impl Into<String>, api_key: Option<String>, model: impl Into<String>) -> Result<Self, LlmError> {
+    pub fn new(base_url: impl Into<String>, api_key: Option<String>, model: impl Into<String>, params: ModelParams) -> Result<Self, LlmError> {
         Ok(Self {
-            client: reqwest::Client::builder().timeout(REQUEST_TIMEOUT).build()?,
+            client: reqwest::Client::builder().timeout(params.timeout(REQUEST_TIMEOUT)).build()?,
             base_url: base_url.into().trim_end_matches('/').to_owned(),
             api_key,
             model: model.into(),
+            params,
         })
     }
 
@@ -134,7 +137,7 @@ impl LlmProvider for AnthropicProvider {
     async fn chat(&self, request: ChatRequest, tokens: Option<mpsc::Sender<String>>) -> Result<ChatResponse, LlmError> {
         let url = format!("{}/v1/messages", self.base_url);
         let stream = tokens.is_some();
-        let response = self.headers(self.client.post(url)).json(&build_body(&self.model, &request, stream)).send().await?.error_for_status()?;
+        let response = self.headers(self.client.post(url)).json(&build_body(&self.model, &ChatRequest { temperature: self.params.temperature(request.temperature), ..request.clone() }, stream)).send().await?.error_for_status()?;
         let Some(tokens) = tokens else { return Ok(parse_response(&response.json().await?)) };
 
         let mut bytes = response.bytes_stream();

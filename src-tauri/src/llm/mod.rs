@@ -1,5 +1,6 @@
 pub mod anthropic;
 pub mod hardware;
+pub mod ollama;
 pub mod openai_compat;
 pub mod provider;
 pub mod router;
@@ -8,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::engine::mcp::is_loopback;
 use anthropic::AnthropicProvider;
+use ollama::OllamaProvider;
 use openai_compat::OpenAiCompatProvider;
 use provider::{LlmError, LlmProvider, Task};
 use router::TaskRouting;
@@ -41,6 +43,30 @@ impl Kind {
     }
 }
 
+/// Advanced per-model settings. `None` keeps the provider's or the call site's default.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct ModelParams {
+    #[serde(default)]
+    pub temperature: Option<f32>,
+    #[serde(default)]
+    pub top_p: Option<f32>,
+    /// Context window in tokens. Only Ollama's native API honours it.
+    #[serde(default)]
+    pub num_ctx: Option<u32>,
+    #[serde(default)]
+    pub timeout_secs: Option<u64>,
+}
+
+impl ModelParams {
+    pub fn temperature(&self, default: f32) -> f32 {
+        self.temperature.unwrap_or(default)
+    }
+
+    pub fn timeout(&self, default: std::time::Duration) -> std::time::Duration {
+        self.timeout_secs.map_or(default, |secs| std::time::Duration::from_secs(secs.clamp(10, 3600)))
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LlmConfig {
     pub kind: Kind,
@@ -48,11 +74,13 @@ pub struct LlmConfig {
     pub model: String,
     #[serde(default)]
     pub embed_model: Option<String>,
+    #[serde(default)]
+    pub params: ModelParams,
 }
 
 impl Default for LlmConfig {
     fn default() -> Self {
-        Self { kind: Kind::Ollama, base_url: Kind::Ollama.default_base_url().into(), model: String::new(), embed_model: None }
+        Self { kind: Kind::Ollama, base_url: Kind::Ollama.default_base_url().into(), model: String::new(), embed_model: None, params: ModelParams::default() }
     }
 }
 
@@ -92,9 +120,11 @@ impl Llm {
         if base_url.is_empty() {
             return Err(LlmError::Invalid("Set a base URL for the AI provider in Settings, AI.".into()));
         }
+        let params = self.config.params.clone();
         Ok(match self.config.kind {
-            Kind::Anthropic => Box::new(AnthropicProvider::new(base_url, self.api_key.clone(), model)?),
-            _ => Box::new(OpenAiCompatProvider::new(base_url, self.api_key.clone(), model)?),
+            Kind::Anthropic => Box::new(AnthropicProvider::new(base_url, self.api_key.clone(), model, params)?),
+            Kind::Ollama => Box::new(OllamaProvider::new(base_url, model, params)?),
+            _ => Box::new(OpenAiCompatProvider::new(base_url, self.api_key.clone(), model, params)?),
         })
     }
 
@@ -128,7 +158,7 @@ mod tests {
     use super::*;
 
     fn llm(kind: Kind, base_url: &str, model: &str, offline: bool) -> Llm {
-        Llm::new(LlmConfig { kind, base_url: base_url.into(), model: model.into(), embed_model: None }, None, offline)
+        Llm::new(LlmConfig { kind, base_url: base_url.into(), model: model.into(), embed_model: None, params: ModelParams::default() }, None, offline)
     }
 
     #[test]

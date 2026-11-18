@@ -6,6 +6,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use tokio::sync::mpsc;
 
+use super::ModelParams;
 use super::provider::{ChatRequest, ChatResponse, LlmError, LlmProvider, ResponseFormat, Usage};
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(600);
@@ -16,6 +17,7 @@ pub struct OpenAiCompatProvider {
     base_url: String,
     api_key: Option<String>,
     model: String,
+    params: ModelParams,
 }
 
 #[derive(Deserialize)]
@@ -59,12 +61,13 @@ struct EmbeddingItem {
 }
 
 impl OpenAiCompatProvider {
-    pub fn new(base_url: impl Into<String>, api_key: Option<String>, model: impl Into<String>) -> Result<Self, LlmError> {
+    pub fn new(base_url: impl Into<String>, api_key: Option<String>, model: impl Into<String>, params: ModelParams) -> Result<Self, LlmError> {
         Ok(Self {
-            client: reqwest::Client::builder().timeout(REQUEST_TIMEOUT).build()?,
+            client: reqwest::Client::builder().timeout(params.timeout(REQUEST_TIMEOUT)).build()?,
             base_url: base_url.into().trim_end_matches('/').to_owned(),
             api_key,
             model: model.into(),
+            params,
         })
     }
 
@@ -83,7 +86,10 @@ impl OpenAiCompatProvider {
             body["max_completion_tokens"] = json!(request.max_tokens);
         } else {
             body["max_tokens"] = json!(request.max_tokens);
-            body["temperature"] = json!(request.temperature);
+            body["temperature"] = json!(self.params.temperature(request.temperature));
+        }
+        if let Some(top_p) = self.params.top_p {
+            body["top_p"] = json!(top_p);
         }
         if stream {
             body["stream_options"] = json!({ "include_usage": true });

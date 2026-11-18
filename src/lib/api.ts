@@ -169,7 +169,8 @@ export type TableDetail = {
 export type TaskRouting = { sql: string | null; reasoning: string | null; narrative: string | null }
 
 export type LlmKind = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'compat'
-export type LlmSettings = { kind: LlmKind; base_url: string; model: string; embed_model: string | null }
+export type ModelParams = { temperature: number | null; top_p: number | null; num_ctx: number | null; timeout_secs: number | null }
+export type LlmSettings = { kind: LlmKind; base_url: string; model: string; embed_model: string | null; params: ModelParams }
 // routing is read from the config if the backend returns it.
 export type LlmConfig = LlmSettings & { has_key: boolean; routing?: TaskRouting }
 
