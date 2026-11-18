@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Download, Trash2 } from 'lucide-react'
-import { AnswerView } from '../../components/analyst/AnswerView'
+import { AnswerInspector, AnswerView, type InspectorTab } from '../../components/analyst/AnswerView'
 import { GenerationSteps } from '../../components/analyst/StepsPanel'
 import { Composer, type OutputKind } from '../../components/analyst/Composer'
 import { Button } from '../../components/ui/button'
@@ -46,7 +46,9 @@ function ChatHeader({ conversation }: { conversation: ConversationDetail }) {
   )
 }
 
-function Conversation({ id }: { id: string }) {
+type Inspected = { messageId: string; tab: InspectorTab }
+
+function Conversation({ id, inspected, onInspect }: { id: string; inspected: Inspected | null; onInspect: (next: Inspected | null) => void }) {
   const { data: conversation, error } = useQuery({ queryKey: queryKeys.conversation(id), queryFn: () => api.conversation(id) })
   const live = useAnalyst((state) => state.live)
   const generate = useGenerate()
@@ -92,6 +94,8 @@ function Conversation({ id }: { id: string }) {
               live={live[message.id]}
               onAsk={(question) => void submit(question).catch(() => undefined)}
               canAsk={!writing && !generate.isPending && !sending}
+              inspecting={inspected?.messageId === message.id ? inspected.tab : null}
+              onInspect={(tab) => onInspect(tab ? { messageId: message.id, tab } : null)}
             />
           ),
         )}
@@ -118,14 +122,31 @@ function Question({ children }: { children: string }) {
 export function ChatPage() {
   const conversationId = useNavigation((state) => state.conversationId)
   const navigate = useNavigation((state) => state.navigate)
+  const [inspected, setInspected] = useState<Inspected | null>(null)
+  const { data: conversation } = useQuery({ queryKey: queryKeys.conversation(conversationId ?? ''), queryFn: () => api.conversation(conversationId ?? ''), enabled: Boolean(conversationId) })
+  const message = conversation?.messages.find((item) => item.id === inspected?.messageId)
 
   useEffect(() => {
     if (!conversationId) navigate('home')
+    setInspected(null)
   }, [conversationId, navigate])
 
   return (
-    <div className="mx-auto flex min-h-[calc(100%-28px)] max-w-3xl flex-col px-4 sm:px-8 pt-6">
-      {conversationId && <Conversation key={conversationId} id={conversationId} />}
+    <div className="flex h-full">
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex min-h-full max-w-3xl flex-col px-4 pt-6 sm:px-8">
+          {conversationId && <Conversation key={conversationId} id={conversationId} inspected={inspected} onInspect={setInspected} />}
+        </div>
+      </div>
+      {conversation && message && inspected && (
+        <AnswerInspector
+          message={message}
+          queries={conversation.queries.filter((query) => query.messageId === message.id)}
+          tab={inspected.tab}
+          onTab={(tab) => setInspected({ messageId: message.id, tab })}
+          onClose={() => setInspected(null)}
+        />
+      )}
     </div>
   )
 }

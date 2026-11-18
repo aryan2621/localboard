@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { AlertTriangle, BookmarkPlus, ChevronDown, Code2, GitBranch, RotateCw, SquareTerminal, Square, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { AlertTriangle, BookmarkPlus, ChevronDown, Code2, GitBranch, RotateCw, SquareTerminal, X, Square, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { save } from '@tauri-apps/plugin-dialog'
 import { toast } from 'sonner'
 import {
@@ -21,6 +20,8 @@ import { useNavigation } from '../../stores/navigation'
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '../ui/dropdown-menu'
 import { Alert, AlertDescription } from '../ui/alert'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible'
+import { ScrollArea } from '../ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Hint } from '../ui/tooltip'
 import { PaginationBar } from '../ui/pagination'
@@ -280,6 +281,37 @@ function LineagePanel({ message, queries }: { message: MessageRecord; queries: Q
   )
 }
 
+export type InspectorTab = 'sql' | 'lineage'
+
+/** Right-hand pane beside the thread: the SQL behind an answer and where its numbers came from. */
+export function AnswerInspector({ message, queries, tab, onTab, onClose }: { message: MessageRecord; queries: QueryRecord[]; tab: InspectorTab; onTab: (tab: InspectorTab) => void; onClose: () => void }) {
+  const answer = message.answer
+  return (
+    <aside className="flex w-[28rem] shrink-0 flex-col border-l border-border bg-background">
+      <Tabs value={tab} onValueChange={(value) => onTab(value as InspectorTab)} className="flex min-h-0 flex-1 flex-col">
+        <div className="flex items-center justify-between border-b border-border px-3 py-2">
+          <TabsList>
+            <TabsTrigger value="sql">SQL</TabsTrigger>
+            <TabsTrigger value="lineage">Lineage</TabsTrigger>
+          </TabsList>
+          <Button variant="ghost" size="icon" aria-label="Close inspector" onClick={onClose}><X strokeWidth={iconStroke} /></Button>
+        </div>
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="space-y-3 p-4">
+            <TabsContent value="sql" className="mt-0 space-y-3">
+              {answer?.explanation && <p className="text-app-label text-foreground">{answer.explanation}</p>}
+              <SqlPanel queries={queries} primaryId={answer?.primaryQueryId ?? null} />
+            </TabsContent>
+            <TabsContent value="lineage" className="mt-0">
+              <LineagePanel message={message} queries={queries} />
+            </TabsContent>
+          </div>
+        </ScrollArea>
+      </Tabs>
+    </aside>
+  )
+}
+
 function refresh(conversationId: string) {
   return queryClient.invalidateQueries({ queryKey: queryKeys.conversation(conversationId) })
 }
@@ -290,15 +322,18 @@ export function AnswerView({
   live,
   onAsk,
   canAsk,
+  inspecting,
+  onInspect,
 }: {
   message: MessageRecord
   queries: QueryRecord[]
   live: LiveAnswer | undefined
   onAsk: (question: string) => void
   canAsk: boolean
+  inspecting: InspectorTab | null
+  onInspect: (tab: InspectorTab | null) => void
 }) {
-  const [showSql, setShowSql] = useState(false)
-  const [showLineage, setShowLineage] = useState(false)
+  const toggleInspector = (tab: InspectorTab) => onInspect(inspecting === tab ? null : tab)
   const answer = message.answer
   const pending = message.status === 'pending'
   const steps = pending ? (live?.steps ?? []) : (answer?.steps ?? [])
@@ -479,7 +514,7 @@ export function AnswerView({
           ) : (
             <>
               {queries.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={() => setShowSql((open) => !open)}>
+                <Button variant="ghost" size="sm" onClick={() => toggleInspector('sql')}>
                   <Code2 strokeWidth={iconStroke} /> SQL
                 </Button>
               )}
@@ -519,8 +554,8 @@ export function AnswerView({
               {(queries.length > 0 || (message.status === 'done' && (primaryOk || kept))) && (
                 <MoreMenu>
                   {queries.length > 0 && (
-                    <DropdownMenuItem onSelect={() => setShowLineage((open) => !open)}>
-                      <GitBranch size={14} strokeWidth={iconStroke} /> {showLineage ? 'Hide lineage' : 'Show lineage'}
+                    <DropdownMenuItem onSelect={() => toggleInspector('lineage')}>
+                      <GitBranch size={14} strokeWidth={iconStroke} /> {inspecting === 'lineage' ? 'Hide lineage' : 'Show lineage'}
                     </DropdownMenuItem>
                   )}
                   {message.status === 'done' && primaryOk && (
@@ -543,19 +578,6 @@ export function AnswerView({
           )}
         </div>
       </>
-
-      <Collapsible open={showSql && !pending} onOpenChange={setShowSql}>
-        <CollapsibleContent className="space-y-3 border-t border-border pt-3">
-          {answer?.explanation && <p className="text-app-label text-foreground">{answer.explanation}</p>}
-          <SqlPanel queries={queries} primaryId={answer?.primaryQueryId ?? null} />
-        </CollapsibleContent>
-      </Collapsible>
-
-      <Collapsible open={showLineage && !pending} onOpenChange={setShowLineage}>
-        <CollapsibleContent>
-          <LineagePanel message={message} queries={queries} />
-        </CollapsibleContent>
-      </Collapsible>
     </div>
   )
 }
