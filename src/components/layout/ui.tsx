@@ -281,7 +281,7 @@ export function EmptyState({
   className?: string
 }) {
   return (
-    <div className={cn('flex flex-col items-start gap-1 px-1 py-6', className)}>
+    <div className={cn('flex flex-col items-center justify-center gap-1 px-4 py-12 text-center', className)}>
       <p className="text-app-label font-medium text-foreground">{title}</p>
       {description && <p className="max-w-sm text-app-caption text-muted-foreground">{description}</p>}
       {action && <div className="pt-2">{action}</div>}
