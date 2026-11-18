@@ -112,8 +112,9 @@ pub fn run(
     let bound: HashMap<String, DuckValue> =
         query.parameters.iter().filter_map(|name| params.get(name).map(|value| (name.clone(), value.clone()))).collect();
     let rendered = duck_placeholders(&query.sql);
-    // EXPLAIN cannot be a subquery; everything else is capped here rather than trusting its own LIMIT.
-    let sql = if rendered.starts_with("EXPLAIN") { rendered } else { format!("SELECT * FROM ({rendered}) LIMIT {}", MAX_ROWS + 1) };
+    // No wrapper: DuckDB would rename duplicate output columns (email, email_1) and dodge name-based masks.
+    // The row cap is enforced while fetching (see `read`).
+    let sql = rendered;
 
     let handle = conn.interrupt_handle();
     cancel.track(Some(handle.clone()));

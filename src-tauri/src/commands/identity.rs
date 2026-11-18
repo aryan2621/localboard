@@ -191,11 +191,13 @@ pub async fn unlock_workspace(app: tauri::AppHandle, id: String, passphrase: Str
 }
 
 pub fn restore_lock_and_offline(state: &AppState) {
-    // Fails closed: if the setting cannot be read, stay locked rather than open the app.
-    let lock_enabled = match state.app_db().and_then(|db| db.setting::<bool>(LOCK_KEY)) {
-        Ok(value) => value.unwrap_or(false),
-        Err(_) => true,
-    };
+    // Fails closed only when a lock passphrase exists; with none there is nothing to unlock with.
+    let has_hash = state.app_db().ok().and_then(|db| db.setting::<String>(LOCK_HASH).ok().flatten()).is_some();
+    let lock_enabled = has_hash
+        && match state.app_db().and_then(|db| db.setting::<bool>(LOCK_KEY)) {
+            Ok(value) => value.unwrap_or(false),
+            Err(_) => true,
+        };
     state.set_unlocked(!lock_enabled);
     let offline = state.app_db().ok().and_then(|db| db.setting::<bool>(OFFLINE_KEY).ok().flatten()).unwrap_or(false);
     state.set_offline(offline);

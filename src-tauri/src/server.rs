@@ -56,7 +56,7 @@ pub fn start(app: AppHandle) -> Result<LocalServerHandle, AppError> {
 /// Header the live pages send on data requests.
 pub const SITE_TOKEN_HEADER: &str = "x-lb-site-token";
 
-/// Random per-launch token embedded in live pages; other local pages or processes cannot guess it.
+/// Random per-launch token embedded in live pages. It authenticates chart-data requests, including those from sandboxed (null-origin) previews; other pages or processes cannot guess it.
 pub fn site_token() -> &'static str {
     static TOKEN: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     TOKEN.get_or_init(|| format!("{}{}", uuid::Uuid::new_v4().simple(), uuid::Uuid::new_v4().simple()))
@@ -82,13 +82,23 @@ async fn guard(request: Request, next: Next) -> Response {
     let path = request.uri().path().to_owned();
     let origin = headers.get(header::ORIGIN).and_then(|value| value.to_str().ok()).map(str::to_owned);
     if is_query_route(&path) {
-        // An opaque ("null") origin is no longer accepted: sandboxed or file:// pages cannot call these routes.
+        // Chart data may also come from the sandboxed (opaque "null" origin) in-app preview iframe: the site token authenticates it.
         if let Some(origin) = &origin {
             let same = origin == &format!("http://127.0.0.1:{port}") || origin == &format!("http://localhost:{port}");
-            if !same {
+            if !same && !(is_chart_route(&path) && origin == "null") {
                 return (StatusCode::FORBIDDEN, "Cross-origin requests are not allowed").into_response();
             }
         }
+    }
+    if is_chart_route(&path) && request.method() == axum::http::Method::OPTIONS {
+        // Preflight for the x-lb-site-token header; the real request is still token-checked.
+        let mut response = StatusCode::NO_CONTENT.into_response();
+        let out = response.headers_mut();
+        let allow = origin.as_deref().and_then(|value| HeaderValue::from_str(value).ok()).unwrap_or(HeaderValue::from_static("null"));
+        out.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, allow);
+        out.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, HeaderValue::from_static(SITE_TOKEN_HEADER));
+        out.insert(header::ACCESS_CONTROL_ALLOW_METHODS, HeaderValue::from_static("GET"));
+        return response;
     }
     if is_chart_route(&path) {
         let provided = headers.get(SITE_TOKEN_HEADER).and_then(|value| value.to_str().ok()).unwrap_or("");
@@ -97,31 +107,51 @@ async fn guard(request: Request, next: Next) -> Response {
         }
     }
     let mut response = next.run(request).await;
+    if is_chart_route(&path) {
+        if let Some(origin) = origin.as_deref().and_then(|value| HeaderValue::from_str(value).ok()) {
+            response.headers_mut().insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin);
+        }
+    }
     response.headers_mut().insert(header::X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff"));
     response
 }
 
-/// Per-hook token bucket: 30 requests a minute.
-static HOOK_BUCKETS: Mutex<Option<HashMap<String, (f64, Instant)>>> = Mutex::new(None);
-const HOOK_BURST: f64 = 30.0;
-const HOOK_REFILL_PER_SEC: f64 = 30.0 / 60.0;
+/// Token buckets, 30 a minute per webhook id: one for failed (bad-token) attempts, one for valid calls.
+static BAD_BUCKETS: Mutex<Option<HashMap<String, (f64, Instant)>>> = Mutex::new(None);
+static GOOD_BUCKETS: Mutex<Option<HashMap<String, (f64, Instant)>>> = Mutex::new(None);
+const BAD_BURST: f64 = 30.0;
+const GOOD_BURST: f64 = 12.0;
+const BUCKET_REFILL_PER_SEC: f64 = 0.5;
+const MAX_BUCKETS: usize = 2000;
 
-fn hook_allowed(id: &str) -> bool {
-    let Ok(mut guard) = HOOK_BUCKETS.lock() else { return false };
-    let buckets = guard.get_or_insert_with(HashMap::new);
-    let now = Instant::now();
-    if buckets.len() > 2000 {
-        buckets.clear();
+type Buckets = HashMap<String, (f64, Instant)>;
+
+/// Refills the bucket for `id`. `spend` takes one token if available; returns whether one was (or is) available.
+fn bucket_take(buckets: &mut Buckets, id: &str, burst: f64, now: Instant, spend: bool) -> bool {
+    if buckets.len() >= MAX_BUCKETS && !buckets.contains_key(id) {
+        // Evict full (idle) buckets first, else the oldest one; never wholesale-clear.
+        buckets.retain(|_, (tokens, at)| *tokens + now.duration_since(*at).as_secs_f64() * BUCKET_REFILL_PER_SEC < burst);
+        if buckets.len() >= MAX_BUCKETS {
+            if let Some(oldest) = buckets.iter().min_by_key(|(_, (_, at))| *at).map(|(key, _)| key.clone()) {
+                buckets.remove(&oldest);
+            }
+        }
     }
-    let entry = buckets.entry(id.to_owned()).or_insert((HOOK_BURST, now));
-    entry.0 = (entry.0 + now.duration_since(entry.1).as_secs_f64() * HOOK_REFILL_PER_SEC).min(HOOK_BURST);
+    let entry = buckets.entry(id.to_owned()).or_insert((burst, now));
+    entry.0 = (entry.0 + now.duration_since(entry.1).as_secs_f64() * BUCKET_REFILL_PER_SEC).min(burst);
     entry.1 = now;
-    if entry.0 >= 1.0 {
-        entry.0 -= 1.0;
-        true
-    } else {
-        false
+    if entry.0 < 1.0 {
+        return false;
     }
+    if spend {
+        entry.0 -= 1.0;
+    }
+    true
+}
+
+fn with_bucket(store: &Mutex<Option<Buckets>>, id: &str, burst: f64, spend: bool) -> bool {
+    let Ok(mut guard) = store.lock() else { return false };
+    bucket_take(guard.get_or_insert_with(HashMap::new), id, burst, Instant::now(), spend)
 }
 
 async fn datasite_overview(State(app): State<AppHandle>, Path(id): Path<String>) -> Response {
@@ -219,6 +249,10 @@ async fn mcp_rpc(State(app): State<AppHandle>, headers: HeaderMap, Json(request)
 }
 
 async fn webhook_fire(State(app): State<AppHandle>, Path(id): Path<String>, headers: HeaderMap) -> Response {
+    // Refuse before any token check once the bad-attempt bucket is dry.
+    if !with_bucket(&BAD_BUCKETS, &id, BAD_BURST, false) {
+        return (StatusCode::TOO_MANY_REQUESTS, "Too many requests for this webhook. Try again in a minute.").into_response();
+    }
     let Some(token) = headers
         .get(header::AUTHORIZATION)
         .and_then(|value| value.to_str().ok())
@@ -246,10 +280,11 @@ async fn webhook_fire(State(app): State<AppHandle>, Path(id): Path<String>, head
     };
     if !allowed {
         // Only failed attempts spend the bucket, so a flood of bad tokens cannot starve the real caller.
-        if !hook_allowed(&id) {
-            return (StatusCode::TOO_MANY_REQUESTS, "Too many requests for this webhook. Try again in a minute.").into_response();
-        }
+        with_bucket(&BAD_BUCKETS, &id, BAD_BURST, true);
         return (StatusCode::UNAUTHORIZED, "That webhook token is not valid").into_response();
+    }
+    if !with_bucket(&GOOD_BUCKETS, &id, GOOD_BURST, true) {
+        return (StatusCode::TOO_MANY_REQUESTS, "Too many runs for this webhook. Try again in a minute.").into_response();
     }
     match crate::commands::automations::run_one(&app, &state, &id, "webhook").await {
         Ok(()) => {
@@ -261,7 +296,7 @@ async fn webhook_fire(State(app): State<AppHandle>, Path(id): Path<String>, head
 }
 
 /// Pages are self-contained: inline script/style only, data over same-origin fetch, nothing else.
-const PAGE_CSP: &str = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'";
+const PAGE_CSP: &str = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' tauri://localhost http://tauri.localhost https://tauri.localhost http://localhost:*";
 
 fn html_ok(body: String) -> Response {
     (
@@ -293,5 +328,21 @@ mod tests {
         assert!(is_chart_route("/d/abc/data/c1"));
         assert!(!is_chart_route("/d/abc"));
         assert!(!site_token().is_empty());
+    }
+
+    #[test]
+    fn bucket_limits_and_evicts_without_clearing() {
+        let mut buckets = Buckets::new();
+        let now = Instant::now();
+        for _ in 0..3 {
+            assert!(bucket_take(&mut buckets, "a", 3.0, now, true));
+        }
+        assert!(!bucket_take(&mut buckets, "a", 3.0, now, true));
+        assert!(!bucket_take(&mut buckets, "a", 3.0, now, false));
+        for index in 0..MAX_BUCKETS + 10 {
+            bucket_take(&mut buckets, &format!("id{index}"), 3.0, now, true);
+        }
+        assert!(buckets.len() <= MAX_BUCKETS);
+        assert!(buckets.contains_key(&format!("id{}", MAX_BUCKETS + 9)));
     }
 }

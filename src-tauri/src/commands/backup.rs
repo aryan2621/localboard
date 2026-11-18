@@ -84,8 +84,15 @@ fn rekey_connection_secrets(state: &AppState, workspace_id: &str) -> AppResult<(
     for connection in db.list_connections()? {
         let Some(old) = connection.secret_ref else { continue };
         let fresh = format!("{workspace_id}:{}", connection.id);
-        let moved = crate::storage::secrets::get(&old).and_then(|secret| crate::storage::secrets::save(&fresh, &secret)).is_ok();
-        db.set_connection_secret_ref(&connection.id, moved.then_some(fresh.as_str()))?;
+        match crate::storage::secrets::get(&old) {
+            Ok(secret) => match crate::storage::secrets::save(&fresh, &secret) {
+                Ok(()) => db.set_connection_secret_ref(&connection.id, Some(fresh.as_str()))?,
+                Err(error) => tracing::error!("could not move the secret for connection {}: {error}", connection.id),
+            },
+            // Only a secret that truly is not there is dropped; a keychain failure keeps the old ref.
+            Err(AppError::NotFound(_)) => db.set_connection_secret_ref(&connection.id, None)?,
+            Err(error) => tracing::error!("could not read the secret for connection {}: {error}", connection.id),
+        }
     }
     Ok(())
 }

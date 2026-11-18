@@ -354,13 +354,26 @@ fn write_csv(path: &PathBuf, result: &QueryResult) -> AppResult<()> {
 fn csv_cell(value: &str) -> String {
     // Spreadsheet apps run cells starting with these as formulas; a leading quote makes them text.
     let guarded;
-    let value = if value.starts_with(['=', '+', '-', '@', '\t', '\r']) {
+    let value = if value.starts_with(['=', '+', '-', '@', '\t', '\r']) && value.parse::<f64>().is_err() {
         guarded = format!("'{value}");
         guarded.as_str()
     } else {
         value
     };
     if value.contains([',', '"', '\n']) { format!("\"{}\"", value.replace('"', "\"\"")) } else { value.to_owned() }
+}
+
+#[cfg(test)]
+mod csv_tests {
+    use super::csv_cell;
+
+    #[test]
+    fn guards_formulas_but_not_numbers() {
+        assert_eq!(csv_cell("-5"), "-5");
+        assert_eq!(csv_cell("+1.5"), "+1.5");
+        assert_eq!(csv_cell("=1+1"), "'=1+1");
+        assert_eq!(csv_cell("-cmd"), "'-cmd");
+    }
 }
 
 fn cell_text(value: &Value) -> String {

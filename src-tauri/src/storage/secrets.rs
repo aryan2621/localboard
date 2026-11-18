@@ -14,7 +14,11 @@ pub fn save(reference: &str, secret: &str) -> AppResult<()> {
 }
 
 pub fn get(reference: &str) -> AppResult<String> {
-    entry(reference)?.get_password().map_err(|error| AppError::Secret(error.to_string()))
+    match entry(reference)?.get_password() {
+        Ok(secret) => Ok(secret),
+        Err(keyring::Error::NoEntry) => Err(AppError::NotFound("Secret not found".into())),
+        Err(error) => Err(AppError::Secret(error.to_string())),
+    }
 }
 
 pub fn delete(reference: &str) -> AppResult<()> {
