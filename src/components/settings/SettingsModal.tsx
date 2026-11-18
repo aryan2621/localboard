@@ -138,8 +138,6 @@ function SmtpSection() {
 
 function GeneralSection() {
   const { theme, setTheme, fontSize, setFontSize } = useAppearance()
-  const { data: status } = useQuery({ queryKey: queryKeys.status, queryFn: api.appStatus })
-  const hardware = status?.hardware
 
   return (
     <div className="space-y-8">
@@ -171,26 +169,6 @@ function GeneralSection() {
         </SettingsCard>
       </SettingsSection>
       <BrandSection />
-      {hardware && status && (
-        <SettingsSection title={'This computer'}>
-          <SettingsCard>
-            <SettingsRow label={'Memory'}>
-              <span className="text-app-label text-muted-foreground">{hardware.ramGb} GB</span>
-            </SettingsRow>
-            <SettingsRow label={'Processor'}>
-              <span className="text-app-label text-muted-foreground">
-                {hardware.cpu} · {hardware.cores} cores
-              </span>
-            </SettingsRow>
-            <SettingsRow label={'Acceleration'}>
-              <span className="text-app-label text-muted-foreground">{hardware.accelerator}</span>
-            </SettingsRow>
-            <SettingsRow label={'LocalBoard version'}>
-              <span className="text-app-label text-muted-foreground">{status.version}</span>
-            </SettingsRow>
-          </SettingsCard>
-        </SettingsSection>
-      )}
     </div>
   )
 }
@@ -305,6 +283,7 @@ function SecuritySection() {
   const { data: gov } = useQuery({ queryKey: queryKeys.governance, queryFn: api.governance })
   const [lockPass, setLockPass] = useState('')
   const [lockCurrent, setLockCurrent] = useState('')
+  const [lockConfirm, setLockConfirm] = useState('')
   const [rememberKey, setRememberKey] = useState(false)
   const [importPath, setImportPath] = useState<string | null>(null)
   const [importPass, setImportPass] = useState('')
@@ -323,6 +302,7 @@ function SecuritySection() {
     mutationFn: (enabled: boolean) => api.setAppLock(enabled, lockPass, lockCurrent || undefined),
     onSuccess: () => {
       setLockPass('')
+      setLockConfirm('')
       setLockCurrent('')
       invalidate()
       toast.success('App lock updated')
@@ -397,9 +377,12 @@ function SecuritySection() {
           <SettingsRow label={gov?.lockEnabled ? 'New passphrase' : 'Passphrase'}>
             <Input type="password" value={lockPass} onChange={(event) => setLockPass(event.target.value)} className="max-w-[14rem]" aria-label={'App lock passphrase'} />
           </SettingsRow>
+          <SettingsRow label={'Confirm passphrase'} description={lockConfirm && lockConfirm !== lockPass ? 'The passphrases do not match.' : 'Type it again so a typo does not lock you out.'}>
+            <Input type="password" value={lockConfirm} onChange={(event) => setLockConfirm(event.target.value)} className="max-w-[14rem]" aria-label={'Confirm app lock passphrase'} aria-invalid={Boolean(lockConfirm) && lockConfirm !== lockPass} />
+          </SettingsRow>
           <SettingsRow label={gov?.lockEnabled ? 'Change or turn off' : 'Turn on'} description={'Cmd/Ctrl-L locks the app right away.'}>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" disabled={!lockPass || (gov?.lockEnabled && !lockCurrent) || lock.isPending} onClick={() => lock.mutate(true)}>
+              <Button size="sm" disabled={!lockPass || lockConfirm !== lockPass || (gov?.lockEnabled && !lockCurrent) || lock.isPending} onClick={() => lock.mutate(true)}>
                 {gov?.lockEnabled ? 'Change passphrase' : 'Set lock'}
               </Button>
               {gov?.lockEnabled && (
@@ -648,7 +631,7 @@ export function SettingsModal() {
 
   return (
     <Dialog open={settingsOpen} onOpenChange={(open) => !open && closeSettings()}>
-      <DialogContent className="flex h-[min(640px,85vh)] max-w-4xl gap-0 overflow-hidden p-0">
+      <DialogContent className="flex h-[min(580px,80vh)] max-w-[52rem] gap-0 overflow-hidden p-0">
         <aside className="flex w-36 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar p-3 min-[700px]:w-[14rem]">
           <p className="px-2 pb-4 pt-2 font-medium text-app-title text-foreground">Settings</p>
           <nav className="space-y-4">
