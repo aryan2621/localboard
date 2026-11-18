@@ -2,14 +2,14 @@ import * as React from 'react'
 import { cn } from '../../lib/utils'
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto rounded-lg border border-border bg-surface">
+  <div className="relative w-full overflow-auto border border-border bg-surface">
     <table ref={ref} className={cn('w-full caption-bottom text-app-body tabular-nums', className)} {...props} />
   </div>
 ))
 Table.displayName = 'Table'
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('sticky top-0 z-[1] border-b border-border bg-muted [&_tr]:border-b-0', className)} {...props} />
+  <thead ref={ref} className={cn('sticky top-0 z-[1] border-b-2 border-foreground bg-surface [&_tr]:border-b-0', className)} {...props} />
 ))
 TableHeader.displayName = 'TableHeader'
 

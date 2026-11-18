@@ -56,7 +56,7 @@ export function PaginationBar({
   return (
     <div className={cn('flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-app-caption text-muted-foreground', className)}>
       <p aria-live="polite">
-        {from}–{to} of {total}
+        {from} to {to} of {total}
         {lastKnown}
       </p>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">

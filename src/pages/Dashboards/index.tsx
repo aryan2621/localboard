@@ -596,7 +596,7 @@ function TileSheet({
                     </button>
                   ))}
                 </div>
-                <p className="text-app-caption text-muted-foreground">If the columns don't suit this chart, the closest one that fits is used.</p>
+                <p className="text-app-caption text-muted-foreground">If the columns don’t suit this chart, the closest one that fits is used.</p>
               </div>
               <FormField label="SQL" htmlFor="tile-edit-sql" hint="Read-only. It runs when you save, so mistakes show here before the tile changes.">
                 <Textarea id="tile-edit-sql" value={sql} rows={10} onChange={(event) => setSql(event.target.value)} className="font-mono text-app-caption" />

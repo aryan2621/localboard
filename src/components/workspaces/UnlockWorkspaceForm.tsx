@@ -42,7 +42,7 @@ export function UnlockWorkspaceForm({ id, onDone }: { id: string; onDone?: () =>
         </Label>
       </div>
       <Button type="submit" disabled={!passphrase || unlock.isPending}>
-        Unlock workspace
+        Open workspace
       </Button>
     </form>
   )

@@ -70,8 +70,8 @@ export default {
         '2xl': 'var(--radius)',
       },
       fontFamily: {
-        sans: ['"Geist Variable"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', ...defaultTheme.fontFamily.sans],
-        mono: ['"Geist Mono Variable"', 'ui-monospace', 'SFMono-Regular', 'Menlo', ...defaultTheme.fontFamily.mono],
+        sans: ['"Hanken Grotesk Variable"', '-apple-system', 'BlinkMacSystemFont', 'system-ui', ...defaultTheme.fontFamily.sans],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', ...defaultTheme.fontFamily.mono],
       },
       fontSize: {
         'app-caption': ['var(--app-text-caption)', { lineHeight: '1.33' }],

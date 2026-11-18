@@ -19,6 +19,5 @@ createRoot(document.getElementById('root')!).render(
 )
 
 void Promise.all([
-  import('@fontsource-variable/geist'),
-  import('@fontsource-variable/geist-mono'),
+  import('@fontsource-variable/hanken-grotesk'),
 ])

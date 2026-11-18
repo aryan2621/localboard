@@ -311,7 +311,7 @@ export function Meter({ value, label, tone = 'brand', className }: { value: numb
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted" role="meter" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-        <div className={cn('h-full rounded-full transition-[width] duration-base', bar)} style={{ width: `${pct}%` }} />
+        <div className={cn('h-full w-full origin-left rounded-full transition-transform duration-base', bar)} style={{ transform: `scaleX(${pct / 100})` }} />
       </div>
       {label !== undefined && <span className="shrink-0 text-app-caption tabular-nums text-muted-foreground">{label}</span>}
     </div>
