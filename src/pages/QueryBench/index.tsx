@@ -472,9 +472,10 @@ export function QueryBenchPage() {
           <SheetBody>
               {(saved.data ?? []).length === 0 && <EmptyState title="No saved queries" description="Run a query, then use Save to keep it." />}
               {savedPg.pageItems.map((query) => (
-                <div key={query.id} className="group flex items-center gap-1">
+                <div key={query.id} className="group flex items-center gap-1 border-b border-border last:border-b-0">
                   <ListItemCard
-                    className={`min-w-0 flex-1 ${editingSaved?.id === query.id ? 'border-brand/40' : ''}`}
+                    className="min-w-0 flex-1"
+                    selected={editingSaved?.id === query.id}
                     title={query.name}
                     meta={`Edited ${relativeTime(query.updatedAt)}`}
                     onClick={() => { loadSql(query.sql, { id: query.id, name: query.name }); setDrawer(null) }}

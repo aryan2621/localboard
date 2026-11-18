@@ -261,7 +261,7 @@ function AuditDetail({ entry }: { entry: AuditEntry }) {
     <>
       <SheetHeader title={kindLabel(entry.kind)} description={`${new Date(entry.ts).toLocaleString()} · ${relativeTime(entry.ts)}`} />
       <SheetBody>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-lg border border-border bg-muted/30 p-4 text-app-label sm:grid-cols-3 [&>*]:min-w-0">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-y border-border py-3 text-app-label sm:grid-cols-3 [&>*]:min-w-0">
         <Field label="Status">
           <StatusPill status={entry.status} />
         </Field>
