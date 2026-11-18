@@ -132,7 +132,7 @@ function ChatHistory() {
               title={conversation.title}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex h-8 w-full items-center rounded-lg px-2 text-left text-app-caption transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                'flex h-8 w-full items-center rounded-lg px-2 text-left text-app-body transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 active ? 'bg-accent text-foreground' : 'text-foreground/75 hover:bg-accent hover:text-foreground',
               )}
             >
@@ -153,10 +153,10 @@ function AiStatus() {
     <button
       type="button"
       onClick={() => openSettings('models')}
-      className="flex h-8 w-full items-center gap-2 rounded-lg px-2 text-app-caption text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex h-8 w-full items-center gap-2 rounded-lg px-2 text-app-body text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Cpu size={14} strokeWidth={iconStroke} className={ready ? 'text-success' : 'text-warning'} />
-      <span className="truncate">{ready ? 'AI provider ready' : 'SQL-only mode · no AI provider'}</span>
+      <span className="truncate">{ready ? 'AI provider ready' : 'No AI provider'}</span>
     </button>
   )
 }

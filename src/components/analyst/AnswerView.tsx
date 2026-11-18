@@ -52,7 +52,7 @@ function Drivers({ drivers }: { drivers: Driver[] }) {
   const pg = usePagination(drivers, { initialPageSize: 10, resetKey: drivers })
   return (
     <div>
-    <Table className="text-app-caption">
+    <Table className="text-app-body">
       <TableHeader>
         <TableRow>
           {(['Driver', 'Before', 'After', 'Change', 'Share of change'] as const).map((label) => (
@@ -84,7 +84,7 @@ function Anomalies({ anomalies }: { anomalies: Anomaly[] }) {
   const pg = usePagination(anomalies, { initialPageSize: 10, resetKey: anomalies })
   return (
     <div>
-    <Table className="text-app-caption">
+    <Table className="text-app-body">
       <caption className="px-3 py-2 text-left text-app-caption text-muted-foreground">{'Unusual periods, flagged in code'}</caption>
       <TableHeader>
         <TableRow>
@@ -147,7 +147,7 @@ function SqlPanel({ queries, primaryId }: { queries: QueryRecord[]; primaryId: s
               <span className="flex flex-wrap items-center gap-1">
                 {'Reads'}
                 {query.relations.map((relation) => (
-                  <span key={relation} className="rounded-md bg-card px-1.5 py-0.5 font-mono text-app-caption text-foreground">
+                  <span key={relation} className="rounded-md bg-card px-1.5 py-0.5 text-app-caption text-foreground">
                     {relation}
                   </span>
                 ))}
@@ -167,7 +167,7 @@ function SqlPanel({ queries, primaryId }: { queries: QueryRecord[]; primaryId: s
               <SquareTerminal strokeWidth={iconStroke} /> {'Edit in Query Bench'}
             </Button>
           </div>
-          <pre className="overflow-x-auto whitespace-pre-wrap break-words px-3 py-2 font-mono text-app-caption text-foreground">{query.sql}</pre>
+          <pre className="overflow-x-auto whitespace-pre-wrap break-words px-3 py-2 font-mono text-app-body text-foreground">{query.sql}</pre>
           {query.error && <p className="border-t border-border px-3 py-2 text-app-caption text-destructive">{query.error}</p>}
         </div>
       ))}
@@ -231,7 +231,7 @@ function LineagePanel({ message, queries }: { message: MessageRecord; queries: Q
             const connection = table ? connections?.find((item) => item.id === table.connection_id) : undefined
             return (
               <li key={relation} className="flex flex-wrap items-center gap-1.5">
-                <span className="rounded-md bg-card px-1.5 py-0.5 font-mono text-app-caption text-foreground">{relation}</span>
+                <span className="rounded-md bg-card px-1.5 py-0.5 text-app-caption text-foreground">{relation}</span>
                 <span className="text-muted-foreground">
                   {connection ? `${'Source'}: ${connection.name} · ${table?.source_ref}` : 'Source not found'}
                 </span>

@@ -7,7 +7,7 @@ const alertVariants = cva('relative flex w-full items-start gap-3 rounded-lg bor
     variant: {
       default: 'border-border bg-muted/40 text-foreground',
       warning: 'border-warning/30 bg-warning/10 text-foreground [&>svg]:text-warning',
-      destructive: 'border-destructive/30 bg-destructive/10 text-foreground [&>svg]:text-destructive',
+      destructive: 'border-destructive/40 bg-transparent text-foreground [&>svg]:text-destructive',
     },
   },
   defaultVariants: { variant: 'default' },
