@@ -654,19 +654,33 @@ impl Run {
         let provider = self.models.as_ref().ok_or(LlmError::NoModel)?.provider(task, &self.routing)?;
         let mut all = vec![ChatMessage { role: Role::System, content: system }];
         all.extend(messages);
-        let response = provider
-            .chat(
-                ChatRequest {
-                    messages: all,
-                    temperature: prompts::SQL_TEMPERATURE,
-                    max_tokens: prompts::SQL_MAX_TOKENS,
-                    format: ResponseFormat::JsonSchema { name: name.to_owned(), schema },
-                },
-                None,
-            )
-            .await?;
-        serde_json::from_str(response.content.trim())
-            .map_err(|error| AnalystError::Failed(format!("The AI model returned an unreadable answer ({error}). Try again.")))
+        let mut last_error = String::new();
+        // One re-ask on unreadable JSON: small models truncate or wrap the object now and then.
+        for attempt in 0..2 {
+            let mut request_messages = all.clone();
+            if attempt == 1 {
+                request_messages.push(ChatMessage {
+                    role: Role::User,
+                    content: format!("Your last reply was not valid JSON for the schema ({last_error}). Reply again with only the JSON object."),
+                });
+            }
+            let response = provider
+                .chat(
+                    ChatRequest {
+                        messages: request_messages,
+                        temperature: prompts::SQL_TEMPERATURE,
+                        max_tokens: prompts::SQL_MAX_TOKENS,
+                        format: ResponseFormat::JsonSchema { name: name.to_owned(), schema: schema.clone() },
+                    },
+                    None,
+                )
+                .await?;
+            match serde_json::from_str(response.content.trim()) {
+                Ok(value) => return Ok(value),
+                Err(error) => last_error = error.to_string(),
+            }
+        }
+        Err(AnalystError::Failed(format!("The AI model returned an unreadable answer ({last_error}). Try again.")))
     }
 
     async fn narrate(&mut self, facts: Value) -> Result<(), AnalystError> {

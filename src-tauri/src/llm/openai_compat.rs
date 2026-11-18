@@ -8,7 +8,7 @@ use tokio::sync::mpsc;
 
 use super::provider::{ChatRequest, ChatResponse, LlmError, LlmProvider, ResponseFormat, Usage};
 
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(300);
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// Any server speaking the OpenAI chat API: OpenAI, Gemini's compatibility endpoint, Ollama, LM Studio, vLLM.
 pub struct OpenAiCompatProvider {
