@@ -159,7 +159,8 @@ fn read_zip(src: &Path, dest: &Path) -> AppResult<bool> {
     let mut zip = ZipArchive::new(file).map_err(zip_err)?;
     for index in 0..zip.len() {
         let mut entry = zip.by_index(index).map_err(zip_err)?;
-        let name = entry.name().to_owned();
+        // zip 9 returns Err for names it deems unsafe; skip those entries.
+        let Ok(name) = entry.name().map(|n| n.into_owned()) else { continue };
         if name.contains("..") || name.contains('\\') || name.contains('/') && name != "manifest.json" {
             if !matches!(name.as_str(), WORKSPACE_DB | ANALYTICS_DB | "manifest.json") {
                 continue;
@@ -188,4 +189,59 @@ fn read_zip(src: &Path, dest: &Path) -> AppResult<bool> {
 
 fn zip_err(error: zip::result::ZipError) -> AppError {
     AppError::Internal(error.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn scratch(tag: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("localboard-test-{tag}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    #[test]
+    fn backup_round_trips_databases_and_manifest() {
+        let src = scratch("bk-src");
+        std::fs::write(src.join(WORKSPACE_DB), b"workspace-bytes").unwrap();
+        std::fs::write(src.join(ANALYTICS_DB), b"analytics-bytes").unwrap();
+        let zip_path = src.join("out.zip");
+        write_backup(&src, "Acme", true, &zip_path).unwrap();
+        let dest = scratch("bk-dest");
+        let encrypted = read_zip(&zip_path, &dest).unwrap();
+        assert!(encrypted, "the manifest's encrypted flag must survive");
+        assert_eq!(std::fs::read(dest.join(WORKSPACE_DB)).unwrap(), b"workspace-bytes");
+        assert_eq!(std::fs::read(dest.join(ANALYTICS_DB)).unwrap(), b"analytics-bytes");
+    }
+
+    #[test]
+    fn import_skips_path_traversal_and_unknown_entries() {
+        let dir = scratch("bk-evil");
+        let zip_path = dir.join("evil.zip");
+        {
+            let mut zip = ZipWriter::new(File::create(&zip_path).unwrap());
+            let opts = SimpleFileOptions::default();
+            for name in ["../escape.txt", "sub/dir.txt", "..\\win.txt", "random.bin", WORKSPACE_DB] {
+                zip.start_file(name, opts).unwrap();
+                zip.write_all(b"x").unwrap();
+            }
+            zip.finish().unwrap();
+        }
+        let dest = dir.join("dest");
+        read_zip(&zip_path, &dest).unwrap();
+        assert!(!dir.join("escape.txt").exists());
+        assert!(!dest.join("sub").exists());
+        assert!(!dest.join("random.bin").exists());
+        assert!(dest.join(WORKSPACE_DB).is_file());
+    }
+
+    #[test]
+    fn import_of_a_non_zip_fails_cleanly() {
+        let dir = scratch("bk-bad");
+        let path = dir.join("nope.zip");
+        std::fs::write(&path, b"not a zip").unwrap();
+        assert!(read_backup(&path, &dir.join("dest")).is_err());
+    }
 }

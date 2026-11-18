@@ -37,7 +37,7 @@ const SchemaExplorerPage = lazy(() => import('./pages/SchemaExplorer').then((m) 
 function PageFallback() {
   return (
     <div className="flex h-full items-center justify-center" role="status" aria-label="Loading">
-      <Loader2 size={20} strokeWidth={iconStroke} className="animate-spin text-muted-foreground" />
+      <Loader2 size={16} strokeWidth={iconStroke} className="animate-spin text-muted-foreground" />
     </div>
   )
 }
@@ -190,7 +190,7 @@ export default function App() {
         <div className="flex h-full items-center justify-center p-8 text-app-label text-destructive">{errorMessage(error)}</div>
       ) : !status?.ready ? (
         <div className="flex h-full items-center justify-center" role="status" aria-label="Starting LocalBoard">
-          <Loader2 size={20} strokeWidth={iconStroke} className="animate-spin text-muted-foreground" />
+          <Loader2 size={16} strokeWidth={iconStroke} className="animate-spin text-muted-foreground" />
         </div>
       ) : status.onboardingCompleted ? (
         status.locked ? (

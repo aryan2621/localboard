@@ -20,12 +20,12 @@ serde_json = "1"
 thiserror = "2"
 tokio = { version = "1", features = ["time", "sync", "process", "fs", "io-util", "macros", "net", "rt"] }
 axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
 flate2 = "1"
 reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls", "blocking"] }
 futures-util = "0.3"
 duckdb = { version = "1", features = ["bundled"] }
-calamine = "0.26"
+calamine = "0.38"
 rusqlite = { version = "0.32", features = ["bundled-sqlcipher-vendored-openssl"] }
 tokio-tungstenite = { version = "0.26", default-features = false, features = ["connect", "rustls-tls-webpki-roots"] }
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio-rustls", "postgres", "mysql", "sqlite"] }
@@ -44,8 +44,8 @@ tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
 sqlparser = { version = "0.63", features = ["visitor"] }
 pdf-extract = "0.7"
 docx-rs = "0.4"
-rust_xlsxwriter = "0.99.1"
-tiberius = { version = "0.12", default-features = false, features = ["tds73", "rustls"] }
+rust_xlsxwriter = "0.102"
+tiberius = { version = "0.13", default-features = false, features = ["tds73", "rustls"] }
 tokio-util = { version = "0.7", features = ["compat"] }
 rsa = "0.9"
 base64 = "0.22"

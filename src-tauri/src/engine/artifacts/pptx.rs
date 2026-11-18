@@ -348,3 +348,39 @@ const THEME: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </a:fmtScheme>
 </a:themeElements>
 </a:theme>"#;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::engine::query::{ColumnKind, ResultColumn};
+    use crate::storage::artifacts::DeckSlide;
+    use std::io::Read;
+
+    fn slide(title: &str, body: &str, result: Option<QueryResult>) -> DeckSlide {
+        DeckSlide { id: "s".into(), deck_id: "d".into(), title: title.into(), body: body.into(), sql: None, chart: None, result, sort: 0 }
+    }
+
+    #[test]
+    fn deck_is_a_valid_pptx_package_with_one_slide_per_entry() {
+        let result = QueryResult {
+            columns: vec![
+                ResultColumn { name: "region".into(), data_type: "VARCHAR".into(), kind: ColumnKind::Text },
+                ResultColumn { name: "sales".into(), data_type: "DOUBLE".into(), kind: ColumnKind::Number },
+            ],
+            rows: vec![vec!["East".into(), 10.5.into()], vec!["West".into(), (-4.0).into()]],
+            truncated: false,
+        };
+        let deck = DeckRecord {
+            id: "d".into(), name: "Q3 <review> & \"plan\"".into(), prompt: String::new(), outline: vec![], source_message_id: None,
+            slides: vec![slide("Title & <b>", "Body", Some(result)), slide("Second", "", None)],
+        };
+        let bytes = write(&deck).unwrap();
+        let mut zip = zip::ZipArchive::new(Cursor::new(bytes)).unwrap();
+        for name in ["[Content_Types].xml", "ppt/presentation.xml", "ppt/slides/slide1.xml", "ppt/slides/slide2.xml"] {
+            assert!(zip.by_name(name).is_ok(), "{name} missing");
+        }
+        let mut xml = String::new();
+        zip.by_name("ppt/slides/slide1.xml").unwrap().read_to_string(&mut xml).unwrap();
+        assert!(xml.contains("Title &amp; &lt;b&gt;"), "titles must be XML-escaped");
+    }
+}

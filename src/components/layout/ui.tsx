@@ -36,7 +36,7 @@ export function SettingsSection({
             <span className="block text-app-label font-semibold text-foreground">{title}</span>
             {description && <span className="mt-0.5 block truncate text-app-caption text-muted-foreground" title={description}>{description}</span>}
           </span>
-          <ChevronDown size={16} className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+          <ChevronDown size={15} className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
         </summary>
         <div className="space-y-4 border-t border-border p-4">{children}</div>
       </details>
@@ -121,7 +121,12 @@ export function StatusBadge({
 
 /* ---------- Page system: one container, one header, one set of states ---------- */
 
-const PAGE_WIDTH = { narrow: 'max-w-3xl', wide: 'max-w-6xl', full: 'max-w-[1400px]' } as const
+// Children keep a capped, centred column; the <header> (PageHeader) spans the full width.
+const PAGE_WIDTH = {
+  narrow: '[&>*:not(header)]:max-w-3xl',
+  wide: '[&>*:not(header)]:max-w-6xl',
+  full: '[&>*:not(header)]:max-w-[1400px]',
+} as const
 
 export function PageContainer({
   width = 'narrow',
@@ -132,7 +137,17 @@ export function PageContainer({
   className?: string
   children: ReactNode
 }) {
-  return <div className={cn('mx-auto space-y-4 px-4 py-4 sm:px-6', PAGE_WIDTH[width], className)}>{children}</div>
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-4 pb-24 [&>*:not(header)]:mx-auto [&>*:not(header)]:w-[calc(100%-2rem)] sm:[&>*:not(header)]:w-[calc(100%-3rem)] [&>header+*]:mt-2 [&>*:first-child:not(header)]:mt-6',
+        PAGE_WIDTH[width],
+        className,
+      )}
+    >
+      {children}
+    </div>
+  )
 }
 
 export function PageHeader({
@@ -147,7 +162,7 @@ export function PageHeader({
   className?: string
 }) {
   return (
-    <header className={cn('flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3', className)}>
+    <header className={cn('flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6', className)}>
       <div className="min-w-0">
         <h1 className="break-words font-semibold text-app-label text-foreground">{title}</h1>
         {description && <p className="text-app-caption text-muted-foreground">{description}</p>}
@@ -402,7 +417,7 @@ export function ViewToggle({ value, onChange }: { value: 'cards' | 'list'; onCha
       {options.map((option) => (
         <Hint key={option.value} text={option.label}>
           <ToggleGroupItem value={option.value} aria-label={option.label} className="w-8 px-0">
-            <option.icon size={15} strokeWidth={iconStroke} />
+            <option.icon size={14} strokeWidth={iconStroke} />
           </ToggleGroupItem>
         </Hint>
       ))}

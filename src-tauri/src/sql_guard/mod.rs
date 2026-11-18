@@ -406,3 +406,64 @@ const ALLOWED_FUNCTIONS: &[&str] = &[
     "unnest", "range", "generate_series", "list_sum", "list_avg", "list_min", "list_max", "list_slice", "list_position", "list_count", "list_median",
     "list_concat", "list_reverse", "array_slice", "array_extract", "array_contains", "len",
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn policy() -> GuardPolicy {
+        GuardPolicy::new(["orders".to_string(), "users".to_string()])
+    }
+
+    #[test]
+    fn allows_reads_of_registered_relations() {
+        for sql in [
+            "SELECT * FROM orders",
+            "select count(*) from ORDERS where id > 3;",
+            "WITH t AS (SELECT * FROM users) SELECT * FROM t",
+            "SELECT o.id FROM orders o JOIN users u ON u.id = o.user_id",
+            "SELECT date_trunc('month', CURRENT_DATE) - INTERVAL 1 MONTH",
+        ] {
+            assert!(validate(sql, &policy()).is_ok(), "{sql} should pass");
+        }
+    }
+
+    #[test]
+    fn rejects_writes_files_and_escapes() {
+        for sql in [
+            "",
+            "DROP TABLE orders",
+            "DELETE FROM orders",
+            "INSERT INTO orders VALUES (1)",
+            "UPDATE orders SET id = 1",
+            "CREATE TABLE x AS SELECT 1",
+            "ATTACH 'evil.db' AS e",
+            "COPY orders TO '/tmp/out.csv'",
+            "INSTALL httpfs",
+            "LOAD httpfs",
+            "PRAGMA database_list",
+            "SET enable_external_access = true",
+            "SELECT 1; SELECT 2",
+            "SELECT * FROM secrets",
+            "SELECT * FROM read_csv('/etc/passwd')",
+            "SELECT * FROM read_parquet('/tmp/x.parquet')",
+            "SELECT * FROM '/etc/passwd'",
+            "SELECT * FROM glob('/*')",
+            "SELECT * FROM duckdb_settings()",
+            "SELECT * FROM information_schema.tables",
+            "SELECT * FROM sqlite_master",
+            "SELECT getenv('HOME')",
+            "SELECT current_setting('home_directory')",
+            "SELECT * FROM orders; DROP TABLE orders",
+            "SELECT * FROM main.orders, read_text('/etc/hosts')",
+        ] {
+            assert!(validate(sql, &policy()).is_err(), "{sql} should be rejected");
+        }
+    }
+
+    #[test]
+    fn rejects_oversized_query() {
+        let sql = format!("SELECT {}", "1,".repeat(MAX_SQL_BYTES));
+        assert!(validate(&sql, &policy()).is_err());
+    }
+}

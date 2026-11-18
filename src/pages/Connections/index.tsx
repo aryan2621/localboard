@@ -291,7 +291,7 @@ function PendingSources({ paths }: { paths: string[] }) {
   return (
     <div role="status" aria-live="polite" className="space-y-1.5 rounded-lg border border-border bg-surface px-4 py-3">
       <p className="flex items-center gap-2 text-app-label text-foreground">
-        <Loader2 size={15} strokeWidth={iconStroke} className="animate-spin text-brand" />
+        <Loader2 size={14} strokeWidth={iconStroke} className="animate-spin text-brand" />
         Reading {paths.length === 1 ? '1 source' : `${paths.length} sources`} and profiling columns…
       </p>
       <ul className="space-y-0.5 pl-6">
@@ -411,7 +411,7 @@ function SourceRow({ connection, onExplore, layout = 'card' }: { connection: Con
         <TableCell className="text-muted-foreground">{snapshotLabel(connection) ?? `Added ${relativeTime(connection.createdAt)}`}</TableCell>
         <TableCell className="w-12 text-right">
           <div className="flex items-center justify-end gap-1">
-            {action.isPending && <Loader2 size={15} strokeWidth={iconStroke} className="animate-spin text-muted-foreground" />}
+            {action.isPending && <Loader2 size={14} strokeWidth={iconStroke} className="animate-spin text-muted-foreground" />}
             {menu}
           </div>
           {removeDialog}
@@ -445,7 +445,7 @@ function SourceRow({ connection, onExplore, layout = 'card' }: { connection: Con
           Explore
         </Button>
       )}
-      {action.isPending && <Loader2 size={15} strokeWidth={iconStroke} className="animate-spin text-muted-foreground" />}
+      {action.isPending && <Loader2 size={14} strokeWidth={iconStroke} className="animate-spin text-muted-foreground" />}
       {menu}
       {removeDialog}
     </div>
@@ -614,7 +614,7 @@ function AddDataDialog({ open: isOpen, onOpenChange }: { open: boolean; onOpenCh
           choice === value ? 'bg-accent text-foreground' : 'text-foreground/80 hover:bg-accent/60 hover:text-foreground',
         )}
       >
-        <Icon size={15} strokeWidth={iconStroke} className="shrink-0 text-muted-foreground" />
+        <Icon size={14} strokeWidth={iconStroke} className="shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate" title={label}>{label}</span>
         {trailing}
       </button>

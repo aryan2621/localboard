@@ -121,6 +121,9 @@ fn validate_steps(steps: &[StepDraft]) -> AppResult<Vec<AutomationStep>> {
         if !automations::valid_step(&step.kind) {
             return Err(AppError::invalid(format!("Unknown step kind: {}", step.kind)));
         }
+        if step.kind == "sql" && step.config.get("sql").and_then(Value::as_str).map_or(true, |sql| sql.trim().is_empty()) {
+            return Err(AppError::invalid(format!("Step {} is a SQL step with no SQL", index + 1)));
+        }
         out.push(AutomationStep {
             id: step.id.clone().unwrap_or_else(new_id),
             sort: index as i64,
@@ -1102,6 +1105,10 @@ pub async fn automation_propose(app: AppHandle, state: State<'_, AppState>, prom
                          - file_change: {\"path\": \"<file or folder>\"}.\n\
                          - manual or webhook: {}.\n\
                          If the user names no time, use manual.\n\
+                         Step shapes, by kind (use no other keys):\n\
+                         - sql: {\"name\": \"<label>\", \"sql\": \"SELECT ...\"}. It only reads; there is no step that saves to a table.\n\
+                         - threshold: {\"column\": \"<column of the sql step>\", \"op\": \">\", \"value\": 5000}. Put it after a sql step that returns that column; for an alert on rows, make the sql step select the aggregate (for example COUNT(*) AS n) and threshold on n.\n\
+                         - notify: {\"title\": \"<short title>\", \"message\": \"<text>\"}. Place it after a threshold step so it fires only on an alert.\n\
                          Tables you can use:\n"
                             .to_owned()
                             + &context.prompt,

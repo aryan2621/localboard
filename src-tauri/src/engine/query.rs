@@ -152,7 +152,7 @@ pub fn run(
     Ok(result)
 }
 
-fn execute(conn: &Connection, sql: &str, params: &HashMap<String, DuckValue>) -> Result<QueryResult, duckdb::Error> {
+pub(crate) fn execute(conn: &Connection, sql: &str, params: &HashMap<String, DuckValue>) -> Result<QueryResult, duckdb::Error> {
     conn.execute_batch("BEGIN TRANSACTION;")?;
     let result = read(conn, sql, params);
     if let Err(error) = conn.execute_batch("ROLLBACK;") {
@@ -263,6 +263,11 @@ fn coerce_text(text: &str) -> DuckValue {
         if text.contains('.') && number.is_finite() {
             return DuckValue::Double(number);
         }
+    }
+    // A bare text parameter won't compare with a DATE column, so ISO dates bind as dates.
+    if let Ok(date) = chrono::NaiveDate::parse_from_str(text, "%Y-%m-%d") {
+        let epoch = chrono::NaiveDate::from_ymd_opt(1970, 1, 1).expect("valid epoch");
+        return DuckValue::Date32(i32::try_from((date - epoch).num_days()).unwrap_or(0));
     }
     DuckValue::Text(text.to_owned())
 }
@@ -394,4 +399,52 @@ fn format_timestamp(unit: TimeUnit, value: i64) -> String {
 /// Milliseconds since `started`, saturating, for storage.
 pub fn elapsed_ms(started: Instant) -> i64 {
     i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn run_sql(conn: &Connection, sql: &str) -> Result<QueryResult, duckdb::Error> {
+        execute(conn, sql, &HashMap::new())
+    }
+
+    #[test]
+    fn engine_aggregates_filters_and_binds_parameters() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE sales(region VARCHAR, amount DOUBLE, day DATE); INSERT INTO sales VALUES ('East',10,'2026-01-05'),('East',5,'2026-02-10'),('West',7,'2026-02-11'),('West',NULL,'2026-02-12');").unwrap();
+        let totals = run_sql(&conn, "SELECT region, sum(amount) AS total FROM sales GROUP BY region ORDER BY region").unwrap();
+        assert_eq!(totals.rows.len(), 2);
+        assert_eq!(totals.rows[0][0], "East");
+        assert_eq!(totals.rows[0][1], 15.0);
+        let bound = execute(&conn, &duck_placeholders("SELECT count(*) FROM sales WHERE region = :r"), &HashMap::from([("r".to_string(), DuckValue::Text("West".into()))])).unwrap();
+        assert_eq!(bound.rows[0][0], 2);
+    }
+
+    #[test]
+    fn nulls_stay_null_and_read_only_transaction_rolls_back() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE t(a INTEGER); INSERT INTO t VALUES (NULL);").unwrap();
+        let result = run_sql(&conn, "SELECT a FROM t").unwrap();
+        assert!(result.rows[0][0].is_null());
+        // A write smuggled past the guard must not persist.
+        let _ = run_sql(&conn, "INSERT INTO t VALUES (1)");
+        assert_eq!(run_sql(&conn, "SELECT count(*) FROM t").unwrap().rows[0][0], 1);
+    }
+
+    #[test]
+    fn previous_month_date_math_binds() {
+        // Regression: first INTERVAL query on a new connection used to fail to bind.
+        let sql = "SELECT CAST(date_trunc('month', CURRENT_DATE) AS DATE) - INTERVAL 1 MONTH";
+        let conn = crate::engine::duck::Analytics::open(std::path::Path::new(":memory:"), 1).unwrap();
+        // First query on a fresh Analytics connection must already bind (see duck::warm_up).
+        assert!(run_sql(conn.connection(), "SELECT date_trunc('month', CURRENT_DATE) - INTERVAL 1 MONTH").is_ok());
+        assert!(run_sql(conn.connection(), sql).is_ok());
+    }
+
+    #[test]
+    fn iso_dates_bind_as_dates() {
+        assert!(matches!(coerce_text("1970-01-02"), DuckValue::Date32(1)));
+        assert!(matches!(coerce_text("West"), DuckValue::Text(_)));
+    }
 }

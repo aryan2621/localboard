@@ -125,7 +125,7 @@ export function SplitView({
               onClick={toggle}
               className="flex items-center gap-2 border-t border-border px-4 py-2.5 text-app-caption text-muted-foreground transition-colors duration-fast hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             >
-              <PanelLeftClose size={15} strokeWidth={iconStroke} /> Hide {label}
+              <PanelLeftClose size={14} strokeWidth={iconStroke} /> Hide {label}
             </button>
           )}
         </aside>
@@ -226,7 +226,7 @@ export function Timeline({ items }: { items: TimelineItem[] }) {
             {index < items.length - 1 && <span className="absolute left-[17px] top-10 h-[calc(100%-2.5rem)] w-px bg-border" aria-hidden />}
             {item.status === 'running' ? (
               <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                <Loader2 size={18} strokeWidth={iconStroke} className="animate-spin" />
+                <Loader2 size={16} strokeWidth={iconStroke} className="animate-spin" />
               </span>
             ) : (
               <IconTile icon={item.icon} tone={tone} />

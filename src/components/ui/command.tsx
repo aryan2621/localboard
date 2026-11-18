@@ -10,7 +10,7 @@ Command.displayName = 'Command'
 
 const CommandInput = React.forwardRef<React.ElementRef<typeof CommandPrimitive.Input>, React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>>(({ className, ...props }, ref) => (
   <div className="flex items-center gap-2 border-b border-border px-3">
-    <Search size={15} className="shrink-0 text-muted-foreground" aria-hidden />
+    <Search size={14} className="shrink-0 text-muted-foreground" aria-hidden />
     <CommandPrimitive.Input ref={ref} className={cn('h-10 w-full bg-transparent text-app-label outline-none placeholder:text-muted-foreground', className)} {...props} />
   </div>
 ))

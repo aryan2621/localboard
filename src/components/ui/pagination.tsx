@@ -77,10 +77,10 @@ export function PaginationBar({
         </div>
         <div className="flex items-center gap-1">
           <Button variant="outline" size="icon" className="h-8 w-8" aria-label="First page" disabled={page <= 1} onClick={() => onPageChange(1)}>
-            <ChevronsLeft size={15} />
+            <ChevronsLeft size={14} />
           </Button>
           <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Previous page" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
-            <ChevronLeft size={15} />
+            <ChevronLeft size={14} />
           </Button>
           <span className="flex items-center gap-1.5 px-1">
             Page
@@ -104,7 +104,7 @@ export function PaginationBar({
             disabled={atEnd && !hasMore}
             onClick={() => onPageChange(page + 1)}
           >
-            <ChevronRight size={15} />
+            <ChevronRight size={14} />
           </Button>
           <Button
             variant="outline"
@@ -114,7 +114,7 @@ export function PaginationBar({
             disabled={atEnd || hasMore}
             onClick={() => onPageChange(pageCount)}
           >
-            <ChevronsRight size={15} />
+            <ChevronsRight size={14} />
           </Button>
         </div>
       </div>

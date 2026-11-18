@@ -23,7 +23,7 @@ function ChatHeader({ conversation }: { conversation: ConversationDetail }) {
   const remove = useDeleteChat(conversation, () => navigate('home'))
 
   return (
-    <header className="flex items-center gap-2 border-b border-border pb-4">
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
       <Hint text={conversation.title}>
         <h1 className="min-w-0 flex-1 truncate font-medium text-app-heading text-foreground" title={conversation.title}>{conversation.title}</h1>
       </Hint>
@@ -81,7 +81,6 @@ function Conversation({ id, inspected, onInspect }: { id: string; inspected: Ins
 
   return (
     <>
-      <ChatHeader conversation={conversation} />
       <div className="flex-1 space-y-8 py-6">
         {conversation.messages.map((message, index) =>
           message.role === 'user' ? (
@@ -108,7 +107,7 @@ function Conversation({ id, inspected, onInspect }: { id: string; inspected: Ins
         )}
         <div ref={end} />
       </div>
-      <div className="sticky bottom-0 border-t border-border bg-background pb-4 pt-3">
+      <div className="sticky bottom-0 bg-background pb-4 pt-3">
         <Composer onSubmit={submit} busy={generate.isPending || Boolean(sending)} disabled={writing} />
       </div>
     </>
@@ -117,7 +116,7 @@ function Conversation({ id, inspected, onInspect }: { id: string; inspected: Ins
 
 /** Each turn opens with its question as a heading, so the thread reads as a list of answers. */
 function Question({ children }: { children: string }) {
-  return <h2 className="whitespace-pre-wrap break-words border-t border-border pt-6 text-app-title font-semibold text-foreground first:border-t-0 first:pt-0">{children}</h2>
+  return <h2 className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-lg bg-muted px-4 py-3 text-app-body font-normal text-foreground">{children}</h2>
 }
 
 export function ChatPage() {
@@ -134,9 +133,13 @@ export function ChatPage() {
 
   return (
     <div className="flex h-full">
-      <div className="min-w-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex min-h-full max-w-3xl flex-col px-4 pt-6 sm:px-8">
-          {conversationId && <Conversation key={conversationId} id={conversationId} inspected={inspected} onInspect={setInspected} />}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="mac-window-space shrink-0" />
+        {conversation && <ChatHeader conversation={conversation} />}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto flex min-h-full max-w-[44rem] flex-col px-4 pt-6 sm:px-8">
+            {conversationId && <Conversation key={conversationId} id={conversationId} inspected={inspected} onInspect={setInspected} />}
+          </div>
         </div>
       </div>
       {conversation && message && inspected && (

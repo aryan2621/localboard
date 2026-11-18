@@ -296,7 +296,7 @@ async fn webhook_fire(State(app): State<AppHandle>, Path(id): Path<String>, head
 }
 
 /// Pages are self-contained: inline script/style only, data over same-origin fetch, nothing else.
-const PAGE_CSP: &str = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self' tauri://localhost http://tauri.localhost https://tauri.localhost http://localhost:*";
+const PAGE_CSP: &str = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self' http://127.0.0.1:17890; base-uri 'none'; form-action 'none'; frame-ancestors 'self' tauri://localhost http://tauri.localhost https://tauri.localhost http://localhost:* http://127.0.0.1:*";
 
 fn html_ok(body: String) -> Response {
     (

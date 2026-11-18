@@ -291,10 +291,8 @@ export function AutomationsPage() {
       })
     },
     onSuccess: (saved) => {
-      setSelected(saved.id)
-      setCreating(false)
-      setSteps((current) => current.map((step) => ({ ...step, id: step.id ?? step.key })))
-      setStepSecrets({})
+      // Reload the form from the saved record so the unsaved-changes check compares like with like.
+      load(saved)
       if (saved.webhookToken) setToken(saved.webhookToken)
       void queryClient.invalidateQueries({ queryKey: queryKeys.automations })
       toast.success('Saved')

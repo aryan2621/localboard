@@ -35,7 +35,7 @@ pub(crate) fn bar_extent(value: f32, values: &[f32], height: f32) -> (f32, f32) 
     (if value >= 0.0 { zero } else { zero - h }, h)
 }
 
-pub const ARTIFACT_MAX_TOKENS: u32 = 2_048;
+pub const ARTIFACT_MAX_TOKENS: u32 = 4_096;
 pub const BRAND_HEX: &str = "#C96240";
 pub const BRAND_NAME: &str = "LocalBoard";
 
@@ -52,7 +52,8 @@ pub fn datasite_system(schema: &str) -> String {
         "Propose a multi-page datasite. Return a short name, an overview page, and up to 5 sections.\n\
          Each page has a title, a narrative with no numbers, and up to 4 tiles.\n\
          Each tile is a title, one read-only SELECT, and a chart kind.\n\
-         Do not invent tables or columns. Do not put numbers in the narrative.\n\nSCHEMA:\n{schema}"
+         Do not invent tables or columns. Do not put numbers in the narrative.\n\
+         Every column in a tile must belong to the table in that tile's FROM clause: check the SCHEMA before using a column, and stay on the tables the request names. Add no tile the request did not ask for.\n\nSCHEMA:\n{schema}"
     )
 }
 

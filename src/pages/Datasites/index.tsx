@@ -80,7 +80,7 @@ export function DatasitesPage() {
               const Icon = TYPE_ICON[item.value]
               return (
                 <TabsTrigger key={item.value} value={item.value} title={EXPLAINER[item.value]} className="group gap-2">
-                  <Icon size={15} strokeWidth={iconStroke} />
+                  <Icon size={14} strokeWidth={iconStroke} />
                   {item.label}
                   <span className="rounded-sm bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground group-data-[state=active]:bg-brand/15 group-data-[state=active]:text-brand">
                     {counts[item.value] ?? 0}
@@ -624,7 +624,7 @@ function DeckView({ id }: { id: string }) {
                       index === selectedIndex ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-foreground/30',
                     )}
                   >
-                    <span className="line-clamp-2 text-[11px] leading-tight text-foreground">{slide.title || 'Untitled'}</span>
+                    <span className="line-clamp-2 text-app-caption leading-tight text-foreground">{slide.title || 'Untitled'}</span>
                     {withData.has(slide.id) ? (
                       <span className="mt-auto flex h-5 items-end gap-0.5" aria-hidden>
                         {[40, 70, 55, 90, 65].map((height, bar) => (
@@ -632,7 +632,7 @@ function DeckView({ id }: { id: string }) {
                         ))}
                       </span>
                     ) : (
-                      <span className="line-clamp-2 text-[9px] leading-tight text-muted-foreground">{slide.body}</span>
+                      <span className="line-clamp-2 text-app-caption leading-tight text-muted-foreground">{slide.body}</span>
                     )}
                   </button>
                 </li>
@@ -667,7 +667,7 @@ function DeckView({ id }: { id: string }) {
                 </div>
               </div>
               <div className="flex aspect-video flex-col gap-4 overflow-hidden rounded-lg border border-border bg-card p-10 shadow-md">
-                <h2 className="text-2xl leading-tight text-foreground">{selected.title || 'Untitled'}</h2>
+                <h2 className="text-app-page leading-tight text-foreground">{selected.title || 'Untitled'}</h2>
                 {withData.has(selected.id) ? (
                   <div className="flex min-h-0 flex-1 items-end gap-3 border-b border-l border-border px-4 pb-0" aria-label="Chart placeholder">
                     {[35, 60, 45, 80, 55, 70].map((height, bar) => (

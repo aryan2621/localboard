@@ -149,18 +149,32 @@ fn record_refresh(
 
 async fn llm_json<T: serde::de::DeserializeOwned>(state: &AppState, system: String, prompt: String, name: &str, schema: Value) -> AppResult<T> {
     let provider = state.task_provider(Task::Sql)?;
-    let response = provider
-        .chat(
-            ChatRequest {
-                messages: vec![ChatMessage { role: Role::System, content: system }, ChatMessage { role: Role::User, content: prompt }],
-                temperature: prompts::SQL_TEMPERATURE,
-                max_tokens: ARTIFACT_MAX_TOKENS,
-                format: ResponseFormat::JsonSchema { name: name.into(), schema },
-            },
-            None,
-        )
-        .await?;
-    serde_json::from_str(response.content.trim()).map_err(|_| AppError::invalid("The model returned an unreadable result. Try again."))
+    // Local models sometimes wrap the JSON in prose or fences, or emit a broken one-off: parse leniently, retry once.
+    let mut last = String::new();
+    for _ in 0..2 {
+        let response = provider
+            .chat(
+                ChatRequest {
+                    messages: vec![ChatMessage { role: Role::System, content: system.clone() }, ChatMessage { role: Role::User, content: prompt.clone() }],
+                    temperature: prompts::SQL_TEMPERATURE,
+                    max_tokens: ARTIFACT_MAX_TOKENS,
+                    format: ResponseFormat::JsonSchema { name: name.into(), schema: schema.clone() },
+                },
+                None,
+            )
+            .await?;
+        let text = response.content.trim();
+        let body = match (text.find('{'), text.rfind('}')) {
+            (Some(a), Some(b)) if a < b => &text[a..=b],
+            _ => text,
+        };
+        if let Ok(parsed) = serde_json::from_str(body) {
+            return Ok(parsed);
+        }
+        last = text.chars().take(300).collect();
+    }
+    tracing::warn!(raw = %last, "artifact model output was not valid JSON");
+    Err(AppError::invalid("The model returned an unreadable result. Try again."))
 }
 
 async fn narrate(state: &AppState, title: &str, facts: &Value) -> String {

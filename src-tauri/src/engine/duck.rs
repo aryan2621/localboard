@@ -21,16 +21,24 @@ pub fn sql_string(value: &str) -> String {
     format!("'{}'", value.replace('\'', "''"))
 }
 
+/// DuckDB fails the first INTERVAL binding on a fresh connection and succeeds afterwards, so a user's first
+/// date question would error. Bind one up front; the result is irrelevant.
+fn warm_up(conn: &Connection) {
+    let _ = conn.execute_batch("SELECT CURRENT_DATE - INTERVAL 1 MONTH");
+}
+
 impl Analytics {
     pub fn open(path: &Path, memory_limit_gb: u64) -> Result<Self, duckdb::Error> {
         let conn = Connection::open(path)?;
         conn.execute_batch(&format!("SET memory_limit = '{}GB';", memory_limit_gb.max(1)))?;
+        warm_up(&conn);
         Ok(Self { conn })
     }
 
     /// Wraps a connection that is already set up (for example an encrypted catalog attached and selected).
     pub fn from_connection(conn: Connection, memory_limit_gb: u64) -> Result<Self, duckdb::Error> {
         conn.execute_batch(&format!("SET memory_limit = '{}GB';", memory_limit_gb.max(1)))?;
+        warm_up(&conn);
         Ok(Self { conn })
     }
 

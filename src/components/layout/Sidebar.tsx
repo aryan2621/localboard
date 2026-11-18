@@ -192,7 +192,7 @@ function WorkspaceMenu({ compact = false }: { compact?: boolean }) {
                   <span className="block truncate text-app-label font-medium text-foreground" title={active?.name}>{active?.name ?? 'No workspace'}</span>
                   <span className="block text-app-caption text-muted-foreground">{'Workspace'}</span>
                 </span>
-                <ChevronsUpDown size={15} strokeWidth={iconStroke} className="text-muted-foreground" />
+                <ChevronsUpDown size={14} strokeWidth={iconStroke} className="text-muted-foreground" />
               </>
             )}
           </button>
@@ -282,7 +282,7 @@ export function Sidebar() {
                     page === target ? 'bg-accent text-foreground' : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
                   )}
                 >
-                  <Icon size={16} strokeWidth={iconStroke} />
+                  <Icon size={15} strokeWidth={iconStroke} />
                 </button>
               </Hint>
             ))}

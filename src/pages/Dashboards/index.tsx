@@ -580,7 +580,7 @@ function TileSheet({
                         kind === option.value ? 'border-brand bg-brand/5 text-foreground ring-1 ring-brand/30' : 'border-border text-muted-foreground hover:text-foreground',
                       )}
                     >
-                      <option.icon size={15} strokeWidth={iconStroke} />
+                      <option.icon size={14} strokeWidth={iconStroke} />
                       {option.label}
                     </button>
                   ))}

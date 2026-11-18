@@ -665,7 +665,7 @@ export function SettingsModal() {
                       settingsSection === id ? 'bg-accent text-foreground' : 'text-foreground/80 hover:bg-accent hover:text-foreground',
                     )}
                   >
-                    <Icon size={15} strokeWidth={iconStroke} className="shrink-0" />
+                    <Icon size={14} strokeWidth={iconStroke} className="shrink-0" />
                     <span className="min-w-0 truncate">{label}</span>
                   </button>
                 ))}

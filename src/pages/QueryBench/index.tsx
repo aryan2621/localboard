@@ -258,7 +258,7 @@ export function QueryBenchPage() {
                 { value: 'saved', label: 'Saved', Icon: Bookmark, count: savedRows.length },
               ].map(({ value, label, Icon, count }) => (
                 <TabsTrigger key={value} value={value} className="group gap-2">
-                  <Icon size={15} strokeWidth={iconStroke} />
+                  <Icon size={14} strokeWidth={iconStroke} />
                   {label}
                   <span className="rounded-sm bg-muted px-1.5 text-app-caption tabular-nums text-muted-foreground group-data-[state=active]:bg-brand/15 group-data-[state=active]:text-brand">
                     {count}

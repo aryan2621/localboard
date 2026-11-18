@@ -371,3 +371,31 @@ mod wrap_tests {
         assert_eq!(wrap("hello world", 20), vec!["hello world"]);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::storage::artifacts::ReportBlock;
+
+    fn block(kind: &str, title: &str, body: &str) -> ReportBlock {
+        ReportBlock { id: "b".into(), report_id: "r".into(), kind: kind.into(), title: title.into(), body: body.into(), sql: None, chart: None, result: None, facts: None, sort: 0 }
+    }
+
+    #[test]
+    fn report_renders_a_pdf_even_with_odd_text() {
+        let long = "word ".repeat(2000);
+        let report = ReportRecord {
+            id: "r".into(), name: "Sales — Q3 “review”".into(), prompt: String::new(), theme: crate::engine::artifacts::default_theme(), source_message_id: None,
+            blocks: vec![block("narrative", "Summary", &long), block("narrative", "", "日本語 ünïcödé (parens) \\ backslash"), block("narrative", "Verylongunbrokenword", &"x".repeat(500))],
+        };
+        let bytes = write(&report).unwrap();
+        assert!(bytes.starts_with(b"%PDF-"));
+        assert!(bytes.windows(5).any(|w| w == b"%%EOF"));
+    }
+
+    #[test]
+    fn empty_report_still_produces_a_pdf() {
+        let report = ReportRecord { id: "r".into(), name: "Empty".into(), prompt: String::new(), theme: crate::engine::artifacts::default_theme(), source_message_id: None, blocks: vec![] };
+        assert!(write(&report).unwrap().starts_with(b"%PDF-"));
+    }
+}

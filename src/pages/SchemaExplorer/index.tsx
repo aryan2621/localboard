@@ -323,7 +323,7 @@ function TableView({ id }: { id: string }) {
         </p>
         {table.profile_error && (
           <Alert variant="warning">
-            <AlertTriangle size={16} strokeWidth={iconStroke} />
+            <AlertTriangle size={15} strokeWidth={iconStroke} />
             <AlertDescription>{table.profile_error}</AlertDescription>
           </Alert>
         )}
