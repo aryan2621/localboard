@@ -4,6 +4,7 @@ import { ChevronRight, Plus } from 'lucide-react'
 import { api } from '../../lib/api'
 import { iconStroke } from '../../lib/icon'
 import { queryKeys } from '../../lib/queryClient'
+import { ScrollArea } from '../ui/scroll-area'
 import { cn } from '../../lib/utils'
 import { useNavigation } from '../../stores/navigation'
 
@@ -49,13 +50,13 @@ export function DataPane() {
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="mac-window-space mac-drag-region shrink-0" />
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
+      <ScrollArea className="min-h-0 flex-1"><div className="px-2 py-3">
         <p className="px-1.5 pb-1 text-app-caption font-medium text-muted-foreground">Tables</p>
         {tables.length === 0 && <p className="px-1.5 text-app-caption text-muted-foreground">No data yet.</p>}
         {tables.map((table) => (
           <TableNode key={table.relation} {...table} />
         ))}
-      </div>
+      </div></ScrollArea>
     </aside>
   )
 }
