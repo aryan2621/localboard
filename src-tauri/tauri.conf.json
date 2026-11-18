@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "app.localboard.desktop",
   "build": {
-    "beforeDevCommand": "./scripts/build-llama-server.sh && npm run dev",
+    "beforeDevCommand": "npm run dev",
     "devUrl": "http://127.0.0.1:1520",
-    "beforeBuildCommand": "./scripts/build-llama-server.sh && npm run build",
+    "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -26,9 +26,6 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "externalBin": [
-      "binaries/llama-server"
-    ],
     "macOS": {
       "signingIdentity": null,
       "hardenedRuntime": true,

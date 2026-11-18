@@ -42,11 +42,9 @@ jobs:
         with:
           workspaces: src-tauri
 
-      # On macOS the Tauri build compiles llama.cpp's server (scripts/build-llama-server.sh, needs
-      # CMake, Metal). On Windows it downloads the official prebuilt one (scripts/fetch-llama-server.ps1).
       - name: Tool versions
         shell: bash
-        run: cmake --version | head -1 && rustc --version && node --version
+        run: rustc --version && node --version
 
       # SQLCipher builds OpenSSL from source; under `shell: bash` Git's MSYS perl wins on PATH and
       # lacks modules OpenSSL's Configure needs, so point openssl-src at the runner's Strawberry Perl.

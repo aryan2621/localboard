@@ -1,15 +1,13 @@
 import { useEffect } from 'react'
 import { listen } from '@tauri-apps/api/event'
-import { toast } from 'sonner'
 import { useGeneration } from '../stores/generation'
 import { handleAnalystEvent } from './analyst'
-import type { AnalystEventPayload, DownloadProgress, ModelCatalog, Step } from './api'
+import type { AnalystEventPayload, Step } from './api'
 import { invalidateConnectionData, invalidateWorkspaceData, queryClient, queryKeys } from './queryClient'
 
 const ANALYST_EVENT = 'analyst://event'
 const GENERATE_PROGRESS = 'generate://progress'
 const CATALOG_CHANGED = 'catalog://changed'
-const DOWNLOAD_PROGRESS = 'llm://download-progress'
 const DASHBOARD_REFRESHED = 'dashboard://refreshed'
 const AUTOMATION_RAN = 'automation://ran'
 const APP_READY = 'app://ready'
@@ -33,18 +31,6 @@ export function useBackendEvents() {
       }),
       listen(APP_READY, () => {
         void queryClient.invalidateQueries({ queryKey: queryKeys.status })
-      }),
-      listen<DownloadProgress>(DOWNLOAD_PROGRESS, ({ payload }) => {
-        queryClient.setQueryData<ModelCatalog>(queryKeys.models, (current) =>
-          current ? { ...current, download: payload } : current,
-        )
-        if (payload.finished) {
-          toast.success('Model downloaded and verified')
-          void queryClient.invalidateQueries({ queryKey: queryKeys.models })
-        } else if (payload.error) {
-          toast.error(payload.error)
-          void queryClient.invalidateQueries({ queryKey: queryKeys.models })
-        }
       }),
     ]
     return () => {

@@ -166,32 +166,12 @@ export type TableDetail = {
   usedBy: TableUsage
 }
 
-export type DownloadProgress = { id: string; done: number; total: number; error: string | null; finished: boolean }
-
 export type TaskRouting = { sql: string | null; reasoning: string | null; narrative: string | null }
 
-export type LocalModel = {
-  id: string
-  name: string
-  sizeMb: number
-  minRamGb: number
-  note: string
-  installed: boolean
-}
-
-export type ModelCatalog = {
-  ramGb: number
-  recommended: string
-  runtimeAvailable: boolean
-  running: string | null
-  download: DownloadProgress | null
-  routing: TaskRouting
-  active: string | null
-  models: LocalModel[]
-  embedding: LocalModel
-}
-
-export type Benchmark = { modelId: string; loadMs: number; tokensPerSec: number; completionTokens: number }
+export type LlmKind = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'compat'
+export type LlmSettings = { kind: LlmKind; base_url: string; model: string; embed_model: string | null }
+// routing is read from the config if the backend returns it.
+export type LlmConfig = LlmSettings & { has_key: boolean; routing?: TaskRouting }
 
 export type ColumnKind = 'number' | 'temporal' | 'text' | 'boolean' | 'other'
 export type ResultColumn = { name: string; dataType: string; kind: ColumnKind }
@@ -555,12 +535,10 @@ export const api = {
   describeColumn: (tableId: string, column: string, description: string) =>
     call<void>('describe_column', { tableId, column, description }),
 
-  modelCatalog: () => call<ModelCatalog>('llm_catalog'),
-  downloadModel: (modelId: string) => call<void>('llm_download', { modelId }),
-  cancelDownload: () => call<void>('llm_cancel_download'),
-  deleteModel: (modelId: string) => call<void>('llm_delete_model', { modelId }),
-  benchmarkModel: (modelId: string) => call<Benchmark>('llm_benchmark', { modelId }),
-  stopModel: () => call<void>('llm_stop'),
+  llmConfig: () => call<LlmConfig>('llm_get_config'),
+  // apiKey: null keeps the stored key, '' clears it.
+  setLlmConfig: (config: LlmSettings, apiKey: string | null) => call<void>('llm_set_config', { config, apiKey }),
+  testLlm: () => call<{ ok: boolean; message: string }>('llm_test'),
   setTaskRouting: (routing: TaskRouting) => call<TaskRouting>('set_task_routing', { routing }),
 
   ask: (question: string, conversationId: string | null) => call<AskStarted>('ask', { question, conversationId }),

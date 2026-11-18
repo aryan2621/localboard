@@ -1,13 +1,11 @@
 # LocalBoard developer guide
 
-Local-first desktop AI data analyst: Tauri v2 + React + Rust + DuckDB + SQLite, with a bundled
-llama.cpp server as the built-in AI (llama.cpp is the runtime by design; Ollama is not used). No telemetry; analysis stays local, and the only network calls are the ones listed under Privacy.
+Local-first desktop AI data analyst: Tauri v2 + React + Rust + DuckDB + SQLite. AI runs through a provider you configure (Anthropic, OpenAI, Gemini, Ollama or any OpenAI-compatible endpoint). No telemetry; the only network calls are the ones listed under Privacy.
 
 ## Prerequisites
 
 - Node.js 20+, npm, Rust stable, and the Tauri v2 platform prerequisites
   (macOS: Xcode command line tools; Linux: WebKit2GTK/GTK dev packages; Windows: Visual Studio C++ build tools and WebView2).
-- macOS/Linux: **CMake** (`brew install cmake`). It builds the bundled `llama-server` once.
 
 ## Run
 
@@ -16,28 +14,14 @@ npm install
 npm run tauri dev
 ```
 
-The first run builds llama.cpp (pinned `v0.5.0`; macOS gets Metal) into `src-tauri/binaries/`, which takes
-about a minute. Later runs reuse it. Windows downloads the official prebuilt CPU server (`b11205`) instead.
-Tauri ships the binary inside the app, so end users install nothing.
-
 For a release bundle: `npm run tauri build`.
 
-## Models
+## AI provider
 
-Models are downloaded in the app (onboarding or Settings → AI models) as 4-bit GGUF files from Hugging
-Face. Each download is pinned to a revision and verified against its SHA-256 before use.
+Set one in Settings, AI: Anthropic, OpenAI and Gemini take an API key; Ollama takes a base URL; a generic OpenAI-compatible provider takes a base URL and an optional key. Keys live in the OS keychain and are never sent to the UI. Models are free-text names, with optional per-task overrides. The optional embedding model (not available for Anthropic) lets LocalBoard match questions to analysts and examples; without it, matching uses keywords. Without a provider, LocalBoard runs in SQL-only mode.
 
-| Model | Download | Needs RAM |
-| --- | --- | --- |
-| Qwen3.5 4B | 2.7 GB | 8 GB |
-| Qwen3.5 9B | 5.7 GB | 16 GB |
-| Gemma 4 12B | 6.7 GB | 16 GB |
-| Gemma 4 26B A4B | 14.3 GB | 32 GB |
-| Qwen3.8 27B | 16.5 GB | 32 GB |
-| Nomic Embed Text v1.5 | 146 MB | 2 GB |
+Cloud providers receive the question, the schema, sample rows and query results. Use Ollama on this machine to keep everything local.
 
-The app recommends one chat model based on detected memory. The embedding model is optional: with it, LocalBoard matches questions to the right analyst and to saved examples; without it, that matching uses keywords. Without a chat model, LocalBoard runs in SQL-only mode.
-LocalBoard only uses models in its own models folder.
 
 ## Data
 
@@ -94,7 +78,7 @@ Every workspace starts with one analyst. Add more from **Agents** (for example F
 
 ## Query Bench
 
-**Query Bench** is a SQL editor with autocomplete from the workspace tables and columns. Format rewrites the statement through the SQL parser. Run, history and saved queries all go through the same read-only guard (30 seconds, 5,000 rows). Named parameters are `:name` and are bound by DuckDB. The grid sorts and filters. Export writes CSV, JSON, XLSX or Parquet. EXPLAIN shows the plan. Explain, Fix and Optimize ask the local model; Fix and Optimize only return SQL that passes the guard. Save as example stores a question and the query on an analyst. Save as tile adds the query to a dashboard.
+**Query Bench** is a SQL editor with autocomplete from the workspace tables and columns. Format rewrites the statement through the SQL parser. Run, history and saved queries all go through the same read-only guard (30 seconds, 5,000 rows). Named parameters are `:name` and are bound by DuckDB. The grid sorts and filters. Export writes CSV, JSON, XLSX or Parquet. EXPLAIN shows the plan. Explain, Fix and Optimize ask the AI provider; Fix and Optimize only return SQL that passes the guard. Save as example stores a question and the query on an analyst. Save as tile adds the query to a dashboard.
 
 ## Dashboards
 
@@ -176,7 +160,7 @@ Add other MCP servers in Settings → Integrations (stdio command or HTTP URL). 
 
 Settings → Security.
 
-- **Offline mode** is visible in the app. It blocks Hugging Face downloads, SMTP and remote MCP servers. Loopback (datasites, local MCP, llama-server) stays up.
+- **Offline mode** is visible in the app. It blocks remote AI providers, SMTP and remote MCP servers. Loopback (datasites, local MCP, a local Ollama) stays up.
 - **App lock** is an optional passphrase. Unlock each launch.
 - **Column masks** (Schema): redact, hash or email, applied at the query-result boundary.
 - **Workspace encryption** is SQLCipher, opt-in. Existing workspaces stay unencrypted. The passphrase lives in the keychain.
@@ -198,8 +182,8 @@ Home has starters for E-commerce / DTC, SaaS, subscription boxes, healthcare RCM
 
 ## Privacy
 
-Analysis happens entirely on this machine unless you turn on something labelled as leaving the device. The chat model and the embedding model each listen only on `127.0.0.1`, with their own per-launch API key. Datasites, reports, webhooks and MCP listen on `127.0.0.1:17890` for the life of the app. Outbound traffic, when not in Offline mode: a model download from Hugging Face (which redirects to its CDN), database connections to hosts you enter, optional SMTP, optional remote MCP HTTP, an optional DuckDB scanner-extension download on first live-table register, and building from source (llama.cpp from GitHub).
+Queries run on this machine, but the AI provider you choose receives questions, schema, sample rows and results; a local Ollama keeps them on the device. Datasites, reports, webhooks and MCP listen on `127.0.0.1:17890` for the life of the app. Outbound traffic, when not in Offline mode: your AI provider, database connections to hosts you enter, optional SMTP, optional remote MCP HTTP, and an optional DuckDB scanner-extension download on first live-table register.
 
 ## Not in this milestone
 
-LAN sharing, binding `0.0.0.0`, Ollama, column-level lineage, a lineage graph, hosted cloud workspace sharing, local users and roles, cloud identity providers, and an auto-updater feed hosted by LocalBoard.
+LAN sharing, binding `0.0.0.0`, column-level lineage, a lineage graph, hosted cloud workspace sharing, local users and roles, cloud identity providers, and an auto-updater feed hosted by LocalBoard.

@@ -10,7 +10,6 @@ use super::ANALYST_EVENT;
 use crate::engine::analyst::{context, export, AnalystEvent, EventSink, Models, Run};
 use crate::engine::query::{self, elapsed_ms, CancelToken};
 use crate::error::{blocking, AppError, AppResult};
-use crate::llm::router::{TaskRouting, SETTINGS_KEY};
 use crate::sql_guard::{self, GuardPolicy};
 use crate::state::AppState;
 use crate::storage::conversations::{
@@ -68,8 +67,7 @@ pub async fn ask(
         return Err(AppError::invalid(format!("Questions are limited to {MAX_QUESTION_CHARS} characters")));
     }
     let workspace = state.workspace()?;
-    let routing: TaskRouting = state.app_db()?.setting(SETTINGS_KEY)?.unwrap_or_default();
-    let models = Models::available(state.llm.clone(), routing);
+    let models = Models::available(state.llm()?, state.task_routing()?);
     let offline = state.is_offline();
 
     let (user_message_id, assistant_message_id) = (new_id(), new_id());

@@ -49,7 +49,7 @@ pub fn app_status(state: State<'_, AppState>) -> AppResult<AppStatus> {
     Ok(AppStatus {
         version: env!("CARGO_PKG_VERSION"),
         onboarding_completed,
-        hardware: state.llm.hardware().clone(),
+        hardware: state.hardware.clone(),
         local_server: state.server_origin().map(|url| LocalServerInfo {
             port: url.rsplit(':').next().and_then(|port| port.parse().ok()).unwrap_or(0),
             url,

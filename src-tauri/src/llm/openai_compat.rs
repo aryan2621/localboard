@@ -10,7 +10,7 @@ use super::provider::{ChatRequest, ChatResponse, LlmError, LlmProvider, Response
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(300);
 
-/// Any server speaking the OpenAI chat API: the bundled llama-server, LM Studio, vLLM.
+/// Any server speaking the OpenAI chat API: OpenAI, Gemini's compatibility endpoint, Ollama, LM Studio, vLLM.
 pub struct OpenAiCompatProvider {
     client: reqwest::Client,
     base_url: String,
@@ -42,7 +42,7 @@ struct UsageBody {
     completion_tokens: u32,
 }
 
-/// llama.cpp extension: generation speed measured by the server itself.
+/// Optional extension some servers send: generation speed measured by the server itself.
 #[derive(Deserialize)]
 struct Timings {
     predicted_per_second: Option<f64>,
@@ -77,13 +77,14 @@ impl OpenAiCompatProvider {
     }
 
     fn body(&self, request: &ChatRequest, stream: bool) -> Value {
-        let mut body = json!({
-            "model": self.model,
-            "messages": request.messages,
-            "temperature": request.temperature,
-            "max_tokens": request.max_tokens,
-            "stream": stream,
-        });
+        let mut body = json!({ "model": self.model, "messages": request.messages, "stream": stream });
+        if self.base_url.contains("api.openai.com") {
+            // Reasoning models reject max_tokens and a non-default temperature.
+            body["max_completion_tokens"] = json!(request.max_tokens);
+        } else {
+            body["max_tokens"] = json!(request.max_tokens);
+            body["temperature"] = json!(request.temperature);
+        }
         if stream {
             body["stream_options"] = json!({ "include_usage": true });
         }

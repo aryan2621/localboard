@@ -22,7 +22,7 @@ export const queryKeys = {
   connections: ['connections'] as const,
   tables: ['tables'] as const,
   table: (id: string) => ['tables', id] as const,
-  models: ['model-catalog'] as const,
+  models: ['llm-config'] as const,
   conversations: ['conversations'] as const,
   conversationSearch: (search: string) => ['conversations', search] as const,
   conversation: (id: string) => ['conversation', id] as const,

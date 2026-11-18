@@ -22,10 +22,9 @@ use tokio::sync::mpsc;
 
 use crate::engine::query::{self, elapsed_ms, CancelToken, QueryError, QueryResult};
 use crate::error::{blocking, AppError};
-use crate::llm::openai_compat::OpenAiCompatProvider;
 use crate::llm::provider::{ChatMessage, ChatRequest, LlmError, LlmProvider, ResponseFormat, Role, Task};
 use crate::llm::router::TaskRouting;
-use crate::llm::LlmRuntime;
+use crate::llm::Llm;
 use crate::sql_guard::{self, GuardPolicy};
 use crate::state::Workspace;
 use crate::storage::agents::RuleRecord;
@@ -194,18 +193,17 @@ impl From<LlmError> for AnalystError {
 
 /// The models available for analysis. Absent means SQL-only mode.
 pub struct Models {
-    llm: Arc<LlmRuntime>,
+    llm: Llm,
     routing: TaskRouting,
 }
 
 impl Models {
-    pub fn available(llm: Arc<LlmRuntime>, routing: TaskRouting) -> Option<Self> {
-        (llm.runtime_available() && llm.resolve(&routing, Task::Sql).is_some()).then_some(Self { llm, routing })
+    pub fn available(llm: Llm, routing: TaskRouting) -> Option<Self> {
+        llm.available(&routing).then_some(Self { llm, routing })
     }
 
-    async fn provider(&self, task: Task, routing: &TaskRouting) -> Result<OpenAiCompatProvider, LlmError> {
-        let spec = self.llm.resolve(routing, task).ok_or(LlmError::NoModel)?;
-        self.llm.provider(spec.id).await
+    fn provider(&self, task: Task, routing: &TaskRouting) -> Result<Box<dyn LlmProvider>, LlmError> {
+        self.llm.task_provider(routing, task)
     }
 }
 
@@ -586,17 +584,9 @@ impl Run {
     }
 
     async fn load_model(&mut self, task: Task) -> Result<(), AnalystError> {
-        let models = self.models.as_ref().ok_or(LlmError::NoModel)?;
-        let spec = models.llm.resolve(&self.routing, task).ok_or(LlmError::NoModel)?;
-        let running = models.llm.running_model().await;
-        self.answer.model = Some(spec.name.to_owned());
-        self.answer.lineage.get_or_insert_with(Lineage::default).model_id = Some(spec.id.to_owned());
-        if running.as_deref() == Some(spec.id) {
-            return Ok(());
-        }
-        self.step("model", format!("Starting {}", spec.name));
-        self.models.as_ref().ok_or(LlmError::NoModel)?.provider(task, &self.routing).await?;
-        self.finish_step("model", StepStatus::Done, None);
+        let provider = self.models.as_ref().ok_or(LlmError::NoModel)?.provider(task, &self.routing)?;
+        self.answer.model = Some(provider.id().to_owned());
+        self.answer.lineage.get_or_insert_with(Lineage::default).model_id = Some(provider.id().to_owned());
         Ok(())
     }
 
@@ -648,7 +638,7 @@ impl Run {
         name: &str,
         schema: Value,
     ) -> Result<T, AnalystError> {
-        let provider = self.models.as_ref().ok_or(LlmError::NoModel)?.provider(task, &self.routing).await?;
+        let provider = self.models.as_ref().ok_or(LlmError::NoModel)?.provider(task, &self.routing)?;
         let mut all = vec![ChatMessage { role: Role::System, content: system }];
         all.extend(messages);
         let response = provider
@@ -672,7 +662,7 @@ impl Run {
         }
         self.load_model(Task::Narrative).await?;
         self.step("summary", "Writing the answer");
-        let provider = self.models.as_ref().ok_or(LlmError::NoModel)?.provider(Task::Narrative, &self.routing).await?;
+        let provider = self.models.as_ref().ok_or(LlmError::NoModel)?.provider(Task::Narrative, &self.routing)?;
         let request = |system: String| ChatRequest {
             messages: vec![
                 ChatMessage { role: Role::System, content: system },

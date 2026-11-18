@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, Check, Code2, Download, FileSpreadsheet, FolderOpen, KeyRound, LayoutDashboard, Loader2, Lock, MessageSquare, Shield } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { ArrowLeft, ArrowRight, Check, Code2, Globe, FileSpreadsheet, FolderOpen, KeyRound, LayoutDashboard, Loader2, Lock, MessageSquare, Shield } from 'lucide-react'
 import { Banner, ChoiceGrid, IconTile } from '../../components/layout/patterns'
 import { toast } from 'sonner'
-import { ModelManager } from '../../components/models/ModelManager'
+import { useAiReady } from '../../components/analyst/Composer'
+import { ProviderSettings } from '../../components/models/ProviderSettings'
 import { Button } from '../../components/ui/button'
 import { api, errorMessage } from '../../lib/api'
 import { iconStroke } from '../../lib/icon'
@@ -16,7 +17,7 @@ type Step = (typeof STEPS)[number]
 
 const STEP_INFO: Record<Step, { label: string; hint: string }> = {
   welcome: { label: 'Welcome', hint: 'What LocalBoard does' },
-  model: { label: 'AI model', hint: 'Download one to this computer' },
+  model: { label: 'AI model', hint: 'Connect a provider' },
   privacy: { label: 'Privacy', hint: 'Where your data goes' },
   data: { label: 'Your data', hint: 'Add files or a folder' },
 }
@@ -28,8 +29,8 @@ const POINTS = [
 ]
 
 const PROMISES = [
-  { icon: Lock, title: 'Nothing leaves this computer', body: 'Your data, questions and results are never sent anywhere. No account, and no usage data is collected.' },
-  { icon: Download, title: 'Internet only for models', body: 'LocalBoard connects only to download a model, and only to Hugging Face for that file.' },
+  { icon: Lock, title: 'Your files stay on this computer', body: 'Data files and databases are read here. No account, and no usage data is collected.' },
+  { icon: Globe, title: 'The AI provider sees your questions', body: 'With Anthropic, OpenAI or Gemini, your questions, table schema, sample rows and query results are sent to that provider. Use Ollama to keep everything on this computer.' },
   { icon: KeyRound, title: 'Read-only and keychain', body: 'Databases are opened read-only. Saved passwords stay in your system keychain.' },
 ]
 
@@ -70,8 +71,8 @@ function Welcome() {
 function ModelStep() {
   return (
     <div className="space-y-6">
-      <Heading title="Choose an AI model" description="This is the one we recommend for this computer. You can switch models or add more later in Settings." />
-      <ModelManager only="recommended" />
+      <Heading title="Connect an AI provider" description="Pick a provider and model for the analyst. You can change this later in Settings, or skip it and use SQL only." />
+      <ProviderSettings />
     </div>
   )
 }
@@ -79,7 +80,7 @@ function ModelStep() {
 function Privacy() {
   return (
     <div className="space-y-6">
-      <Heading title="Your data stays here" description="LocalBoard runs the AI model and the database engine on this computer." />
+      <Heading title="What stays here, what is sent" description="LocalBoard runs the database engine on this computer. Only the AI provider you chose receives anything." />
       <FeatureList items={PROMISES} />
     </div>
   )
@@ -130,9 +131,8 @@ function DataStep({ added, onAdded }: { added: number; onAdded: (tables: number)
 export function Onboarding() {
   const [step, setStep] = useState<Step>('welcome')
   const [tablesAdded, setTablesAdded] = useState(0)
-  const { data: catalog } = useQuery({ queryKey: queryKeys.models, queryFn: api.modelCatalog })
   const index = STEPS.indexOf(step)
-  const modelReady = Boolean(catalog?.models.some((model) => model.installed))
+  const modelReady = useAiReady()
 
   const finish = useMutation({
     mutationFn: api.completeOnboarding,
@@ -186,7 +186,7 @@ export function Onboarding() {
         </ol>
         <div className="mt-auto flex gap-2 px-8 py-6 text-app-caption text-muted-foreground">
           <Shield size={14} strokeWidth={iconStroke} className="mt-0.5 shrink-0" />
-          Everything runs on this computer.
+          Your files stay on this computer.
         </div>
       </aside>
       <main className="flex min-w-0 flex-1 flex-col">

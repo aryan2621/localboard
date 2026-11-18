@@ -11,7 +11,7 @@ pub struct Hardware {
     pub cores: usize,
     pub os: String,
     pub arch: String,
-    /// How llama.cpp accelerates inference in this build.
+    /// How this machine would accelerate local inference.
     pub accelerator: String,
 }
 

@@ -11,7 +11,6 @@ use crate::error::{blocking, AppError, AppResult};
 use crate::sql_guard::{self, GuardPolicy};
 use crate::state::AppState;
 use crate::engine::analyst::{AnalystEvent, EventSink, Models, Run};
-use crate::llm::router::{TaskRouting, SETTINGS_KEY};
 use crate::storage::conversations::{title_from, MessageRole, MessageStatus, QueryStatus};
 use crate::storage::mcp::{McpServerRecord, McpToolRule};
 use crate::storage::workspace_db::{AuditEntry, AuditQuery, AuditStatus};
@@ -40,8 +39,7 @@ pub async fn ask_headless(state: &AppState, question: &str) -> AppResult<Headles
     }
     let workspace = state.workspace()?;
     crate::engine::mask::activate(workspace.policy());
-    let routing: TaskRouting = state.app_db()?.setting(SETTINGS_KEY)?.unwrap_or_default();
-    let models = Models::available(state.llm.clone(), routing);
+    let models = Models::available(state.llm()?, state.task_routing()?);
     let offline = state.is_offline();
     let (conversation_id, user_id, assistant_id) =
         (uuid::Uuid::new_v4().to_string(), uuid::Uuid::new_v4().to_string(), uuid::Uuid::new_v4().to_string());

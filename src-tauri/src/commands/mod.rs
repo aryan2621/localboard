@@ -18,7 +18,6 @@ pub mod deeplink;
 
 pub const ANALYST_EVENT: &str = "analyst://event";
 pub const CATALOG_CHANGED: &str = "catalog://changed";
-pub const DOWNLOAD_PROGRESS: &str = "llm://download-progress";
 pub const APP_READY: &str = "app://ready";
 
 pub const GENERATE_PROGRESS: &str = "generate://progress";

@@ -10,10 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 
 const MAX_QUESTION_CHARS = 20_000
 
-/** Mirrors the sidebar status: without a usable model, questions must be SQL. */
+/** A provider is usable when a model is set and a key is saved (Ollama and custom servers may skip the key); remote providers need the network. */
 export function useAiReady() {
-  const { data: catalog } = useQuery({ queryKey: queryKeys.models, queryFn: api.modelCatalog })
-  return Boolean(catalog?.runtimeAvailable && catalog.active)
+  const { data: config } = useQuery({ queryKey: queryKeys.models, queryFn: api.llmConfig })
+  const { data: status } = useQuery({ queryKey: queryKeys.status, queryFn: api.appStatus })
+  if (!config?.model.trim()) return false
+  const remote = config.kind !== 'ollama' && config.kind !== 'compat'
+  if (remote && status?.offline) return false
+  return config.has_key || !remote
 }
 
 /** The untyped tail of a past question or schema term, shown faintly until Tab accepts it. */

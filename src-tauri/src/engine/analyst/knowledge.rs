@@ -6,7 +6,7 @@ use std::collections::HashSet;
 use super::context::{tokens, DATA_CLOSE, DATA_OPEN};
 use super::{AnalystError, Lineage, LineageChunk, LineageRule, MemoryProposal, Run, StepStatus};
 use crate::error::blocking;
-use crate::llm::provider::{ChatMessage, LlmProvider, Role, Task};
+use crate::llm::provider::{ChatMessage, Role, Task};
 use crate::retrieval::{self, clip, cosine, unpack, DOC_PREFIX, MIN_COSINE, QUERY_PREFIX};
 use crate::storage::agents::{AgentRecord, ChunkRecord, ExampleRecord, MemoryRecord, RoutingText, RuleRecord};
 
@@ -200,14 +200,7 @@ impl Run {
 
     async fn embed_question(&self) -> Option<Vec<f32>> {
         let models = self.models.as_ref()?;
-        let provider = match models.llm.embed_provider().await {
-            Ok(Some(provider)) => provider,
-            Ok(None) => return None,
-            Err(error) => {
-                tracing::warn!("embedding model did not start: {error}");
-                return None;
-            }
-        };
+        let provider = models.llm.embed_provider()?;
         match provider.embed(&[format!("{QUERY_PREFIX}{}", clip(&self.question, EMBED_CHARS))]).await {
             Ok(vectors) => vectors.into_iter().next(),
             Err(error) => {
@@ -220,10 +213,7 @@ impl Run {
     /// Fills in embeddings that were saved before the embedding model was installed.
     async fn backfill(&self, agent_id: &str) -> bool {
         let Some(models) = &self.models else { return false };
-        let provider = match models.llm.embed_provider().await {
-            Ok(Some(provider)) => provider,
-            _ => return false,
-        };
+        let Some(provider) = models.llm.embed_provider() else { return false };
         let workspace = self.workspace.clone();
         let agent = agent_id.to_owned();
         let pending = match blocking(move || workspace.db()?.pending_embeddings(&agent, BACKFILL_BATCH)).await {

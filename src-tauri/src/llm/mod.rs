@@ -1,203 +1,163 @@
-pub mod catalog;
-pub mod download;
+pub mod anthropic;
 pub mod hardware;
-pub mod llama_server;
 pub mod openai_compat;
 pub mod provider;
 pub mod router;
 
-use std::path::PathBuf;
-use std::sync::Arc;
-use std::time::Instant;
+use serde::{Deserialize, Serialize};
 
-use serde::Serialize;
-
-use catalog::{ModelSpec, ModelStore, CATALOG};
-use download::{DownloadProgress, Downloader, ProgressSink};
-use hardware::Hardware;
-use llama_server::Supervisor;
+use crate::engine::mcp::is_loopback;
+use anthropic::AnthropicProvider;
 use openai_compat::OpenAiCompatProvider;
-use provider::{ChatMessage, ChatRequest, LlmError, LlmProvider, ResponseFormat, Role, Task};
+use provider::{LlmError, LlmProvider, Task};
 use router::TaskRouting;
 
-const BENCHMARK_PROMPT: &str = "In three sentences, explain why a bar chart suits comparing sales across regions.";
-const BENCHMARK_TOKENS: u32 = 128;
+/// App setting holding the [`LlmConfig`]. The API key lives in the keychain under `llm.<kind>`.
+pub const CONFIG_KEY: &str = "llm.provider";
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ModelView {
-    #[serde(flatten)]
-    pub spec: &'static ModelSpec,
-    pub installed: bool,
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Kind {
+    Anthropic,
+    Openai,
+    Gemini,
+    Ollama,
+    Compat,
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CatalogView {
-    pub ram_gb: u64,
-    pub recommended: &'static str,
-    pub runtime_available: bool,
-    pub running: Option<String>,
-    pub download: Option<DownloadProgress>,
-    pub routing: TaskRouting,
-    /// What each task resolves to right now; `None` means SQL-only mode.
-    pub active: Option<&'static str>,
-    pub models: Vec<ModelView>,
-    pub embedding: ModelView,
+impl Kind {
+    pub fn secret_ref(self) -> String {
+        format!("llm.{}", format!("{self:?}").to_lowercase())
+    }
+
+    fn default_base_url(self) -> &'static str {
+        match self {
+            Self::Anthropic => anthropic::DEFAULT_BASE_URL,
+            Self::Openai => "https://api.openai.com/v1",
+            Self::Gemini => "https://generativelanguage.googleapis.com/v1beta/openai",
+            Self::Ollama => "http://localhost:11434/v1",
+            Self::Compat => "",
+        }
+    }
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Benchmark {
-    pub model_id: String,
-    pub load_ms: u128,
-    pub tokens_per_sec: f64,
-    pub completion_tokens: u32,
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct LlmConfig {
+    pub kind: Kind,
+    pub base_url: String,
+    pub model: String,
+    #[serde(default)]
+    pub embed_model: Option<String>,
 }
 
-/// The local AI runtime: model files, downloads and the llama.cpp server process.
-pub struct LlmRuntime {
-    store: ModelStore,
-    downloader: Arc<Downloader>,
-    supervisor: Supervisor,
-    hardware: Hardware,
+impl Default for LlmConfig {
+    fn default() -> Self {
+        Self { kind: Kind::Ollama, base_url: Kind::Ollama.default_base_url().into(), model: String::new(), embed_model: None }
+    }
 }
 
-impl LlmRuntime {
-    pub fn new(data_dir: PathBuf, binary: Option<PathBuf>) -> Result<Self, LlmError> {
-        let supervisor = Supervisor::new(data_dir.clone(), binary)?;
-        Ok(Self {
-            store: ModelStore::new(data_dir.join("models")),
-            downloader: Arc::new(Downloader::new(download::HUGGING_FACE)?),
-            supervisor,
-            hardware: hardware::detect(),
+impl LlmConfig {
+    fn base_url(&self) -> &str {
+        let url = self.base_url.trim();
+        if url.is_empty() { self.kind.default_base_url() } else { url }
+    }
+}
+
+/// A snapshot of the provider settings, key and offline flag: a factory for providers.
+#[derive(Clone)]
+pub struct Llm {
+    config: LlmConfig,
+    api_key: Option<String>,
+    offline: bool,
+}
+
+impl Llm {
+    pub fn new(config: LlmConfig, api_key: Option<String>, offline: bool) -> Self {
+        Self { config, api_key: api_key.filter(|key| !key.is_empty()), offline }
+    }
+
+    fn check_online(&self) -> Result<(), LlmError> {
+        if self.offline && !is_loopback(self.config.base_url()) {
+            return Err(LlmError::Invalid("Offline mode is on. Calling a remote AI provider would leave this device.".into()));
+        }
+        Ok(())
+    }
+
+    fn model<'a>(&'a self, model_override: Option<&'a str>) -> Option<&'a str> {
+        model_override.or(Some(self.config.model.as_str())).map(str::trim).filter(|model| !model.is_empty())
+    }
+
+    fn build(&self, model: &str) -> Result<Box<dyn LlmProvider>, LlmError> {
+        let base_url = self.config.base_url();
+        if base_url.is_empty() {
+            return Err(LlmError::Invalid("Set a base URL for the AI provider in Settings, AI.".into()));
+        }
+        Ok(match self.config.kind {
+            Kind::Anthropic => Box::new(AnthropicProvider::new(base_url, self.api_key.clone(), model)?),
+            _ => Box::new(OpenAiCompatProvider::new(base_url, self.api_key.clone(), model)?),
         })
     }
 
-    /// Kills llama-server processes left behind by a force-quit. Not part of construction:
-    /// scanning processes on the UI thread keeps the window from painting.
-    pub fn stop_leftover_servers(&self) {
-        self.supervisor.stop_leftover();
+    /// `None` uses the configured model.
+    pub fn provider(&self, model_override: Option<&str>) -> Result<Box<dyn LlmProvider>, LlmError> {
+        self.check_online()?;
+        self.build(self.model(model_override).ok_or(LlmError::NoModel)?)
     }
 
-    pub fn hardware(&self) -> &Hardware {
-        &self.hardware
+    pub fn task_provider(&self, routing: &TaskRouting, task: Task) -> Result<Box<dyn LlmProvider>, LlmError> {
+        self.provider(routing.get(task))
     }
 
-    pub fn resolve(&self, routing: &TaskRouting, task: Task) -> Option<&'static ModelSpec> {
-        self.store.resolve(routing.get(task), self.hardware.ram_gb)
-    }
-
-    pub fn runtime_available(&self) -> bool {
-        self.supervisor.binary_available()
-    }
-
-    pub async fn running_model(&self) -> Option<String> {
-        self.supervisor.current().await.map(|endpoint| endpoint.model_id)
-    }
-
-    pub async fn catalog(&self, routing: TaskRouting) -> CatalogView {
-        CatalogView {
-            ram_gb: self.hardware.ram_gb,
-            recommended: catalog::recommended(self.hardware.ram_gb).id,
-            runtime_available: self.runtime_available(),
-            running: self.running_model().await,
-            download: self.downloader.status(),
-            active: self.resolve(&routing, Task::Sql).map(|spec| spec.id),
-            routing,
-            models: CATALOG
-                .iter()
-                .map(|spec| ModelView { spec, installed: self.store.path(spec.id).is_some() })
-                .collect(),
-            embedding: ModelView { spec: &catalog::EMBEDDING, installed: self.store.path(catalog::EMBEDDING.id).is_some() },
+    /// `None` means keyword matching is used instead of vectors.
+    pub fn embed_provider(&self) -> Option<Box<dyn LlmProvider>> {
+        let model = self.config.embed_model.as_deref().map(str::trim).filter(|model| !model.is_empty())?;
+        if self.config.kind == Kind::Anthropic || self.check_online().is_err() {
+            return None;
         }
+        self.build(model).ok()
     }
 
-    pub fn download(&self, model_id: &str, sink: ProgressSink) -> Result<(), LlmError> {
-        let spec = known(model_id)?;
-        if self.store.path(spec.id).is_some() {
-            return Err(LlmError::Invalid(format!("{} is already installed", spec.name)));
-        }
-        self.downloader.start(spec, self.store.own_path(spec.id), sink)
-    }
-
-    pub fn cancel_download(&self) {
-        self.downloader.cancel();
-    }
-
-    pub async fn delete(&self, model_id: &str) -> Result<(), LlmError> {
-        let spec = known(model_id)?;
-        if self.downloader.is_downloading(spec.id) {
-            return Err(LlmError::Invalid("Cancel the download first".into()));
-        }
-        if spec.id == catalog::EMBEDDING.id {
-            if self.supervisor.embed_model().await.as_deref() == Some(spec.id) {
-                self.supervisor.stop_embed().await;
-            }
-        } else if self.supervisor.current().await.is_some_and(|endpoint| endpoint.model_id == spec.id) {
-            self.supervisor.stop_chat().await;
-        }
-        match std::fs::remove_file(self.store.own_path(spec.id)) {
-            Ok(()) => Ok(()),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(error) => Err(LlmError::Runtime(format!("could not delete the model: {error}"))),
-        }
-    }
-
-    /// Starts the embedding model when it is installed. `Ok(None)` means keyword matching is used.
-    pub async fn embed_provider(&self) -> Result<Option<OpenAiCompatProvider>, LlmError> {
-        if !self.runtime_available() {
-            return Ok(None);
-        }
-        let Some(path) = self.store.path(catalog::EMBEDDING.id) else { return Ok(None) };
-        let endpoint = self.supervisor.ensure_embed(catalog::EMBEDDING.id, &path).await?;
-        Ok(Some(OpenAiCompatProvider::new(endpoint.base_url, Some(endpoint.api_key), endpoint.model_id)?))
-    }
-
-    /// Loads the model into llama-server and returns a provider bound to it.
-    pub async fn provider(&self, model_id: &str) -> Result<OpenAiCompatProvider, LlmError> {
-        let spec = known(model_id)?;
-        let path = self.store.path(spec.id).ok_or(LlmError::NoModel)?;
-        let endpoint = self.supervisor.ensure(spec.id, &path).await?;
-        OpenAiCompatProvider::new(endpoint.base_url, Some(endpoint.api_key), endpoint.model_id)
-    }
-
-    pub async fn stop(&self) {
-        self.supervisor.stop().await;
-    }
-
-    pub fn shutdown(&self) {
-        self.downloader.cancel();
-        self.supervisor.kill_now();
-    }
-
-    pub async fn benchmark(&self, model_id: &str) -> Result<Benchmark, LlmError> {
-        let loading = Instant::now();
-        let provider = self.provider(model_id).await?;
-        let load_ms = loading.elapsed().as_millis();
-        let generating = Instant::now();
-        let response = provider
-            .chat(
-                ChatRequest {
-                    messages: vec![ChatMessage { role: Role::User, content: BENCHMARK_PROMPT.into() }],
-                    temperature: 0.0,
-                    max_tokens: BENCHMARK_TOKENS,
-                    format: ResponseFormat::Text,
-                },
-                None,
-            )
-            .await?;
-        let elapsed = generating.elapsed().as_secs_f64();
-        let measured = (elapsed > 0.0).then(|| f64::from(response.usage.completion_tokens) / elapsed);
-        Ok(Benchmark {
-            model_id: model_id.to_owned(),
-            load_ms,
-            tokens_per_sec: response.tokens_per_sec.or(measured).unwrap_or(0.0),
-            completion_tokens: response.usage.completion_tokens,
-        })
+    /// False means SQL-only mode: nothing configured, or offline with a remote provider.
+    pub fn available(&self, routing: &TaskRouting) -> bool {
+        self.check_online().is_ok() && self.model(routing.get(Task::Sql)).is_some()
     }
 }
 
-fn known(model_id: &str) -> Result<&'static ModelSpec, LlmError> {
-    catalog::find(model_id).ok_or_else(|| LlmError::Invalid(format!("Unknown model: {model_id}")))
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn llm(kind: Kind, base_url: &str, model: &str, offline: bool) -> Llm {
+        Llm::new(LlmConfig { kind, base_url: base_url.into(), model: model.into(), embed_model: None }, None, offline)
+    }
+
+    #[test]
+    fn default_is_unconfigured_ollama() {
+        let config = LlmConfig::default();
+        assert_eq!((config.kind, config.base_url.as_str(), config.model.as_str()), (Kind::Ollama, "http://localhost:11434/v1", ""));
+        assert!(matches!(Llm::new(config, None, false).provider(None), Err(LlmError::NoModel)));
+    }
+
+    #[test]
+    fn offline_allows_only_loopback() {
+        let routing = TaskRouting::default();
+        assert!(llm(Kind::Ollama, "", "llama3", true).available(&routing));
+        assert!(llm(Kind::Compat, "http://127.0.0.1:8000/v1", "m", true).provider(None).is_ok());
+        assert!(!llm(Kind::Openai, "", "gpt", true).available(&routing));
+        assert!(llm(Kind::Openai, "", "gpt", true).provider(None).is_err());
+        assert!(llm(Kind::Openai, "", "gpt", false).provider(None).is_ok());
+    }
+
+    #[test]
+    fn routing_overrides_the_configured_model() {
+        let llm = llm(Kind::Openai, "", "default", false);
+        assert_eq!(llm.provider(Some("other")).unwrap().id(), "other");
+        assert_eq!(llm.provider(None).unwrap().id(), "default");
+    }
+
+    #[test]
+    fn secret_refs_and_kinds() {
+        assert_eq!(Kind::Openai.secret_ref(), "llm.openai");
+        assert_eq!(serde_json::to_string(&Kind::Anthropic).unwrap(), "\"anthropic\"");
+    }
 }

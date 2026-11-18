@@ -11,7 +11,10 @@ use crate::engine::duck::Analytics;
 use crate::engine::mask::AccessPolicy;
 use crate::engine::query::CancelToken;
 use crate::error::{AppError, AppResult};
-use crate::llm::LlmRuntime;
+use crate::llm::hardware::{self, Hardware};
+use crate::llm::provider::{LlmProvider, Task};
+use crate::llm::router::{TaskRouting, SETTINGS_KEY as ROUTING_KEY};
+use crate::llm::{Llm, LlmConfig, CONFIG_KEY};
 use crate::storage::app_db::AppDb;
 use crate::storage::secrets;
 use crate::storage::workspace_db::WorkspaceDb;
@@ -207,11 +210,10 @@ impl Workspace {
 
 pub type ChangeNotifier = Arc<dyn Fn(&str) + Send + Sync>;
 
-/// DuckDB may use this share of memory; the rest stays available for the local model.
+/// DuckDB may use this share of memory; the rest stays available for other work.
 const QUERY_MEMORY_DIVISOR: u64 = 2;
 
-/// The answer currently being written. llama-server serves one request at a time, so one
-/// analysis runs at a time across the app.
+/// The answer currently being written. one analysis runs at a time across the app.
 #[derive(Default)]
 pub struct AnalystRuns {
     current: Mutex<Option<(String, Arc<CancelToken>)>>,
@@ -306,7 +308,7 @@ struct ServerSlot {
 pub struct AppState {
     pub data_dir: PathBuf,
     pub app_db: Mutex<AppDb>,
-    pub llm: Arc<LlmRuntime>,
+    pub hardware: Hardware,
     pub analyst_runs: AnalystRuns,
     pub refresh: DashboardRefresh,
     pub jobs: DashboardRefresh,
@@ -324,11 +326,11 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(data_dir: PathBuf, app_db: AppDb, llm: Arc<LlmRuntime>, catalog_changed: ChangeNotifier) -> Self {
+    pub fn new(data_dir: PathBuf, app_db: AppDb, catalog_changed: ChangeNotifier) -> Self {
         Self {
             data_dir,
             app_db: Mutex::new(app_db),
-            llm,
+            hardware: hardware::detect(),
             analyst_runs: AnalystRuns::default(),
             refresh: DashboardRefresh::default(),
             jobs: DashboardRefresh::default(),
@@ -367,6 +369,26 @@ impl AppState {
         } else {
             Ok(())
         }
+    }
+
+    pub fn llm_config(&self) -> AppResult<LlmConfig> {
+        Ok(self.app_db()?.setting(CONFIG_KEY)?.unwrap_or_default())
+    }
+
+    pub fn task_routing(&self) -> AppResult<TaskRouting> {
+        Ok(self.app_db()?.setting(ROUTING_KEY)?.unwrap_or_default())
+    }
+
+    /// Snapshot of the configured provider, its keychain key and the offline flag.
+    pub fn llm(&self) -> AppResult<Llm> {
+        let config = self.llm_config()?;
+        let key = crate::storage::secrets::get(&config.kind.secret_ref()).ok();
+        Ok(Llm::new(config, key, self.is_offline()))
+    }
+
+    /// The provider for `task`, honouring the workspace's per-task model routing.
+    pub fn task_provider(&self, task: Task) -> AppResult<Box<dyn LlmProvider>> {
+        Ok(self.llm()?.task_provider(&self.task_routing()?, task)?)
     }
 
     pub fn is_unlocked(&self) -> bool {
@@ -486,7 +508,7 @@ impl AppState {
     /// `passphrase` is used for an encrypted workspace; without one the remembered key is read from the keychain.
     pub fn activate_with_key(&self, id: &str, passphrase: Option<&str>) -> AppResult<Arc<Workspace>> {
         self.app_db()?.get_workspace(id)?;
-        let memory_limit_gb = self.llm.hardware().ram_gb / QUERY_MEMORY_DIVISOR;
+        let memory_limit_gb = self.hardware.ram_gb / QUERY_MEMORY_DIVISOR;
         let encrypted = self.app_db()?.workspace_encrypted(id)?;
         let key = if encrypted {
             match passphrase {

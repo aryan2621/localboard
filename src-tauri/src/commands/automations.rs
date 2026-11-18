@@ -15,8 +15,7 @@ use crate::engine::analyst::facts::{self, Facts};
 use crate::engine::automations::{self, Threshold};
 use crate::engine::query::{self, bind_params, elapsed_ms, CancelToken};
 use crate::error::{blocking, AppError, AppResult};
-use crate::llm::provider::{ChatMessage, ChatRequest, LlmProvider, ResponseFormat, Role, Task};
-use crate::llm::router::{TaskRouting, SETTINGS_KEY};
+use crate::llm::provider::{ChatMessage, ChatRequest, ResponseFormat, Role, Task};
 use crate::retrieval;
 use crate::sql_guard::{self, GuardPolicy};
 use crate::state::AppState;
@@ -603,8 +602,7 @@ async fn run_ask(state: &AppState, step: &AutomationStep) -> Result<StepOut, (bo
         .ok_or_else(|| step_err("This step has no question"))?
         .to_owned();
     let workspace = state.workspace().map_err(step_err)?;
-    let routing: TaskRouting = state.app_db().map_err(step_err)?.setting(SETTINGS_KEY).map_err(step_err)?.unwrap_or_default();
-    let models = Models::available(state.llm.clone(), routing);
+    let models = Models::available(state.llm().map_err(step_err)?, state.task_routing().map_err(step_err)?);
     let (user_id, assistant_id, conversation_id) = (new_id(), new_id(), new_id());
     let stored_question = question.clone();
     blocking({
@@ -765,9 +763,7 @@ async fn deliver_smtp(settings: &SmtpStored, password: &str, to: &str, subject: 
 
 async fn narrate_alert(state: &AppState, title: &str, facts: &Value) -> Option<String> {
     use crate::engine::analyst::prompts;
-    let routing: TaskRouting = state.app_db().ok()?.setting(SETTINGS_KEY).ok().flatten().unwrap_or_default();
-    let spec = state.llm.resolve(&routing, Task::Narrative)?;
-    let provider = state.llm.provider(spec.id).await.ok()?;
+    let provider = state.task_provider(Task::Narrative).ok()?;
     let response = provider
         .chat(
             ChatRequest {
@@ -1045,11 +1041,8 @@ pub async fn automation_propose(app: AppHandle, state: State<'_, AppState>, prom
         StepStatus::Done,
         Some(if found.is_empty() { "No tables yet".into() } else { found }),
     );
-    let routing: TaskRouting = state.app_db()?.setting(SETTINGS_KEY)?.unwrap_or_default();
-    let spec = state.llm.resolve(&routing, Task::Sql).ok_or(crate::llm::provider::LlmError::NoModel)?;
-    crate::commands::progress(app, "model", format!("Starting {}", spec.id), StepStatus::Running, None);
-    let provider = state.llm.provider(spec.id).await?;
-    crate::commands::progress(app, "model", format!("Starting {}", spec.id), StepStatus::Done, None);
+    let provider = state.task_provider(Task::Sql)?;
+    crate::commands::progress(app, "model", format!("Using {}", provider.id()), StepStatus::Done, None);
     crate::commands::progress(app, "design", "Designing the automation", StepStatus::Running, None);
     let schema = json!({
         "type": "object",

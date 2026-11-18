@@ -15,8 +15,6 @@ use std::sync::{Arc, Mutex};
 
 use tauri::{Emitter, Manager, RunEvent, WindowEvent};
 
-use crate::llm::llama_server::Supervisor;
-use crate::llm::LlmRuntime;
 use crate::state::AppState;
 use crate::storage::app_db::AppDb;
 
@@ -56,7 +54,6 @@ impl Drop for BootReady {
 fn finish_boot(handle: tauri::AppHandle) {
     let _ready = BootReady { handle: handle.clone() };
     let state = handle.state::<AppState>();
-    state.llm.stop_leftover_servers();
     if let Err(error) = commands::workspaces::open_initial(&state) {
         tracing::error!("could not open a workspace at startup: {error}");
     }
@@ -87,16 +84,11 @@ pub fn run() {
             init_logging(&data_dir);
 
             let app_db = AppDb::open(&data_dir.join("app.sqlite"))?;
-            let binary = Supervisor::locate_binary();
-            if binary.is_none() {
-                tracing::warn!("llama-server not found; AI features are unavailable (SQL-only mode)");
-            }
-            let llm = Arc::new(LlmRuntime::new(data_dir.clone(), binary)?);
             let handle = app.handle().clone();
             let notifier: state::ChangeNotifier = Arc::new(move |workspace_id: &str| {
                 let _ = handle.emit(commands::CATALOG_CHANGED, workspace_id);
             });
-            app.manage(AppState::new(data_dir, app_db, llm, notifier));
+            app.manage(AppState::new(data_dir, app_db, notifier));
 
             commands::identity::restore_lock_and_offline(&app.state::<AppState>());
             commands::deeplink::register_deep_links(app.handle());
@@ -104,7 +96,7 @@ pub fn run() {
                 tracing::warn!("tray icon unavailable: {error}");
             }
 
-            // Workspace open, leftover llama-server cleanup and the loopback server stay off this
+            // Workspace open and the loopback server stay off this
             // thread. Setup runs on the macOS main thread; blocking it here leaves the webview
             // painted on the HTML splash with JavaScript never started.
             let handle = app.handle().clone();
@@ -145,12 +137,9 @@ pub fn run() {
             commands::catalog::rename_table,
             commands::catalog::describe_table,
             commands::catalog::describe_column,
-            commands::llm::llm_catalog,
-            commands::llm::llm_download,
-            commands::llm::llm_cancel_download,
-            commands::llm::llm_delete_model,
-            commands::llm::llm_benchmark,
-            commands::llm::llm_stop,
+            commands::llm::llm_get_config,
+            commands::llm::llm_set_config,
+            commands::llm::llm_test,
             commands::llm::set_task_routing,
             commands::analyst::ask,
             commands::analyst::cancel_answer,
@@ -292,7 +281,6 @@ pub fn run() {
             RunEvent::Exit => {
                 if let Some(state) = handle.try_state::<AppState>() {
                     state.shutdown_server();
-                    state.llm.shutdown();
                 }
             }
             _ => {}

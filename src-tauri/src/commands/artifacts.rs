@@ -16,8 +16,7 @@ use crate::engine::artifacts::{
 };
 use crate::engine::query::{self, elapsed_ms, CancelToken, QueryResult};
 use crate::error::{blocking, AppError, AppResult};
-use crate::llm::provider::{ChatMessage, ChatRequest, LlmError, LlmProvider, ResponseFormat, Role, Task};
-use crate::llm::router::{TaskRouting, SETTINGS_KEY};
+use crate::llm::provider::{ChatMessage, ChatRequest, ResponseFormat, Role, Task};
 use crate::sql_guard::{self, GuardPolicy};
 use crate::state::{AppState, Workspace};
 use crate::storage::artifacts::{
@@ -149,9 +148,7 @@ fn record_refresh(
 }
 
 async fn llm_json<T: serde::de::DeserializeOwned>(state: &AppState, system: String, prompt: String, name: &str, schema: Value) -> AppResult<T> {
-    let routing: TaskRouting = state.app_db()?.setting(SETTINGS_KEY)?.unwrap_or_default();
-    let spec = state.llm.resolve(&routing, Task::Sql).ok_or(LlmError::NoModel)?;
-    let provider = state.llm.provider(spec.id).await?;
+    let provider = state.task_provider(Task::Sql)?;
     let response = provider
         .chat(
             ChatRequest {
@@ -167,15 +164,7 @@ async fn llm_json<T: serde::de::DeserializeOwned>(state: &AppState, system: Stri
 }
 
 async fn narrate(state: &AppState, title: &str, facts: &Value) -> String {
-    let routing: TaskRouting = match state.app_db() {
-        Ok(db) => db.setting(SETTINGS_KEY).ok().flatten().unwrap_or_default(),
-        Err(_) => return String::new(),
-    };
-    let spec = match state.llm.resolve(&routing, Task::Narrative) {
-        Some(spec) => spec,
-        None => return String::new(),
-    };
-    let Ok(provider) = state.llm.provider(spec.id).await else { return String::new() };
+    let Ok(provider) = state.task_provider(Task::Narrative) else { return String::new() };
     let Ok(response) = provider
         .chat(
             ChatRequest {

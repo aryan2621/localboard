@@ -33,6 +33,7 @@ import { useAppearance, type ThemeMode } from '../../lib/theme'
 import { cn } from '../../lib/utils'
 import { useWorkspaceAction, useWorkspaces } from '../../lib/workspaces'
 import { useNavigation, type AppPage } from '../../stores/navigation'
+import { useAiReady } from '../analyst/Composer'
 import { NewWorkspaceDialog } from '../workspaces/NewWorkspaceDialog'
 import { UnlockWorkspaceForm } from '../workspaces/UnlockWorkspaceForm'
 import { Sheet, SheetBody, SheetContent, SheetHeader } from '../ui/sheet'
@@ -205,10 +206,8 @@ function ChatHistory() {
 }
 
 function AiStatus() {
-  const { data: catalog } = useQuery({ queryKey: queryKeys.models, queryFn: api.modelCatalog })
   const openSettings = useNavigation((state) => state.openSettings)
-  const active = catalog?.models.find((model) => model.id === catalog.active)
-  const ready = Boolean(active && catalog?.runtimeAvailable)
+  const ready = useAiReady()
 
   return (
     <button
@@ -217,7 +216,7 @@ function AiStatus() {
       className="flex h-8 w-full items-center gap-2 rounded-lg px-2 text-app-caption text-muted-foreground transition-colors duration-fast hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
     >
       <Cpu size={14} strokeWidth={iconStroke} className={ready ? 'text-success' : 'text-warning'} />
-      <span className="truncate">{ready ? `On this device · ${active?.name ?? ''}` : 'SQL-only mode · no AI model'}</span>
+      <span className="truncate">{ready ? 'AI provider ready' : 'SQL-only mode · no AI provider'}</span>
     </button>
   )
 }

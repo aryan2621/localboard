@@ -88,7 +88,7 @@ function OfflineBanner() {
   if (!status?.offline) return null
   return (
     <div className="mx-8 mt-2 rounded-lg border border-border bg-card px-3 py-2 text-app-caption text-foreground">
-      Offline mode is on. Downloads, SMTP and remote MCP servers are blocked.
+      Offline mode is on. Remote AI providers, SMTP and remote MCP servers are blocked.
     </div>
   )
 }

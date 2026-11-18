@@ -1,4 +1,4 @@
-//! Prompts and the JSON schemas that constrain the model's output (llama.cpp turns them into a grammar).
+//! Prompts and the JSON schemas that constrain the model's output (providers enforce them as structured output).
 
 use serde::Deserialize;
 use serde_json::{json, Value};

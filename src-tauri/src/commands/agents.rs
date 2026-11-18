@@ -5,9 +5,8 @@ use std::path::Path;
 use tauri::State;
 
 use crate::error::{blocking, AppError, AppResult};
-use crate::llm::provider::{LlmProvider, Task};
+use crate::llm::provider::Task;
 use crate::llm::router::TaskRouting;
-use crate::llm::LlmRuntime;
 use crate::retrieval::{self, DOC_PREFIX};
 use crate::sql_guard::{self, GuardPolicy};
 use crate::state::AppState;
@@ -55,15 +54,8 @@ fn overrides(routing: TaskRouting) -> AppResult<TaskRouting> {
     Ok(clean)
 }
 
-pub(crate) async fn document_vector(llm: &LlmRuntime, text: &str) -> Option<Vec<u8>> {
-    let provider = match llm.embed_provider().await {
-        Ok(Some(provider)) => provider,
-        Ok(None) => return None,
-        Err(error) => {
-            tracing::warn!("embedding model did not start: {error}");
-            return None;
-        }
-    };
+pub(crate) async fn document_vector(state: &AppState, text: &str) -> Option<Vec<u8>> {
+    let provider = state.llm().ok()?.embed_provider()?;
     match provider.embed(&[format!("{DOC_PREFIX}{}", retrieval::clip(text, EMBED_CHARS))]).await {
         Ok(vectors) => vectors.into_iter().next().map(|vector| retrieval::pack(&vector)),
         Err(error) => {
@@ -150,7 +142,7 @@ pub async fn save_rule(
         Some(name) if !name.trim().is_empty() => Some(name.trim().to_owned()),
         _ => None,
     };
-    let embedding = document_vector(&state.llm, &body).await;
+    let embedding = document_vector(&state, &body).await;
     let hash = retrieval::content_hash(&body);
     let snapshot = RuleSnapshot { title, body, table_name };
     let workspace = state.workspace()?;
@@ -209,7 +201,7 @@ pub async fn rollback_rule(state: State<'_, AppState>, rule_id: String, version_
         move || workspace.db()?.rule_version_snapshot(&rule_id, &version_id)
     })
     .await?;
-    let embedding = document_vector(&state.llm, &snapshot.body).await;
+    let embedding = document_vector(&state, &snapshot.body).await;
     let hash = retrieval::content_hash(&snapshot.body);
     blocking(move || workspace.db()?.restore_rule(&rule_id, &new_id(), &snapshot, &hash, embedding.as_deref())).await
 }
@@ -225,7 +217,7 @@ pub async fn save_example(state: State<'_, AppState>, agent_id: String, question
     state.ensure_unlocked()?;
     let question = required(&question, MAX_QUESTION, "question")?;
     let sql = guard_sql(&state, &sql).await?;
-    let embedding = document_vector(&state.llm, &question).await;
+    let embedding = document_vector(&state, &question).await;
     let hash = retrieval::content_hash(&question);
     let workspace = state.workspace()?;
     let id = new_id();
@@ -284,7 +276,7 @@ pub async fn save_answer_example(state: State<'_, AppState>, message_id: String)
     let (question, sql, agent_id) = prepared;
     let question = required(&question, MAX_QUESTION, "question")?;
     let sql = guard_sql(&state, &sql).await?;
-    let embedding = document_vector(&state.llm, &question).await;
+    let embedding = document_vector(&state, &question).await;
     let hash = retrieval::content_hash(&question);
     let id = new_id();
     let message_id_for_row = message_id.clone();
@@ -308,7 +300,7 @@ pub async fn save_memory(state: State<'_, AppState>, id: Option<String>, agent_i
     state.ensure_unlocked()?;
     let body = required(&body, MAX_MEMORY, "memory")?;
     let hash = retrieval::memory_key(&body);
-    let embedding = document_vector(&state.llm, &body).await;
+    let embedding = document_vector(&state, &body).await;
     let workspace = state.workspace()?;
     blocking(move || {
         let db = workspace.db()?;
@@ -335,7 +327,7 @@ pub async fn set_memory_status(state: State<'_, AppState>, id: String, status: S
     })
     .await?;
     if status == "active" && memory.embedding.is_none() {
-        if let Some(blob) = document_vector(&state.llm, &memory.body).await {
+        if let Some(blob) = document_vector(&state, &memory.body).await {
             let workspace = state.workspace()?;
             blocking(move || workspace.db()?.store_embedding(EmbedTarget::Memory, &id, &blob)).await?;
         }
@@ -389,8 +381,8 @@ pub async fn add_knowledge(state: State<'_, AppState>, agent_id: String, path: S
         }
     })
     .await?;
-    match state.llm.embed_provider().await {
-        Ok(Some(provider)) => {
+    match state.llm()?.embed_provider() {
+        Some(provider) => {
             let inputs: Vec<String> = rows.iter().map(|(_, body, _)| format!("{DOC_PREFIX}{}", retrieval::clip(body, EMBED_CHARS))).collect();
             if let Ok(vectors) = provider.embed(&inputs).await {
                 if vectors.len() == rows.len() {
@@ -411,8 +403,7 @@ pub async fn add_knowledge(state: State<'_, AppState>, agent_id: String, path: S
                 }
             }
         }
-        Ok(None) => {}
-        Err(error) => tracing::warn!("saved the document but the embedding model did not start: {error}"),
+        None => {}
     }
     Ok(record)
 }

@@ -12,8 +12,7 @@ use tauri::State;
 use crate::engine::analyst::{context, prompts};
 use crate::engine::query::{self, bind_params, duck_placeholders, elapsed_ms, CancelToken, QueryResult};
 use crate::error::{blocking, AppError, AppResult};
-use crate::llm::provider::{ChatMessage, ChatRequest, LlmError, LlmProvider, ResponseFormat, Role, Task};
-use crate::llm::router::{TaskRouting, SETTINGS_KEY};
+use crate::llm::provider::{ChatMessage, ChatRequest, LlmProvider, ResponseFormat, Role, Task};
 use crate::sql_guard::{self, GuardPolicy};
 use crate::state::AppState;
 use crate::storage::bench::{HistoryEntry, SavedQuery, SchemaTable};
@@ -211,7 +210,7 @@ pub async fn bench_optimize(state: State<'_, AppState>, sql: String) -> AppResul
 pub async fn bench_describe(state: State<'_, AppState>, sql: String) -> AppResult<Explanation> {
     state.ensure_unlocked()?;
     let (validated, _, _) = prepare(&state, &sql).await?;
-    let provider = sql_provider(&state).await?;
+    let provider = sql_provider(&state)?;
     let response = provider
         .chat(
             ChatRequest {
@@ -302,17 +301,15 @@ pub async fn bench_delete_query(state: State<'_, AppState>, id: String) -> AppRe
     .await
 }
 
-async fn sql_provider(state: &AppState) -> AppResult<crate::llm::openai_compat::OpenAiCompatProvider> {
-    let routing: TaskRouting = state.app_db()?.setting(SETTINGS_KEY)?.unwrap_or_default();
-    let spec = state.llm.resolve(&routing, Task::Sql).ok_or(LlmError::NoModel)?;
-    Ok(state.llm.provider(spec.id).await?)
+fn sql_provider(state: &AppState) -> AppResult<Box<dyn LlmProvider>> {
+    state.task_provider(Task::Sql)
 }
 
 async fn rewrite(state: &AppState, sql: &str, error: &str, fixing: bool) -> AppResult<String> {
     let workspace = state.workspace()?;
     let sql_for_schema = sql.to_owned();
     let schema = blocking(move || context::build(&workspace, &sql_for_schema, &[])).await?;
-    let provider = sql_provider(state).await?;
+    let provider = sql_provider(state)?;
     let system = if fixing {
         prompts::repair_system(&schema.prompt, "")
     } else {

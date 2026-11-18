@@ -1,71 +1,72 @@
-use std::sync::Arc;
+use serde::Serialize;
+use tauri::State;
 
-use tauri::{AppHandle, Emitter, State};
-
-use super::DOWNLOAD_PROGRESS;
 use crate::error::AppResult;
+use crate::llm::provider::Task;
 use crate::llm::router::{TaskRouting, SETTINGS_KEY};
-use crate::llm::{Benchmark, CatalogView};
+use crate::llm::{LlmConfig, CONFIG_KEY};
 use crate::state::AppState;
+use crate::storage::secrets;
 
-fn routing(state: &AppState) -> AppResult<TaskRouting> {
-    Ok(state.app_db()?.setting(SETTINGS_KEY)?.unwrap_or_default())
+#[derive(Serialize)]
+pub struct LlmConfigView {
+    #[serde(flatten)]
+    config: LlmConfig,
+    has_key: bool,
+    routing: TaskRouting,
 }
 
-#[tauri::command]
-pub async fn llm_catalog(state: State<'_, AppState>) -> AppResult<CatalogView> {
-    state.ensure_unlocked()?;
-    let routing = routing(&state)?;
-    Ok(state.llm.catalog(routing).await)
+#[derive(Serialize)]
+pub struct LlmTest {
+    ok: bool,
+    message: String,
 }
 
+/// The key is never returned; the UI only learns whether one is saved.
 #[tauri::command]
-pub fn llm_download(app: AppHandle, state: State<'_, AppState>, model_id: String) -> AppResult<()> {
+pub fn llm_get_config(state: State<'_, AppState>) -> AppResult<LlmConfigView> {
     state.ensure_unlocked()?;
-    state.ensure_online("Downloading a model")?;
-    state.llm.download(
-        &model_id,
-        Arc::new(move |progress| {
-            let _ = app.emit(DOWNLOAD_PROGRESS, progress);
-        }),
-    )?;
+    let config = state.llm_config()?;
+    let has_key = secrets::get(&config.kind.secret_ref()).is_ok();
+    Ok(LlmConfigView { config, has_key, routing: state.task_routing()? })
+}
+
+/// `api_key`: `None` keeps the saved key, `Some("")` clears it.
+#[tauri::command]
+pub fn llm_set_config(state: State<'_, AppState>, config: LlmConfig, api_key: Option<String>) -> AppResult<()> {
+    state.ensure_unlocked()?;
+    match api_key.as_deref().map(str::trim) {
+        Some("") => secrets::delete(&config.kind.secret_ref())?,
+        Some(key) => secrets::save(&config.kind.secret_ref(), key)?,
+        None => {}
+    }
+    let config = LlmConfig {
+        base_url: config.base_url.trim().to_owned(),
+        model: config.model.trim().to_owned(),
+        embed_model: config.embed_model.map(|model| model.trim().to_owned()).filter(|model| !model.is_empty()),
+        ..config
+    };
+    state.app_db()?.set_setting(CONFIG_KEY, &config)?;
     Ok(())
 }
 
 #[tauri::command]
-pub fn llm_cancel_download(state: State<'_, AppState>) -> AppResult<()> {
+pub async fn llm_test(state: State<'_, AppState>) -> AppResult<LlmTest> {
     state.ensure_unlocked()?;
-    state.llm.cancel_download();
-    Ok(())
+    let outcome: AppResult<()> = async { Ok(state.llm()?.provider(None)?.health().await?) }.await;
+    Ok(match outcome {
+        Ok(()) => LlmTest { ok: true, message: "Connected".into() },
+        Err(error) => LlmTest { ok: false, message: error.to_string() },
+    })
 }
 
-#[tauri::command]
-pub async fn llm_delete_model(state: State<'_, AppState>, model_id: String) -> AppResult<()> {
-    state.ensure_unlocked()?;
-    Ok(state.llm.delete(&model_id).await?)
-}
-
-#[tauri::command]
-pub async fn llm_benchmark(state: State<'_, AppState>, model_id: String) -> AppResult<Benchmark> {
-    state.ensure_unlocked()?;
-    Ok(state.llm.benchmark(&model_id).await?)
-}
-
-#[tauri::command]
-pub async fn llm_stop(state: State<'_, AppState>) -> AppResult<()> {
-    state.ensure_unlocked()?;
-    state.llm.stop().await;
-    Ok(())
-}
-
-/// Replaces the per-task model choices; every id is validated against the catalog.
 #[tauri::command]
 pub fn set_task_routing(state: State<'_, AppState>, routing: TaskRouting) -> AppResult<TaskRouting> {
     state.ensure_unlocked()?;
-    let mut validated = TaskRouting::default();
-    validated.set(crate::llm::provider::Task::Sql, routing.sql)?;
-    validated.set(crate::llm::provider::Task::Reasoning, routing.reasoning)?;
-    validated.set(crate::llm::provider::Task::Narrative, routing.narrative)?;
-    state.app_db()?.set_setting(SETTINGS_KEY, &validated)?;
-    Ok(validated)
+    let mut clean = TaskRouting::default();
+    clean.set(Task::Sql, routing.sql)?;
+    clean.set(Task::Reasoning, routing.reasoning)?;
+    clean.set(Task::Narrative, routing.narrative)?;
+    state.app_db()?.set_setting(SETTINGS_KEY, &clean)?;
+    Ok(clean)
 }

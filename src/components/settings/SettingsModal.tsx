@@ -13,7 +13,7 @@ import { useAppearance, type FontSize, type ThemeMode } from '../../lib/theme'
 import { cn } from '../../lib/utils'
 import { useWorkspaceAction, useWorkspaces } from '../../lib/workspaces'
 import { useNavigation, type SettingsSectionId } from '../../stores/navigation'
-import { ModelManager } from '../models/ModelManager'
+import { ProviderSettings } from '../models/ProviderSettings'
 import { NewWorkspaceDialog } from '../workspaces/NewWorkspaceDialog'
 import { SegmentedControl, SettingsAction, SettingsCard, SettingsRow, SettingsSection, StatusBadge } from '../layout/ui'
 import { ConfirmAction } from '../ui/alert-dialog'
@@ -23,7 +23,6 @@ import { Input } from '../ui/input'
 import { Switch } from '../ui/switch'
 import { Checkbox } from '../ui/checkbox'
 import { Label } from '../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
 const SECTIONS: { group: string; items: { id: SettingsSectionId; label: string; description: string; icon: typeof Cpu }[] }[] = [
   { group: 'App', items: [{ id: 'general', label: 'General', description: 'Appearance and this computer.', icon: Palette }] },
@@ -203,56 +202,33 @@ const TASKS: { key: keyof TaskRouting; label: string; description: string }[] = 
 ]
 
 function TaskRoutingSection() {
-  const { data: catalog } = useQuery({ queryKey: queryKeys.models, queryFn: api.modelCatalog })
+  const { data: config } = useQuery({ queryKey: queryKeys.models, queryFn: api.llmConfig })
+  const [routing, setRouting] = useState<TaskRouting>({ sql: null, reasoning: null, narrative: null })
+  useEffect(() => {
+    if (config?.routing) setRouting(config.routing)
+  }, [config?.routing])
   const save = useMutation({
     mutationFn: api.setTaskRouting,
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.models }),
     onError: (failure) => toast.error(errorMessage(failure)),
   })
-  const stop = useMutation({
-    mutationFn: api.stopModel,
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.models }),
-    onError: (failure) => toast.error(errorMessage(failure)),
-  })
-  const installed = catalog?.models.filter((model) => model.installed) ?? []
-  if (!catalog || installed.length === 0) return null
-  const running = catalog.models.find((model) => model.id === catalog.running)
+  if (!config) return null
 
   return (
-    <SettingsSection collapsible title={'Model per task'} description={'Use a faster model for SQL and a stronger one for explanations, if you have both.'}>
+    <SettingsSection collapsible title={'Model per task'} description={'Optional. Name a different model for a task; blank uses the default model.'}>
       <SettingsCard>
         {TASKS.map((task) => (
           <SettingsRow key={task.key} label={task.label} description={task.description}>
-            <Select
-              value={catalog.routing[task.key] ?? 'auto'}
-              onValueChange={(value) => save.mutate({ ...catalog.routing, [task.key]: value === 'auto' ? null : value })}
-            >
-              <SelectTrigger className="w-56" aria-label={task.label}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Automatic</SelectItem>
-                {installed.map((model) => (
-                  <SelectItem key={model.id} value={model.id}>
-                    {model.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              className="w-56"
+              aria-label={task.label}
+              value={routing[task.key] ?? ''}
+              onChange={(event) => setRouting((current) => ({ ...current, [task.key]: event.target.value }))}
+              onBlur={() => save.mutate({ ...routing, [task.key]: routing[task.key]?.trim() || null })}
+              spellCheck={false}
+            />
           </SettingsRow>
         ))}
-        <SettingsRow
-          label={'Loaded model'}
-          description={running ? 'Unload it to free memory; it reloads on the next question.' : 'No model is in memory.'}
-        >
-          {running ? (
-            <Button variant="outline" size="sm" disabled={stop.isPending} onClick={() => stop.mutate()}>
-              Unload {running.name}
-            </Button>
-          ) : (
-            <StatusBadge variant="neutral">Idle</StatusBadge>
-          )}
-        </SettingsRow>
       </SettingsCard>
     </SettingsSection>
   )
@@ -404,7 +380,7 @@ function SecuritySection() {
   })
   return (
     <div className="space-y-8">
-      <SettingsSection title={'Offline'} description={'Blocks Hugging Face downloads, SMTP and remote MCP servers.'}>
+      <SettingsSection title={'Offline'} description={'Blocks remote AI providers, SMTP and remote MCP servers.'}>
         <SettingsCard>
           <SettingsRow label={'Offline mode'}>
             <Switch checked={Boolean(gov?.offline)} onCheckedChange={(enabled) => offline.mutate(enabled)} aria-label={'Offline mode'} />
@@ -653,7 +629,7 @@ function SectionContent({ section }: { section: SettingsSectionId }) {
     case 'models':
       return (
         <div className="space-y-8">
-          <ModelManager />
+          <ProviderSettings />
           <TaskRoutingSection />
         </div>
       )

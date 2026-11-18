@@ -9,7 +9,7 @@
 - **Automate:** run checks on a schedule, when a file changes or on demand: thresholds, anomaly alerts, comparisons and scheduled reports.
 - **Control it:** a SQL editor (Query Bench), analysts with their own rules and examples, an audit log, column masking and an MCP server for Claude Desktop and Cursor.
 
-Everything runs on your computer with a built-in local AI (llama.cpp). Your data stays on it: the only outbound traffic is what you set up (model download from Hugging Face, database hosts you enter, optional SMTP or remote MCP). Every query is checked to be a single read-only `SELECT`.
+Queries run on your computer. AI runs through a provider you configure (Anthropic, OpenAI, Gemini, Ollama or an OpenAI-compatible endpoint); cloud providers receive your questions, schema, sample rows and results, and Offline mode blocks them. Other outbound traffic is what you set up (database hosts, optional SMTP or remote MCP). Every query is checked to be a single read-only `SELECT`.
 
 **[⬇ Download for macOS](https://github.com/aryan2621/localboard/releases/latest/download/LocalBoard_0.1.0_aarch64.dmg)**
 · macOS 11+, Apple silicon · [Windows and all downloads](https://github.com/aryan2621/localboard/releases/latest)
@@ -26,7 +26,7 @@ Everything runs on your computer with a built-in local AI (llama.cpp). Your data
    ```bash
    xattr -dr com.apple.quarantine /Applications/LocalBoard.app
    ```
-4. The setup downloads an AI model (2.7 GB for 8 GB Macs, 5.7 GB for 16 GB or more, once). Click **Load sample data** to try it without your own data.
+4. Pick an AI provider in Settings, AI (optional; without one you get SQL-only mode). Click **Load sample data** to try it without your own data.
 
 ## Quick start
 

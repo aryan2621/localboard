@@ -20,6 +20,5 @@ dist-ssr
 # Local databases
 *.sqlite
 
-# Rust build output, and llama-server built by scripts/build-llama-server.sh
+# Rust build output
 src-tauri/target/
-src-tauri/binaries/

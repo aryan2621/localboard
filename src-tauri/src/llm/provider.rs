@@ -5,16 +5,15 @@ use tokio::sync::mpsc;
 
 #[derive(Debug, thiserror::Error)]
 pub enum LlmError {
-    #[error("No AI model is downloaded yet. Download one in Settings, Models.")]
+    #[error("No AI provider configured. Set one in Settings, AI.")]
     NoModel,
     #[error("{0}")]
     Invalid(String),
-    #[error("The AI runtime failed: {0}")]
-    Runtime(String),
     #[error("The AI request failed: {0}")]
     Request(String),
+    /// The provider cannot do this (for example Anthropic has no embeddings API).
     #[error("{0}")]
-    Download(String),
+    Unsupported(String),
 }
 
 impl From<reqwest::Error> for LlmError {
@@ -50,7 +49,7 @@ pub struct ChatMessage {
 #[derive(Clone, Debug)]
 pub enum ResponseFormat {
     Text,
-    /// Grammar-constrained decoding against a JSON Schema.
+    /// Output constrained to a JSON Schema (native structured output, or a forced tool call).
     JsonSchema { name: String, schema: Value },
 }
 
@@ -77,9 +76,8 @@ pub struct ChatResponse {
 
 #[async_trait]
 pub trait LlmProvider: Send + Sync {
-    #[expect(dead_code, reason = "identifies custom OpenAI-compatible endpoints configured in Settings")]
+    /// The model name this provider calls.
     fn id(&self) -> &str;
-    #[expect(dead_code, reason = "custom OpenAI-compatible endpoints are health-checked from Settings")]
     async fn health(&self) -> Result<(), LlmError>;
     /// When `tokens` is set, content deltas are streamed into it as they arrive.
     async fn chat(&self, request: ChatRequest, tokens: Option<mpsc::Sender<String>>) -> Result<ChatResponse, LlmError>;

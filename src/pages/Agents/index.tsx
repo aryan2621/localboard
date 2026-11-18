@@ -32,7 +32,6 @@ import { usePagination } from '../../lib/usePagination'
 import { iconStroke } from '../../lib/icon'
 import { queryClient, queryKeys } from '../../lib/queryClient'
 
-const DEFAULT = 'default'
 const ALL_TABLES = 'all'
 
 function invalidate(agentId?: string) {
@@ -379,7 +378,6 @@ function McpTools({ agentId }: { agentId: string }) {
 
 function Profile({ agent }: { agent: Agent }) {
   const { data: tables = [] } = useQuery({ queryKey: queryKeys.tables, queryFn: api.tables })
-  const { data: catalog } = useQuery({ queryKey: queryKeys.models, queryFn: api.modelCatalog })
   const [name, setName] = useState(agent.name)
   const [description, setDescription] = useState(agent.description)
   const [overrides, setOverrides] = useState<TaskRouting>(agent.modelOverrides)
@@ -467,23 +465,13 @@ function Profile({ agent }: { agent: Agent }) {
         <div className="grid gap-4 sm:grid-cols-3">
           {(['sql', 'reasoning', 'narrative'] as const).map((task) => (
             <FormField key={task} label={TASK_LABEL[task]}>
-              <Select
-                value={overrides[task] || DEFAULT}
-                onValueChange={(value) => setOverrides((current) => ({ ...current, [task]: value === DEFAULT ? null : value }))}
-              >
-                <SelectTrigger aria-label={`${TASK_LABEL[task]} model`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={DEFAULT}>Workspace default</SelectItem>
-                  {catalog?.models.map((model) => (
-                    <SelectItem key={model.id} value={model.id}>
-                      {model.name}
-                      {model.installed ? '' : ' (not downloaded)'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                value={overrides[task] ?? ''}
+                placeholder="Workspace default"
+                aria-label={`${TASK_LABEL[task]} model`}
+                onChange={(event) => setOverrides((current) => ({ ...current, [task]: event.target.value || null }))}
+                spellCheck={false}
+              />
             </FormField>
           ))}
         </div>

@@ -10,8 +10,7 @@ use crate::engine::analyst::{chart, context, facts, prompts, StepStatus};
 use crate::engine::query::{self, bind_params, elapsed_ms, CancelToken, QueryResult};
 use crate::storage::workspace_db::{AuditEntry, AuditQuery, AuditStatus};
 use crate::error::{blocking, AppError, AppResult};
-use crate::llm::provider::{ChatMessage, ChatRequest, LlmError, LlmProvider, ResponseFormat, Role, Task};
-use crate::llm::router::{TaskRouting, SETTINGS_KEY};
+use crate::llm::provider::{ChatMessage, ChatRequest, ResponseFormat, Role, Task};
 use crate::retrieval;
 use crate::sql_guard::{self, GuardPolicy};
 use crate::state::{AppState, Workspace};
@@ -229,12 +228,7 @@ async fn insight_for(state: &AppState, title: &str, result: &QueryResult, previo
     if previous.is_some_and(|existing| existing == hash) {
         return Ok((String::new(), hash));
     }
-    let routing: TaskRouting = state.app_db()?.setting(SETTINGS_KEY)?.unwrap_or_default();
-    let spec = match state.llm.resolve(&routing, Task::Narrative) {
-        Some(spec) => spec,
-        None => return Ok((String::new(), hash)),
-    };
-    let provider = state.llm.provider(spec.id).await?;
+    let Ok(provider) = state.task_provider(Task::Narrative) else { return Ok((String::new(), hash)) };
     let response = provider
         .chat(
             ChatRequest {
@@ -400,11 +394,8 @@ pub async fn dashboard_generate(app: AppHandle, state: State<'_, AppState>, prom
     .await?;
     let tables = schema.tables.iter().map(|table| table.relation.as_str()).collect::<Vec<_>>().join(", ");
     progress(&app, "context", "Finding the relevant tables", StepStatus::Done, Some(tables));
-    let routing: TaskRouting = state.app_db()?.setting(SETTINGS_KEY)?.unwrap_or_default();
-    let spec = state.llm.resolve(&routing, Task::Sql).ok_or(LlmError::NoModel)?;
-    progress(&app, "model", format!("Starting {}", spec.id), StepStatus::Running, None);
-    let provider = state.llm.provider(spec.id).await?;
-    progress(&app, "model", format!("Starting {}", spec.id), StepStatus::Done, None);
+    let provider = state.task_provider(Task::Sql)?;
+    progress(&app, "model", format!("Using {}", provider.id()), StepStatus::Done, None);
     progress(&app, "design", "Designing the dashboard", StepStatus::Running, None);
     let response = provider
         .chat(

@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS app_bindings;
+DROP TABLE IF EXISTS data_apps;
