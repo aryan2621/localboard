@@ -88,6 +88,11 @@ fn show_window(app: &AppHandle) {
     }
 }
 
+/// Workspace-scoped so an imported copy never shares (or deletes) the original's keychain entry.
+pub(crate) fn webhook_token_ref(workspace_id: &str, automation_id: &str) -> String {
+    format!("webhook:{workspace_id}:{automation_id}")
+}
+
 pub(crate) fn smtp_secret(workspace_id: &str) -> String {
     format!("smtp:{workspace_id}")
 }
@@ -847,7 +852,7 @@ pub async fn automation_save(app: AppHandle, state: State<'_, AppState>, draft: 
         webhook_hash = Some(hash_token(&token));
         issued_token = Some(token.clone());
         blocking({
-            let reference = format!("webhook:{id}");
+            let reference = webhook_token_ref(&workspace.id, &id);
             move || secrets::save(&reference, &token)
         })
         .await?;
@@ -893,12 +898,14 @@ pub async fn automation_delete(app: AppHandle, state: State<'_, AppState>, id: S
     state.ensure_unlocked()?;
     state.jobs.stop(&id);
     let workspace = state.workspace()?;
+    let workspace_id = workspace.id.clone();
     blocking({
         let id = id.clone();
         move || {
             let db = workspace.db()?;
             db.clear_query_relations("automation", &id)?;
-            let _ = secrets::delete(&format!("webhook:{id}"));
+            let _ = secrets::delete(&webhook_token_ref(&workspace_id, &id));
+            let _ = secrets::delete(&format!("webhook:{id}")); // pre-scoping key
             db.delete_automation(&id)
         }
     })
@@ -944,7 +951,8 @@ pub async fn automation_rotate_webhook(state: State<'_, AppState>, id: String) -
         let token = token.clone();
         move || {
             workspace.db()?.set_webhook_hash(&id, &hash)?;
-            secrets::save(&format!("webhook:{id}"), &token)
+            let _ = secrets::delete(&format!("webhook:{id}")); // pre-scoping key
+            secrets::save(&webhook_token_ref(&workspace.id, &id), &token)
         }
     })
     .await?;

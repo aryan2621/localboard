@@ -600,9 +600,23 @@ function IntegrationsSection() {
             <Input value={url} onChange={(event) => setUrl(event.target.value)} className="max-w-[16rem]" aria-label={'MCP URL'} />
           </SettingsRow>
           <SettingsAction>
-            <Button size="sm" disabled={!name.trim() || saveServer.isPending} onClick={() => saveServer.mutate()}>
-              {'Add server'}
-            </Button>
+            {transport.trim() === 'stdio' && command.trim() ? (
+              <ConfirmAction
+                trigger={
+                  <Button size="sm" disabled={!name.trim() || saveServer.isPending}>
+                    {'Add server'}
+                  </Button>
+                }
+                title={'Run this command on your computer?'}
+                description={`LocalBoard will launch: ${command.trim()}. It runs with your user permissions. Only continue if you trust it.`}
+                confirmLabel="Run and save"
+                onConfirm={() => saveServer.mutate()}
+              />
+            ) : (
+              <Button size="sm" disabled={!name.trim() || saveServer.isPending} onClick={() => saveServer.mutate()}>
+                {'Add server'}
+              </Button>
+            )}
           </SettingsAction>
         </SettingsCard>
         {servers.length > 0 && (

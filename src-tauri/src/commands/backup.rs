@@ -94,6 +94,14 @@ fn rekey_connection_secrets(state: &AppState, workspace_id: &str) -> AppResult<(
             Err(error) => tracing::error!("could not read the secret for connection {}: {error}", connection.id),
         }
     }
+    for automation in db.list_automations()? {
+        let (old, fresh) = (format!("webhook:{}", automation.id), crate::commands::automations::webhook_token_ref(workspace_id, &automation.id));
+        if let Ok(token) = crate::storage::secrets::get(&old) {
+            if let Err(error) = crate::storage::secrets::save(&fresh, &token) {
+                tracing::error!("could not move the webhook secret for automation {}: {error}", automation.id);
+            }
+        }
+    }
     Ok(())
 }
 

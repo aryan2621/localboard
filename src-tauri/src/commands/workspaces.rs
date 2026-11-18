@@ -100,7 +100,8 @@ pub async fn delete_workspace(app: AppHandle, id: String) -> AppResult<Workspace
                 }
             }
             for automation in db.list_automations()? {
-                secrets::delete(&format!("webhook:{}", automation.id))?;
+                secrets::delete(&crate::commands::automations::webhook_token_ref(&id, &automation.id))?;
+                secrets::delete(&format!("webhook:{}", automation.id))?; // pre-scoping key
                 for step in &automation.steps {
                     secrets::delete(&crate::commands::automations::webhook_secret_ref(&id, &step.id))?;
                 }

@@ -118,12 +118,12 @@ function QueryStatusBadge({ query }: { query: QueryRecord }) {
 }
 
 /** Every query behind the answer, in order, with the tables each one read. */
-async function exportCsv(sql: string) {
+async function exportResult(sql: string, format: 'csv' | 'xlsx') {
   try {
-    const path = await save({ defaultPath: 'result.csv', filters: [{ name: 'csv', extensions: ['csv'] }] })
+    const path = await save({ defaultPath: `result.${format}`, filters: [{ name: format, extensions: [format] }] })
     if (!path) return
-    await api.benchExport(sql, {}, 'csv', path)
-    toast.success('Exported csv')
+    await api.benchExport(sql, {}, format, path)
+    toast.success(`Exported ${format}`)
   } catch (failure) {
     toast.error(errorMessage(failure))
   }
@@ -155,9 +155,14 @@ function SqlPanel({ queries, primaryId }: { queries: QueryRecord[]; primaryId: s
               </span>
             )}
             {!query.error && (
-              <Button variant="ghost" size="sm" className="ml-auto h-7" onClick={() => void exportCsv(query.sql)}>
-                {'Export CSV'}
-              </Button>
+              <span className="ml-auto flex gap-1">
+                <Button variant="ghost" size="sm" className="h-7" onClick={() => void exportResult(query.sql, 'csv')}>
+                  {'Export CSV'}
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7" onClick={() => void exportResult(query.sql, 'xlsx')}>
+                  {'Export XLSX'}
+                </Button>
+              </span>
             )}
             <Button variant="ghost" size="sm" className={cn('h-7', query.error && 'ml-auto')} onClick={() => openBench(query.sql)}>
               <SquareTerminal strokeWidth={iconStroke} /> {'Edit in Query Bench'}
