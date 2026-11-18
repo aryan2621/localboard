@@ -457,8 +457,8 @@ impl Run {
         let history = self.history().await?;
         let mut messages = history.clone();
         messages.push(ChatMessage { role: Role::User, content: self.question.clone() });
-        let generated: Generated = self
-            .ask_json(Task::Sql, prompts::generation_system(&context.prompt, &self.guidance), messages, "analysis", prompts::generation_schema(true))
+        let mut generated: Generated = self
+            .ask_json(Task::Sql, prompts::generation_system(&context.prompt, &self.guidance), messages.clone(), "analysis", prompts::generation_schema(true))
             .await?;
         self.finish_step("sql", StepStatus::Done, Some(generated.explanation.clone()));
 
@@ -478,9 +478,22 @@ impl Run {
             return self.answer_in_parts(&context, history, plan).await;
         }
 
+        // Small models often return an empty sql after classifying; ask again with the one job of writing it.
+        if generated.sql.trim().is_empty() && generated.intent != Intent::Ambiguous {
+            self.step("sql-retry", "Retrying with a simpler prompt");
+            let retry: prompts::Repaired = self
+                .ask_json(Task::Sql, prompts::direct_system(&context.prompt, &self.guidance), messages, "direct_sql", prompts::repair_schema())
+                .await?;
+            self.finish_step("sql-retry", StepStatus::Done, None);
+            generated.sql = retry.sql;
+            if !retry.explanation.trim().is_empty() {
+                generated.explanation = retry.explanation;
+            }
+        }
+        let part = self.answer_part(&context, &generated, "").await?;
+        // Only a successful answer keeps the model's plan and assumptions; a failed one shows just the error.
         self.answer.explanation = Some(generated.explanation.clone());
         self.answer.assumptions = generated.assumptions.clone();
-        let part = self.answer_part(&context, &generated, "").await?;
         self.answer.chart = Some(part.chart);
         self.answer.primary_query_id = Some(part.query_id);
         let mut facts = part.facts;

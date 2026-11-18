@@ -83,7 +83,7 @@ function Conversation({ id, inspected, onInspect }: { id: string; inspected: Ins
     <>
       <ChatHeader conversation={conversation} />
       <div className="flex-1 space-y-8 py-6">
-        {conversation.messages.map((message) =>
+        {conversation.messages.map((message, index) =>
           message.role === 'user' ? (
             <Question key={message.id}>{message.content}</Question>
           ) : (
@@ -94,6 +94,7 @@ function Conversation({ id, inspected, onInspect }: { id: string; inspected: Ins
               live={live[message.id]}
               onAsk={(question) => void submit(question).catch(() => undefined)}
               canAsk={!writing && !generate.isPending && !sending}
+              question={conversation.messages[index - 1]?.role === 'user' ? conversation.messages[index - 1].content : null}
               inspecting={inspected?.messageId === message.id ? inspected.tab : null}
               onInspect={(tab) => onInspect(tab ? { messageId: message.id, tab } : null)}
             />

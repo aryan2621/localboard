@@ -322,6 +322,7 @@ export function AnswerView({
   live,
   onAsk,
   canAsk,
+  question,
   inspecting,
   onInspect,
 }: {
@@ -330,6 +331,8 @@ export function AnswerView({
   live: LiveAnswer | undefined
   onAsk: (question: string) => void
   canAsk: boolean
+  /** The question this answer replies to; failed answers offer to ask it again. */
+  question: string | null
   inspecting: InspectorTab | null
   onInspect: (tab: InspectorTab | null) => void
 }) {
@@ -442,6 +445,11 @@ export function AnswerView({
             )}
             {text}
           </AlertDescription>
+          {question && (
+            <Button variant="outline" size="sm" className="mt-2" disabled={!canAsk} onClick={() => onAsk(question)}>
+              <RotateCw strokeWidth={iconStroke} /> Try again
+            </Button>
+          )}
         </Alert>
       ) : (
         text && (
@@ -477,7 +485,7 @@ export function AnswerView({
         <MemoryBanner proposal={answer.memoryProposal} agentId={answer.agentId} />
       )}
 
-      {answer && answer.assumptions.length > 0 && (
+      {answer && message.status !== 'error' && answer.assumptions.length > 0 && (
         <Collapsible className="group text-app-label">
           <CollapsibleTrigger className="flex items-center gap-1 text-app-caption text-muted-foreground hover:text-foreground">
             <ChevronDown size={14} strokeWidth={iconStroke} className="-rotate-90 transition-transform group-data-[state=open]:rotate-0" />

@@ -158,6 +158,19 @@ pub fn part_user(question: &str, part: &str) -> String {
     format!("Overall question: {question}\n\nAnswer only this part with one query: {part}")
 }
 
+/// Second chance when the first pass returned no SQL: a smaller task with no classification or planning.
+pub fn direct_system(schema: &str, guidance: &str) -> String {
+    attach(
+        format!(
+            "{}\nWrite one query that answers the question as well as the SCHEMA allows. Do not ask questions and do not leave sql empty. \
+             For why or change questions, compare the metric between the latest period and the one before it, with the difference. \
+             Give a one-sentence explanation.\n\nSCHEMA:\n{schema}",
+            rules()
+        ),
+        guidance,
+    )
+}
+
 pub fn repair_system(schema: &str, guidance: &str) -> String {
     attach(
         format!("{}\nThe previous query failed. Return a corrected query and a one-sentence explanation.\n\nSCHEMA:\n{schema}", rules()),
