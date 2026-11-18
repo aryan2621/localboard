@@ -325,10 +325,10 @@ function DatasiteView({ id }: { id: string }) {
     onError: (failure) => toast.error(errorMessage(failure)),
   })
   const exp = useMutation({
-    mutationFn: async (mode: 'static' | 'live') => {
+    mutationFn: async () => {
       const path = await save({ defaultPath: `${live.data?.datasite.name ?? 'datasite'}.html`, filters: [{ name: 'HTML', extensions: ['html'] }] })
       if (!path) return false
-      await api.datasiteExport(id, mode, path)
+      await api.datasiteExport(id, path)
       return true
     },
     onSuccess: (saved) => saved && toast.success('Exported'),
@@ -355,11 +355,8 @@ function DatasiteView({ id }: { id: string }) {
         }
         menu={
           <>
-            <DropdownMenuItem disabled={exp.isPending} onSelect={() => exp.mutate('static')}>
+            <DropdownMenuItem disabled={exp.isPending} onSelect={() => exp.mutate()}>
               <Link2 size={14} strokeWidth={iconStroke} /> Export snapshot (works offline)
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled={exp.isPending} onSelect={() => exp.mutate('live')}>
-              <Link2 size={14} strokeWidth={iconStroke} /> Export live page (needs LocalBoard running)
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleteOpen(true)}>

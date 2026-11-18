@@ -596,7 +596,7 @@ mod export_path_tests {
 }
 
 #[tauri::command]
-pub async fn datasite_export(state: State<'_, AppState>, id: String, mode: String, path: PathBuf) -> AppResult<()> {
+pub async fn datasite_export(state: State<'_, AppState>, id: String, path: PathBuf) -> AppResult<()> {
     let workspace = state.workspace()?;
     let site = blocking({
         let workspace = workspace.clone();
@@ -613,11 +613,7 @@ pub async fn datasite_export(state: State<'_, AppState>, id: String, mode: Strin
         brand: artifacts::BRAND_HEX.into(),
         name: artifacts::BRAND_NAME.into(),
     });
-    let html = match mode.as_str() {
-        "live" => html::datasite_bundle(&site, html::SiteMode::Linked { origin: &origin(&state) }, &theme.brand, &theme.name),
-        "static" => html::datasite_bundle(&site, html::SiteMode::Static, &theme.brand, &theme.name),
-        _ => return Err(AppError::invalid("Export is static or live.")),
-    };
+    let html = html::datasite_bundle(&site, html::SiteMode::Static, &theme.brand, &theme.name);
     std::fs::write(safe_export_path(&path)?, html)?;
     Ok(())
 }

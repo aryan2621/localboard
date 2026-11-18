@@ -8,7 +8,6 @@ use crate::storage::artifacts::{DatasitePage, DatasiteRecord, ReportRecord};
 pub enum SiteMode<'a> {
     Live { token: &'a str },
     Static,
-    Linked { origin: &'a str },
 }
 
 pub fn datasite_page(site: &DatasiteRecord, page: &DatasitePage, mode: SiteMode<'_>, brand: &str, brand_name: &str) -> String {
@@ -24,7 +23,7 @@ pub fn datasite_page(site: &DatasiteRecord, page: &DatasitePage, mode: SiteMode<
                         format!("/d/{}/{}", esc(&site.id), esc(&item.slug))
                     }
                 }
-                SiteMode::Static | SiteMode::Linked { .. } => format!("#{}", esc(&item.slug)),
+                SiteMode::Static => format!("#{}", esc(&item.slug)),
             };
             let current = if item.id == page.id { " aria-current=\"page\"" } else { "" };
             format!("<a href=\"{href}\"{current}>{}</a>", esc(&item.title))
@@ -50,7 +49,6 @@ pub fn datasite_page(site: &DatasiteRecord, page: &DatasitePage, mode: SiteMode<
     let fetch = match mode {
         SiteMode::Live { token } => format!("const BASE=''; const SITE='{}'; const TOKEN='{}';", esc(&site.id), esc(token)),
         SiteMode::Static => "const BASE=null; const SITE=''; const TOKEN='';".to_owned(),
-        SiteMode::Linked { origin } => format!("const BASE='{}'; const SITE='{}'; const TOKEN='';", esc(origin), esc(&site.id)),
     };
 
     wrap_named(
@@ -108,7 +106,6 @@ pub fn datasite_bundle(site: &DatasiteRecord, mode: SiteMode<'_>, brand: &str, b
     let fetch = match mode {
         SiteMode::Live { token } => format!("const BASE=''; const SITE='{}'; const TOKEN='{}';", esc(&site.id), esc(token)),
         SiteMode::Static => "const BASE=null; const SITE=''; const TOKEN='';".to_owned(),
-        SiteMode::Linked { origin } => format!("const BASE='{}'; const SITE='{}'; const TOKEN='';", esc(origin), esc(&site.id)),
     };
     wrap_named(
         &site.name,
