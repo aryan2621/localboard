@@ -1,3 +1,4 @@
+import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group'
 import { useState, type ReactNode } from 'react'
 import { ArrowLeft, Check, ChevronDown, Copy, LayoutGrid, List, MoreHorizontal, Search } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -97,22 +98,13 @@ export function SegmentedControl<T extends string>({
   className?: string
 }) {
   return (
-    <div className={cn('inline-flex rounded-lg border border-border bg-muted/50 p-0.5', className)} role="group">
+    <ToggleGroup type="single" value={value} onValueChange={(next) => next && onChange(next as T)} className={className}>
       {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          aria-pressed={value === option.value}
-          onClick={() => onChange(option.value)}
-          className={cn(
-            'px-3 h-7 rounded-md text-app-label font-medium transition-colors duration-fast',
-            value === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
+        <ToggleGroupItem key={option.value} value={option.value} className="px-3 font-medium">
           {option.label}
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   )
 }
 
@@ -406,23 +398,14 @@ export function ViewToggle({ value, onChange }: { value: 'cards' | 'list'; onCha
     { value: 'list' as const, label: 'Show as list', icon: List },
   ]
   return (
-    <div className="inline-flex rounded-lg border border-border bg-muted/50 p-0.5" role="group" aria-label="View">
+    <ToggleGroup type="single" value={value} onValueChange={(next) => next && onChange(next as 'cards' | 'list')} aria-label="View">
       {options.map((option) => (
         <Hint key={option.value} text={option.label}>
-          <button
-            type="button"
-            aria-label={option.label}
-            aria-pressed={value === option.value}
-            onClick={() => onChange(option.value)}
-            className={cn(
-              'flex h-7 w-8 items-center justify-center rounded-md transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              value === option.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
+          <ToggleGroupItem value={option.value} aria-label={option.label} className="w-8 px-0">
             <option.icon size={15} strokeWidth={iconStroke} />
-          </button>
+          </ToggleGroupItem>
         </Hint>
       ))}
-    </div>
+    </ToggleGroup>
   )
 }

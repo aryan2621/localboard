@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api, type SearchHit } from '../../lib/api'
 import { useNavigation, type AppPage } from '../../stores/navigation'
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '../ui/command'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ui/dialog'
 
 const ACTIONS: (SearchHit & { titleKey: string; subtitleKey?: string })[] = [
@@ -48,7 +49,6 @@ export function CommandPalette() {
   const returnFocus = useRef<HTMLElement | null>(null)
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [active, setActive] = useState(0)
   const search = useQuery({
     queryKey: ['palette', query],
     queryFn: () => api.searchWorkspace(query),
@@ -69,15 +69,7 @@ export function CommandPalette() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  const hits = useMemo((): (SearchHit | (typeof ACTIONS)[number])[] => {
-    const remote = search.data ?? []
-    const pages = ACTIONS.filter((item) => !query.trim() || item.titleKey.toLowerCase().includes(query.trim().toLowerCase()))
-    return [...remote, ...pages].slice(0, 40)
-  }, [query, search.data])
-
-  useEffect(() => {
-    setActive(0)
-  }, [query, hits.length])
+  const hits: (SearchHit | (typeof ACTIONS)[number])[] = [...(search.data ?? []), ...ACTIONS.filter((item) => !query.trim() || item.titleKey.toLowerCase().includes(query.trim().toLowerCase()))].slice(0, 40)
 
   const choose = (hit: SearchHit) => {
     openHit(hit, navigate)
@@ -94,7 +86,7 @@ export function CommandPalette() {
       }}
     >
       <DialogContent
-        className="max-w-xl gap-2 p-3"
+        className="max-w-xl gap-0 overflow-hidden p-0"
         onCloseAutoFocus={(event) => {
           event.preventDefault()
           returnFocus.current?.focus()
@@ -102,40 +94,18 @@ export function CommandPalette() {
       >
         <DialogTitle className="sr-only">{'Command palette'}</DialogTitle>
         <DialogDescription className="sr-only">{'Search chats, dashboards, datasites, apps, automations and saved queries.'}</DialogDescription>
-        <input
-          autoFocus
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === 'ArrowDown') {
-              event.preventDefault()
-              setActive((index) => Math.min(index + 1, Math.max(hits.length - 1, 0)))
-            } else if (event.key === 'ArrowUp') {
-              event.preventDefault()
-              setActive((index) => Math.max(index - 1, 0))
-            } else if (event.key === 'Enter' && hits[active]) {
-              event.preventDefault()
-              choose(hits[active])
-            }
-          }}
-          placeholder={'Search or jump…'}
-          aria-label={'Search LocalBoard'}
-          className="h-10 w-full rounded-lg border border-input bg-popover px-3 text-app-label focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <ul className="max-h-80 overflow-y-auto">
-          {hits.map((hit, index) => (
-            <li key={`${hit.kind}-${hit.id}-${index}`}>
-              <button
-                type="button"
-                onClick={() => choose(hit)}
-                className={`flex w-full flex-col rounded-lg px-3 py-2 text-left text-app-label focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${index === active ? 'bg-accent' : ''}`}
-              >
+        <Command shouldFilter={false} loop>
+          <CommandInput value={query} onValueChange={setQuery} placeholder="Search or jump…" aria-label="Search LocalBoard" autoFocus />
+          <CommandList>
+            <CommandEmpty>No results</CommandEmpty>
+            {hits.map((hit, index) => (
+              <CommandItem key={`${hit.kind}-${hit.id}-${index}`} value={`${hit.kind}-${hit.id}-${index}`} onSelect={() => choose(hit)}>
                 <span className="truncate">{'titleKey' in hit ? hit.titleKey : hit.title}</span>
                 <span className="truncate text-app-caption text-muted-foreground">{'subtitleKey' in hit && hit.subtitleKey ? hit.subtitleKey : hit.kind}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+              </CommandItem>
+            ))}
+          </CommandList>
+        </Command>
       </DialogContent>
     </Dialog>
   )

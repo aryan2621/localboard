@@ -10,7 +10,7 @@ const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay ref={ref} className={cn('fixed inset-0 z-50 bg-[hsl(var(--shadow-color)/0.4)]-[2px] data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out', className)} {...props} />
+  <DialogPrimitive.Overlay ref={ref} className={cn('fixed inset-0 z-50 bg-[hsl(var(--shadow-color)/0.4)] data-[state=open]:animate-overlay-in data-[state=closed]:animate-overlay-out', className)} {...props} />
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
