@@ -200,6 +200,7 @@ impl Run {
         let plan = match validate(plan, context) {
             Ok(plan) => plan,
             Err(reason) => {
+                self.answer.warnings.push(format!("Could not explain the change directly ({reason}); answered with a standard query."));
                 self.finish_step("why", StepStatus::Skipped, Some(reason));
                 return Ok(false);
             }
@@ -210,11 +211,13 @@ impl Run {
         let comparison = match self.execute_once(QueryPurpose::Comparison, &plan.comparison_sql()).await? {
             Ok(found) => found,
             Err(error) => {
+                self.answer.warnings.push("Could not compare the two periods directly; answered with a standard query.".to_owned());
                 self.finish_step("compare", StepStatus::Skipped, Some(error));
                 return Ok(false);
             }
         };
         let Some(((previous_start, previous), (current_start, current))) = periods(&comparison.1) else {
+            self.answer.warnings.push("Only one period has data, so the change could not be compared.".to_owned());
             self.finish_step("compare", StepStatus::Skipped, Some("Only one period has data".to_owned()));
             return Ok(false);
         };

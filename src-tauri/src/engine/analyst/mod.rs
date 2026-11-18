@@ -864,11 +864,13 @@ impl Run {
                 Err(error) if repairs < MAX_REPAIRS => {
                     repairs += 1;
                     self.step(&step, format!("Fixing the query (attempt {repairs} of {MAX_REPAIRS})"));
+                    let mut messages = self.history().await?;
+                    messages.push(ChatMessage { role: Role::User, content: prompts::repair_user(&self.question, &sql, &error) });
                     let repaired: prompts::Repaired = self
                         .ask_json(
                             Task::Sql,
                             prompts::repair_system(&context.prompt, &self.guidance),
-                            vec![ChatMessage { role: Role::User, content: prompts::repair_user(&self.question, &sql, &error) }],
+                            messages,
                             "repair",
                             prompts::repair_schema(),
                         )
@@ -892,7 +894,7 @@ impl Run {
         suffix: &str,
     ) -> Result<(QueryRecord, QueryResult), AnalystError> {
         let largest = record.relations.iter().filter_map(|relation| self.largest_source_rows.get(relation)).max().copied();
-        let warnings = facts::sanity_warnings(&record.sql, &result, largest);
+        let warnings = checked_warnings(&record.sql, &result, largest, &context.prompt);
         if warnings.is_empty() {
             return Ok((record, result));
         }
@@ -915,22 +917,56 @@ impl Run {
             .await?;
         if verdict.plausible || verdict.sql.trim().is_empty() {
             self.finish_step(&step, StepStatus::Done, Some(verdict.reason));
-            self.answer.warnings = warnings;
+            self.answer.warnings.extend(warnings);
             return Ok((record, result));
         }
         // `execute_once` captures its result; only keep that when the fix is accepted.
         let original_capture = self.captured.clone();
         if let Ok((fixed, fixed_result)) = self.execute_once(QueryPurpose::Answer, &verdict.sql).await? {
-            let remaining = facts::sanity_warnings(&fixed.sql, &fixed_result, largest);
+            let remaining = checked_warnings(&fixed.sql, &fixed_result, largest, &context.prompt);
             if remaining.len() < warnings.len() {
                 self.finish_step(&step, StepStatus::Done, Some(verdict.reason));
-                self.answer.warnings = remaining;
+                self.answer.warnings.extend(remaining);
                 return Ok((fixed, fixed_result));
             }
         }
         self.captured = original_capture;
         self.finish_step(&step, StepStatus::Done, Some("Kept the original query.".to_owned()));
-        self.answer.warnings = warnings;
+        self.answer.warnings.extend(warnings);
         Ok((record, result))
+    }
+}
+
+/// Code-level sanity warnings plus filter values the model could not have seen in the schema's samples.
+fn checked_warnings(sql: &str, result: &QueryResult, largest: Option<i64>, schema_prompt: &str) -> Vec<String> {
+    let mut warnings = facts::sanity_warnings(sql, result, largest);
+    let schema = schema_prompt.to_lowercase();
+    for literal in string_literals(sql) {
+        if !schema.contains(&literal.to_lowercase()) {
+            warnings.push(format!("The filter value '{literal}' was not among the sample values; it may not match the data."));
+        }
+    }
+    warnings
+}
+
+/// Short text literals in `sql`, skipping dates and numbers.
+fn string_literals(sql: &str) -> Vec<String> {
+    sql.split('\'')
+        .skip(1)
+        .step_by(2)
+        .filter(|text| !text.is_empty() && text.len() <= 40)
+        .filter(|text| text.chars().any(char::is_alphabetic) && !text.chars().next().is_some_and(|c| c.is_ascii_digit()))
+        .map(str::to_owned)
+        .collect()
+}
+
+#[cfg(test)]
+mod literal_tests {
+    use super::string_literals;
+
+    #[test]
+    fn finds_text_filters_only() {
+        let sql = "SELECT * FROM t WHERE region = 'West' AND d >= '2024-01-01' AND n IN ('a b', '')";
+        assert_eq!(string_literals(sql), vec!["West", "a b"]);
     }
 }

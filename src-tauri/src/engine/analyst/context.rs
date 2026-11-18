@@ -10,6 +10,8 @@ use crate::storage::workspace_db::{ColumnRecord, RelationshipRecord, TableRecord
 const MAX_TABLES: usize = 6;
 const MAX_TABLES_WITH_JOINS: usize = 8;
 const MAX_COLUMNS: usize = 40;
+/// Small local models run with a few thousand tokens of context; past this the rules at the front get cut off.
+const SCHEMA_BUDGET_CHARS: usize = 12_000;
 const SAMPLE_VALUES: usize = 3;
 const SAMPLE_CHARS: usize = 40;
 const STARTER_QUESTIONS: usize = 4;
@@ -99,7 +101,7 @@ pub fn fence_preview(rows: &mut [serde_json::Map<String, serde_json::Value>]) {
     }
 }
 
-fn render(candidates: &[&Candidate], relationships: &[RelationshipRecord], by_id: &HashMap<&str, &str>) -> String {
+fn render(candidates: &[&Candidate], relationships: &[RelationshipRecord], by_id: &HashMap<&str, &str>, max_columns: usize) -> String {
     let mut out = String::new();
     for candidate in candidates {
         let table = &candidate.table;
@@ -109,7 +111,7 @@ fn render(candidates: &[&Candidate], relationships: &[RelationshipRecord], by_id
             let _ = write!(out, " -- {DATA_OPEN}{}{DATA_CLOSE}", clip_to(&table.description, DESCRIPTION_CHARS));
         }
         out.push('\n');
-        for column in candidate.columns.iter().take(MAX_COLUMNS) {
+        for column in candidate.columns.iter().take(max_columns) {
             let _ = write!(out, "  \"{}\" {}", column.name, column.data_type);
             if !column.description.is_empty() {
                 let _ = write!(out, " -- {DATA_OPEN}{}{DATA_CLOSE}", clip_to(&column.description, DESCRIPTION_CHARS));
@@ -124,11 +126,17 @@ fn render(candidates: &[&Candidate], relationships: &[RelationshipRecord], by_id
                 if !samples.is_empty() {
                     let _ = write!(out, " e.g. {}", samples.join(", "));
                 }
+                if let (Some(min), Some(max)) = (&profile.min_value, &profile.max_value) {
+                    let kind = column.data_type.to_uppercase();
+                    if ["DATE", "TIME", "INT", "DOUBLE", "DECIMAL", "FLOAT", "NUMERIC"].iter().any(|word| kind.contains(word)) {
+                        let _ = write!(out, " range {}..{}", fence_text(min), fence_text(max));
+                    }
+                }
             }
             out.push('\n');
         }
-        if candidate.columns.len() > MAX_COLUMNS {
-            let _ = writeln!(out, "  … {} more columns", candidate.columns.len() - MAX_COLUMNS);
+        if candidate.columns.len() > max_columns {
+            let _ = writeln!(out, "  … {} more columns", candidate.columns.len() - max_columns);
         }
     }
     let included: HashSet<&str> = candidates.iter().map(|candidate| candidate.table.id.as_str()).collect();
@@ -169,6 +177,8 @@ fn load(workspace: &Workspace) -> AppResult<(Vec<Candidate>, Vec<RelationshipRec
                 if let (Some(profile), true) = (&mut column.profile, masked) {
                     profile.sample_values.clear();
                     profile.top_values.clear();
+                    profile.min_value = None;
+                    profile.max_value = None;
                 }
             }
             Ok(Candidate { columns, table })
@@ -217,7 +227,7 @@ pub fn build(workspace: &Workspace, question: &str, only: &[String]) -> AppResul
     let by_id: HashMap<&str, &str> =
         candidates.iter().map(|candidate| (candidate.table.id.as_str(), candidate.table.relation.as_str())).collect();
     Ok(SchemaContext {
-        prompt: render(&chosen, &relationships, &by_id),
+        prompt: fit_budget(|columns| render(&chosen, &relationships, &by_id, columns)),
         tables: chosen
             .iter()
             .map(|candidate| TableSchema {
@@ -292,4 +302,16 @@ pub fn starter_questions(workspace: &Workspace) -> AppResult<Vec<String>> {
     questions.dedup();
     questions.truncate(STARTER_QUESTIONS);
     Ok(questions)
+}
+
+/// Renders with fewer columns per table until the schema fits the budget.
+fn fit_budget(render: impl Fn(usize) -> String) -> String {
+    let mut prompt = render(MAX_COLUMNS);
+    for columns in [25, 15, 10] {
+        if prompt.len() <= SCHEMA_BUDGET_CHARS {
+            break;
+        }
+        prompt = render(columns);
+    }
+    prompt
 }
