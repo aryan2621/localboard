@@ -105,9 +105,7 @@ function Conversation({ id }: { id: string }) {
       <div className="flex-1 space-y-8 py-6">
         {conversation.messages.map((message) =>
           message.role === 'user' ? (
-            <div key={message.id} className="flex justify-end">
-              <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-card px-4 py-2.5 text-app-body text-foreground">{message.content}</p>
-            </div>
+            <Question key={message.id}>{message.content}</Question>
           ) : (
             <AnswerView
               key={message.id}
@@ -121,19 +119,22 @@ function Conversation({ id }: { id: string }) {
         )}
         {sending && (
           <>
-            <div className="flex justify-end">
-              <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-card px-4 py-2.5 text-app-body text-foreground">{sending.question}</p>
-            </div>
+            <Question>{sending.question}</Question>
             {sending.output !== 'answer' && <GenerationSteps running />}
           </>
         )}
         <div ref={end} />
       </div>
-      <div className="sticky bottom-0 bg-gradient-to-t from-background via-background to-transparent pb-6 pt-4">
+      <div className="sticky bottom-0 border-t border-border bg-background pb-4 pt-3">
         <Composer onSubmit={submit} busy={generate.isPending || Boolean(sending)} disabled={writing} />
       </div>
     </>
   )
+}
+
+/** Each turn opens with its question as a heading, so the thread reads as a list of answers. */
+function Question({ children }: { children: string }) {
+  return <h2 className="whitespace-pre-wrap break-words border-t border-border pt-6 text-app-title font-semibold text-foreground first:border-t-0 first:pt-0">{children}</h2>
 }
 
 export function ChatPage() {

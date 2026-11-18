@@ -444,16 +444,31 @@ export function AnswerView({
         <MemoryBanner proposal={answer.memoryProposal} agentId={answer.agentId} />
       )}
 
-      {answer && (answer.assumptions.length > 0 || answer.warnings.length > 0) && (
-        <ul className="space-y-1 text-app-caption text-muted-foreground">
-          {answer.assumptions.map((assumption) => (
-            <li key={assumption}>{`Assumed: ${assumption}`}</li>
-          ))}
-          {answer.warnings.map((warning) => (
-            <li key={warning} className="flex min-w-0 gap-1.5 break-words text-warning">
-              <AlertTriangle size={13} strokeWidth={iconStroke} className="mt-px shrink-0" /> {warning}
-            </li>
-          ))}
+      {answer && answer.assumptions.length > 0 && (
+        <Collapsible className="group text-app-label">
+          <CollapsibleTrigger className="flex items-center gap-1 text-app-caption text-muted-foreground hover:text-foreground">
+            <ChevronDown size={14} strokeWidth={iconStroke} className="-rotate-90 transition-transform group-data-[state=open]:rotate-0" />
+            {answer.assumptions.length} {answer.assumptions.length === 1 ? 'assumption' : 'assumptions'}
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <ul className="mt-1 space-y-1 pl-5 text-app-caption text-muted-foreground">
+              {answer.assumptions.map((assumption) => (
+                <li key={assumption}>{assumption}</li>
+              ))}
+            </ul>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+      {/* An error message already lists the warnings, so only show the ones it does not repeat. */}
+      {answer && answer.warnings.filter((warning) => !text?.includes(warning)).length > 0 && (
+        <ul className="space-y-1 text-app-caption text-warning">
+          {answer.warnings
+            .filter((warning) => !text?.includes(warning))
+            .map((warning) => (
+              <li key={warning} className="flex min-w-0 gap-1.5 break-words">
+                <AlertTriangle size={13} strokeWidth={iconStroke} className="mt-px shrink-0" /> {warning}
+              </li>
+            ))}
         </ul>
       )}
 
