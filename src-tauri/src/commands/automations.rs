@@ -88,7 +88,7 @@ fn show_window(app: &AppHandle) {
     }
 }
 
-fn smtp_secret(workspace_id: &str) -> String {
+pub(crate) fn smtp_secret(workspace_id: &str) -> String {
     format!("smtp:{workspace_id}")
 }
 

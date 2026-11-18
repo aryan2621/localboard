@@ -14,12 +14,14 @@ fn routing(state: &AppState) -> AppResult<TaskRouting> {
 
 #[tauri::command]
 pub async fn llm_catalog(state: State<'_, AppState>) -> AppResult<CatalogView> {
+    state.ensure_unlocked()?;
     let routing = routing(&state)?;
     Ok(state.llm.catalog(routing).await)
 }
 
 #[tauri::command]
 pub fn llm_download(app: AppHandle, state: State<'_, AppState>, model_id: String) -> AppResult<()> {
+    state.ensure_unlocked()?;
     state.ensure_online("Downloading a model")?;
     state.llm.download(
         &model_id,
@@ -31,22 +33,27 @@ pub fn llm_download(app: AppHandle, state: State<'_, AppState>, model_id: String
 }
 
 #[tauri::command]
-pub fn llm_cancel_download(state: State<'_, AppState>) {
+pub fn llm_cancel_download(state: State<'_, AppState>) -> AppResult<()> {
+    state.ensure_unlocked()?;
     state.llm.cancel_download();
+    Ok(())
 }
 
 #[tauri::command]
 pub async fn llm_delete_model(state: State<'_, AppState>, model_id: String) -> AppResult<()> {
+    state.ensure_unlocked()?;
     Ok(state.llm.delete(&model_id).await?)
 }
 
 #[tauri::command]
 pub async fn llm_benchmark(state: State<'_, AppState>, model_id: String) -> AppResult<Benchmark> {
+    state.ensure_unlocked()?;
     Ok(state.llm.benchmark(&model_id).await?)
 }
 
 #[tauri::command]
 pub async fn llm_stop(state: State<'_, AppState>) -> AppResult<()> {
+    state.ensure_unlocked()?;
     state.llm.stop().await;
     Ok(())
 }
@@ -54,6 +61,7 @@ pub async fn llm_stop(state: State<'_, AppState>) -> AppResult<()> {
 /// Replaces the per-task model choices; every id is validated against the catalog.
 #[tauri::command]
 pub fn set_task_routing(state: State<'_, AppState>, routing: TaskRouting) -> AppResult<TaskRouting> {
+    state.ensure_unlocked()?;
     let mut validated = TaskRouting::default();
     validated.set(crate::llm::provider::Task::Sql, routing.sql)?;
     validated.set(crate::llm::provider::Task::Reasoning, routing.reasoning)?;

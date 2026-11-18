@@ -104,7 +104,7 @@ fn audit(workspace: &Workspace, kind: &str, started: Instant, result: &AppResult
         query: AuditQuery::default(),
         detail: match result {
             Ok(_) => detail,
-            Err(error) => json!({ "context": detail, "error": error.to_string() }),
+            Err(error) => json!({ "context": detail, "error": crate::connectors::scrub_tokens(&error.to_string()) }),
         },
     };
     if let Err(error) = workspace.db().and_then(|db| db.record_audit(&entry)) {

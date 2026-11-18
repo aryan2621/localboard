@@ -205,6 +205,11 @@ impl WorkspaceDb {
         Ok(inserted == 1)
     }
 
+    pub fn set_connection_secret_ref(&self, id: &str, secret_ref: Option<&str>) -> AppResult<()> {
+        self.conn.execute("UPDATE connections SET secret_ref = ?2 WHERE id = ?1", params![id, secret_ref])?;
+        Ok(())
+    }
+
     pub fn list_connections(&self) -> AppResult<Vec<ConnectionRecord>> {
         let mut statement = self
             .conn

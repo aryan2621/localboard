@@ -6,7 +6,7 @@ use super::{esc, json_script, BRAND_HEX, BRAND_NAME};
 use crate::storage::artifacts::{DatasitePage, DatasiteRecord, ReportRecord};
 
 pub enum SiteMode<'a> {
-    Live,
+    Live { token: &'a str },
     Static,
     Linked { origin: &'a str },
 }
@@ -17,7 +17,7 @@ pub fn datasite_page(site: &DatasiteRecord, page: &DatasitePage, mode: SiteMode<
         .iter()
         .map(|item| {
             let href = match mode {
-                SiteMode::Live => {
+                SiteMode::Live { .. } => {
                     if item.slug == "overview" {
                         format!("/d/{}", esc(&site.id))
                     } else {
@@ -48,9 +48,9 @@ pub fn datasite_page(site: &DatasiteRecord, page: &DatasitePage, mode: SiteMode<
     }
 
     let fetch = match mode {
-        SiteMode::Live => format!("const BASE=''; const SITE='{}';", esc(&site.id)),
-        SiteMode::Static => "const BASE=null; const SITE='';".to_owned(),
-        SiteMode::Linked { origin } => format!("const BASE='{}'; const SITE='{}';", esc(origin), esc(&site.id)),
+        SiteMode::Live { token } => format!("const BASE=''; const SITE='{}'; const TOKEN='{}';", esc(&site.id), esc(token)),
+        SiteMode::Static => "const BASE=null; const SITE=''; const TOKEN='';".to_owned(),
+        SiteMode::Linked { origin } => format!("const BASE='{}'; const SITE='{}'; const TOKEN='';", esc(origin), esc(&site.id)),
     };
 
     wrap_named(
@@ -106,9 +106,9 @@ pub fn datasite_bundle(site: &DatasiteRecord, mode: SiteMode<'_>, brand: &str, b
         }
     }
     let fetch = match mode {
-        SiteMode::Live => format!("const BASE=''; const SITE='{}';", esc(&site.id)),
-        SiteMode::Static => "const BASE=null; const SITE='';".to_owned(),
-        SiteMode::Linked { origin } => format!("const BASE='{}'; const SITE='{}';", esc(origin), esc(&site.id)),
+        SiteMode::Live { token } => format!("const BASE=''; const SITE='{}'; const TOKEN='{}';", esc(&site.id), esc(token)),
+        SiteMode::Static => "const BASE=null; const SITE=''; const TOKEN='';".to_owned(),
+        SiteMode::Linked { origin } => format!("const BASE='{}'; const SITE='{}'; const TOKEN='';", esc(origin), esc(&site.id)),
     };
     wrap_named(
         &site.name,
@@ -161,7 +161,7 @@ pub fn report_html(report: &ReportRecord) -> String {
         &format!(
             "<header class=\"bar\"><strong>{}</strong><span>{}</span></header>\
              <main><h1>{}</h1>{body}</main>\
-             <script>window.__LB_DATA__={};const BASE=null;const SITE='';{CHART_JS}</script>",
+             <script>window.__LB_DATA__={};const BASE=null;const SITE='';const TOKEN='';{CHART_JS}</script>",
             esc(brand_name),
             esc(&report.name),
             esc(&report.name),
@@ -206,7 +206,7 @@ function nums(result,name){const i=col(result,name);return result.rows.map(r=>Nu
 async function resultOf(id){
   if(BASE===null) return window.__LB_DATA__[id];
   const url=(BASE||'')+'/d/'+SITE+'/data/'+id;
-  const res=await fetch(url);
+  const res=await fetch(url,{headers:{'x-lb-site-token':TOKEN}});
   if(!res.ok) throw new Error('Refresh failed');
   return res.json();
 }

@@ -7,7 +7,7 @@ use std::sync::Mutex;
 use std::time::Instant;
 
 use axum::extract::{Path, Request, State};
-use axum::http::{header, HeaderMap, HeaderValue, Method, StatusCode};
+use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
 use axum::middleware::{self, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
@@ -53,13 +53,17 @@ pub fn start(app: AppHandle) -> Result<LocalServerHandle, AppError> {
     Ok(LocalServerHandle { port: LOCAL_PORT, shutdown: Some(tx) })
 }
 
-fn is_query_route(path: &str) -> bool {
-    path == "/mcp" || path.starts_with("/hooks/") || is_chart_route(path) || ((path.starts_with("/a/") || path.starts_with("/e/")) && path.ends_with("/q"))
+/// Header the live pages send on data requests.
+pub const SITE_TOKEN_HEADER: &str = "x-lb-site-token";
+
+/// Random per-launch token embedded in live pages; other local pages or processes cannot guess it.
+pub fn site_token() -> &'static str {
+    static TOKEN: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    TOKEN.get_or_init(|| format!("{}{}", uuid::Uuid::new_v4().simple(), uuid::Uuid::new_v4().simple()))
 }
 
-/// Pages that hand their own query path to a sandboxed iframe, which has an opaque ("null") origin.
-fn is_page_query_route(path: &str) -> bool {
-    is_chart_route(path) || ((path.starts_with("/a/") || path.starts_with("/e/")) && path.ends_with("/q"))
+fn is_query_route(path: &str) -> bool {
+    path == "/mcp" || path.starts_with("/hooks/") || is_chart_route(path) || ((path.starts_with("/a/") || path.starts_with("/e/")) && path.ends_with("/q"))
 }
 
 fn is_chart_route(path: &str) -> bool {
@@ -77,30 +81,22 @@ async fn guard(request: Request, next: Next) -> Response {
     }
     let path = request.uri().path().to_owned();
     let origin = headers.get(header::ORIGIN).and_then(|value| value.to_str().ok()).map(str::to_owned);
-    let mut null_origin = false;
     if is_query_route(&path) {
+        // An opaque ("null") origin is no longer accepted: sandboxed or file:// pages cannot call these routes.
         if let Some(origin) = &origin {
             let same = origin == &format!("http://127.0.0.1:{port}") || origin == &format!("http://localhost:{port}");
-            null_origin = origin == "null" && is_page_query_route(&path);
-            if !same && !null_origin {
+            if !same {
                 return (StatusCode::FORBIDDEN, "Cross-origin requests are not allowed").into_response();
             }
         }
     }
-    if null_origin && request.method() == Method::OPTIONS {
-        let mut response = StatusCode::NO_CONTENT.into_response();
-        let out = response.headers_mut();
-        out.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_static("null"));
-        out.insert(header::ACCESS_CONTROL_ALLOW_METHODS, HeaderValue::from_static("POST"));
-        out.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, HeaderValue::from_static("content-type"));
-        out.insert(header::ACCESS_CONTROL_MAX_AGE, HeaderValue::from_static("600"));
-        return response;
+    if is_chart_route(&path) {
+        let provided = headers.get(SITE_TOKEN_HEADER).and_then(|value| value.to_str().ok()).unwrap_or("");
+        if !crate::storage::security::tokens_match(site_token(), provided) {
+            return (StatusCode::UNAUTHORIZED, "A site token is required").into_response();
+        }
     }
     let mut response = next.run(request).await;
-    if null_origin {
-        response.headers_mut().insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_static("null"));
-        response.headers_mut().insert(header::VARY, HeaderValue::from_static("Origin"));
-    }
     response.headers_mut().insert(header::X_CONTENT_TYPE_OPTIONS, HeaderValue::from_static("nosniff"));
     response
 }
@@ -168,7 +164,7 @@ async fn site_page(app: AppHandle, id: String, slug: Option<String>) -> Response
     let Some(page) = page else {
         return (StatusCode::NOT_FOUND, "Page not found").into_response();
     };
-    html_ok(html::datasite_page(&site, page, SiteMode::Live, &theme.brand, &theme.name))
+    html_ok(html::datasite_page(&site, page, SiteMode::Live { token: site_token() }, &theme.brand, &theme.name))
 }
 
 async fn chart_data(State(app): State<AppHandle>, Path((id, chart)): Path<(String, String)>) -> Response {
@@ -230,9 +226,6 @@ async fn webhook_fire(State(app): State<AppHandle>, Path(id): Path<String>, head
     else {
         return (StatusCode::UNAUTHORIZED, "Bearer token required").into_response();
     };
-    if !hook_allowed(&id) {
-        return (StatusCode::TOO_MANY_REQUESTS, "Too many requests for this webhook. Try again in a minute.").into_response();
-    }
     let Some(state) = app.try_state::<AppState>() else {
         return (StatusCode::SERVICE_UNAVAILABLE, "LocalBoard is shutting down").into_response();
     };
@@ -252,6 +245,10 @@ async fn webhook_fire(State(app): State<AppHandle>, Path(id): Path<String>, head
         Err(error) => return fail(error),
     };
     if !allowed {
+        // Only failed attempts spend the bucket, so a flood of bad tokens cannot starve the real caller.
+        if !hook_allowed(&id) {
+            return (StatusCode::TOO_MANY_REQUESTS, "Too many requests for this webhook. Try again in a minute.").into_response();
+        }
         return (StatusCode::UNAUTHORIZED, "That webhook token is not valid").into_response();
     }
     match crate::commands::automations::run_one(&app, &state, &id, "webhook").await {
@@ -263,8 +260,18 @@ async fn webhook_fire(State(app): State<AppHandle>, Path(id): Path<String>, head
     }
 }
 
+/// Pages are self-contained: inline script/style only, data over same-origin fetch, nothing else.
+const PAGE_CSP: &str = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'";
+
 fn html_ok(body: String) -> Response {
-    ([(header::CONTENT_TYPE, "text/html; charset=utf-8")], body).into_response()
+    (
+        [
+            (header::CONTENT_TYPE, "text/html; charset=utf-8"),
+            (header::CONTENT_SECURITY_POLICY, PAGE_CSP),
+        ],
+        body,
+    )
+        .into_response()
 }
 
 fn fail(error: AppError) -> Response {
@@ -275,4 +282,16 @@ fn fail(error: AppError) -> Response {
         _ => StatusCode::INTERNAL_SERVER_ERROR,
     };
     (status, error.to_string()).into_response()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn chart_routes_need_the_token() {
+        assert!(is_chart_route("/d/abc/data/c1"));
+        assert!(!is_chart_route("/d/abc"));
+        assert!(!site_token().is_empty());
+    }
 }

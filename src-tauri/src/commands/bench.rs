@@ -191,6 +191,7 @@ pub async fn bench_explain(state: State<'_, AppState>, sql: String, params: Valu
 
 #[tauri::command]
 pub async fn bench_fix(state: State<'_, AppState>, sql: String, error: String) -> AppResult<SqlText> {
+    state.ensure_unlocked()?;
     let (validated, _, _) = prepare(&state, &sql).await?;
     let fixed = rewrite(&state, &validated.sql, &error, true).await?;
     let (checked, _, _) = prepare(&state, &fixed).await?;
@@ -199,6 +200,7 @@ pub async fn bench_fix(state: State<'_, AppState>, sql: String, error: String) -
 
 #[tauri::command]
 pub async fn bench_optimize(state: State<'_, AppState>, sql: String) -> AppResult<SqlText> {
+    state.ensure_unlocked()?;
     let (validated, _, _) = prepare(&state, &sql).await?;
     let optimized = rewrite(&state, &validated.sql, "", false).await?;
     let (checked, _, _) = prepare(&state, &optimized).await?;
@@ -207,6 +209,7 @@ pub async fn bench_optimize(state: State<'_, AppState>, sql: String) -> AppResul
 
 #[tauri::command]
 pub async fn bench_describe(state: State<'_, AppState>, sql: String) -> AppResult<Explanation> {
+    state.ensure_unlocked()?;
     let (validated, _, _) = prepare(&state, &sql).await?;
     let provider = sql_provider(&state).await?;
     let response = provider

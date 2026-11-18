@@ -239,15 +239,44 @@ pub fn build(config: sql::DbConfig) -> Result<Box<dyn Connector>, ConnectorError
 /// Secrets must never appear in errors that reach the UI or the audit log.
 pub(crate) fn redact(error: impl std::fmt::Display, secret: &str) -> String {
     let message = error.to_string();
-    if secret.is_empty() {
-        message
-    } else {
-        message.replace(secret, "********")
+    let message = if secret.is_empty() { message } else { message.replace(secret, "********") };
+    scrub_tokens(&message)
+}
+
+/// Masks JWTs (`eyJ...`) and `Bearer` values, which connectors derive from the password and may echo in errors.
+pub(crate) fn scrub_tokens(message: &str) -> String {
+    let is_token_char = |c: char| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | '.' | '~' | '+' | '/' | '=');
+    let mut out = String::with_capacity(message.len());
+    let mut rest = message;
+    while let Some(at) = ["eyJ", "Bearer ", "bearer "].iter().filter_map(|key| rest.find(key).map(|i| (i, *key))).min() {
+        let (start, key) = at;
+        let value_start = if key == "eyJ" { start } else { start + key.len() };
+        out.push_str(&rest[..value_start]);
+        let tail = &rest[value_start..];
+        let len = tail.find(|c: char| !is_token_char(c)).unwrap_or(tail.len());
+        if len > 0 {
+            out.push_str("********");
+        }
+        rest = &tail[len..];
     }
+    out.push_str(rest);
+    out
 }
 
 /// A source whose tables are exposed to the analytics engine as DuckDB relations.
 pub trait DuckDbSource: Send + Sync {
     fn discover(&self) -> Result<Vec<SourceTable>, ConnectorError>;
     fn register(&self, duck: &Analytics, table: &SourceTable, relation: &str) -> Result<(), ConnectorError>;
+}
+
+#[cfg(test)]
+mod redact_tests {
+    use super::*;
+
+    #[test]
+    fn masks_secret_jwt_and_bearer() {
+        let message = redact("bad pw hunter2 token eyJhbGciOi.eyJzdWIi.sig; Authorization: Bearer abc.def end", "hunter2");
+        assert_eq!(message, "bad pw ******** token ********; Authorization: Bearer ******** end");
+        assert_eq!(scrub_tokens("nothing here"), "nothing here");
+    }
 }

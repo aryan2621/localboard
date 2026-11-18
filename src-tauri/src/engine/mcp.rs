@@ -100,7 +100,7 @@ pub async fn list_remote_tools(server: &McpServerRecord, offline: bool) -> AppRe
 pub async fn call_remote(server: &McpServerRecord, method: &str, params: Value, offline: bool) -> AppResult<Value> {
     match server.transport.as_str() {
         "http" => call_http(server, method, params, offline).await,
-        "stdio" => call_stdio(server, method, params).await,
+        "stdio" => call_stdio(server, method, params, offline).await,
         other => Err(AppError::invalid(format!("Unknown MCP transport: {other}"))),
     }
 }
@@ -111,7 +111,7 @@ async fn call_http(server: &McpServerRecord, method: &str, params: Value, offlin
         return Err(AppError::invalid("Offline mode is on. Remote MCP would leave this device."));
     }
     let request = JsonRpcRequest { jsonrpc: "2.0".into(), id: json!(1), method: method.to_owned(), params };
-    let client = reqwest::Client::builder().timeout(Duration::from_secs(30)).build().map_err(|error| AppError::Internal(error.to_string()))?;
+    let client = reqwest::Client::builder().timeout(Duration::from_secs(30)).redirect(reqwest::redirect::Policy::none()).build().map_err(|error| AppError::Internal(error.to_string()))?;
     let response = client
         .post(url)
         .header("Content-Type", "application/json")
@@ -124,7 +124,11 @@ async fn call_http(server: &McpServerRecord, method: &str, params: Value, offlin
     rpc_result(body)
 }
 
-async fn call_stdio(server: &McpServerRecord, method: &str, params: Value) -> AppResult<Value> {
+async fn call_stdio(server: &McpServerRecord, method: &str, params: Value, offline: bool) -> AppResult<Value> {
+    // A local command can reach the network on its own, so offline mode cannot vouch for it.
+    if offline {
+        return Err(AppError::invalid("Offline mode is on. A local MCP command could reach the network, so it is not run."));
+    }
     let command = server.command.as_deref().ok_or_else(|| AppError::invalid("This MCP server has no command"))?;
     let workspace = std::env::current_dir().ok();
     tokio::task::spawn_blocking({
@@ -143,7 +147,7 @@ fn stdio_roundtrip(command: &str, method: &str, params: Value, cwd: Option<&std:
     }
     let program = parts.remove(0);
     let mut child = Command::new(program);
-    child.args(parts).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    child.args(parts).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null());
     if let Some(cwd) = cwd {
         child.current_dir(cwd);
     }
@@ -167,6 +171,7 @@ fn stdio_roundtrip(command: &str, method: &str, params: Value, cwd: Option<&std:
             Ok(frame) => frame,
             Err(_) => {
                 let _ = child.kill();
+                let _ = child.wait();
                 Err(AppError::invalid("The MCP server did not answer in time"))
             }
         }
@@ -181,6 +186,7 @@ fn stdio_roundtrip(command: &str, method: &str, params: Value, cwd: Option<&std:
     write_frame(&mut stdin, &JsonRpcRequest { jsonrpc: "2.0".into(), id: json!(2), method: method.to_owned(), params })?;
     let response = wait(&mut child);
     let _ = child.kill();
+    let _ = child.wait(); // reap the process so it does not linger as a zombie
     let response = response?;
     let parsed: JsonRpcResponse = serde_json::from_value(response)?;
     rpc_result(parsed)
@@ -202,6 +208,8 @@ fn write_notification(writer: &mut dyn Write, method: &str, params: Value) -> Ap
     Ok(())
 }
 
+const MAX_FRAME_BYTES: usize = 16 * 1024 * 1024;
+
 fn read_frame(reader: &mut BufReader<impl Read>) -> AppResult<Value> {
     let mut headers = String::new();
     loop {
@@ -222,6 +230,9 @@ fn read_frame(reader: &mut BufReader<impl Read>) -> AppResult<Value> {
         line.to_ascii_lowercase().strip_prefix("content-length:").map(|value| value.trim().parse::<usize>().ok())
     }).flatten();
     if let Some(length) = length {
+        if length > MAX_FRAME_BYTES {
+            return Err(AppError::invalid("The MCP server sent a message that is too large"));
+        }
         let mut buf = vec![0u8; length];
         reader.read_exact(&mut buf).map_err(|error| AppError::Internal(error.to_string()))?;
         return serde_json::from_slice(&buf).map_err(AppError::from);
@@ -391,4 +402,17 @@ fn ok(id: Value, result: Value) -> JsonRpcResponse {
 
 fn fail(id: Value, message: String) -> JsonRpcResponse {
     JsonRpcResponse { jsonrpc: "2.0".into(), id, result: None, error: Some(JsonRpcError { code: -32000, message }) }
+}
+
+#[cfg(test)]
+mod frame_cap_tests {
+    use super::*;
+
+    #[test]
+    fn oversized_frame_is_rejected_before_allocating() {
+        let mut reader = BufReader::new(&b"Content-Length: 99999999999\r\n\r\n"[..]);
+        assert!(read_frame(&mut reader).is_err());
+        let mut ok = BufReader::new(&b"Content-Length: 2\r\n\r\n{}"[..]);
+        assert!(read_frame(&mut ok).is_ok());
+    }
 }

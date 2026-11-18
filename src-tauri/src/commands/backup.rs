@@ -68,9 +68,26 @@ pub async fn backup_import(app: tauri::AppHandle, state: State<'_, AppState>, pa
     if encrypted && remember.unwrap_or(false) {
         crate::storage::secrets::save(&format!("workspace-key:{id}"), passphrase.as_deref().unwrap_or_default())?;
     }
+    if let Err(error) = rekey_connection_secrets(&state, &id) {
+        tracing::error!("could not re-key imported connection secrets: {error}");
+    }
     crate::commands::automations::resume(&app);
     let record = state.app_db()?.get_workspace(&id)?;
     Ok(record)
+}
+
+/// An imported workspace must not share keychain entries with the one it was exported from: deleting either
+/// would otherwise remove the other's passwords. Copy each secret to a ref scoped to the new workspace.
+fn rekey_connection_secrets(state: &AppState, workspace_id: &str) -> AppResult<()> {
+    let workspace = state.workspace()?;
+    let db = workspace.db()?;
+    for connection in db.list_connections()? {
+        let Some(old) = connection.secret_ref else { continue };
+        let fresh = format!("{workspace_id}:{}", connection.id);
+        let moved = crate::storage::secrets::get(&old).and_then(|secret| crate::storage::secrets::save(&fresh, &secret)).is_ok();
+        db.set_connection_secret_ref(&connection.id, moved.then_some(fresh.as_str()))?;
+    }
+    Ok(())
 }
 
 fn write_backup(dir: &Path, name: &str, encrypted: bool, dest: &Path) -> AppResult<()> {

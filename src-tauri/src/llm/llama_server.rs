@@ -155,8 +155,9 @@ impl Supervisor {
         command
             .arg("--model")
             .arg(model_path)
-            .args(["--host", "127.0.0.1", "--port", &port.to_string(), "--api-key", &api_key])
+            .args(["--host", "127.0.0.1", "--port", &port.to_string()])
             .args(["--n-gpu-layers", "999", "--parallel", "1"])
+            .env("LLAMA_API_KEY", &api_key) // env, not argv: argv is visible to other local users via ps
             .stdin(Stdio::null())
             .stdout(Stdio::from(log))
             .stderr(Stdio::from(log_err))

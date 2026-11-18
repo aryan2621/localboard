@@ -76,16 +76,19 @@ fn show_notification(app: &tauri::AppHandle, title: &str, body: &str) -> AppResu
 }
 
 #[tauri::command]
-pub fn notify_test(app: tauri::AppHandle) -> AppResult<()> {
+pub fn notify_test(app: tauri::AppHandle, state: State<'_, AppState>) -> AppResult<()> {
+    state.ensure_unlocked()?;
     show_notification(&app, "LocalBoard", "Test notification. If you can read this, alerts will reach you.")
 }
 
 #[tauri::command]
-pub fn notify_open_settings() {
+pub fn notify_open_settings(state: State<'_, AppState>) -> AppResult<()> {
+    state.ensure_unlocked()?;
     #[cfg(target_os = "macos")]
     let _ = std::process::Command::new("open").arg("x-apple.systempreferences:com.apple.Notifications-Settings.extension").spawn();
     #[cfg(target_os = "windows")]
     let _ = std::process::Command::new("cmd").args(["/C", "start", "ms-settings:notifications"]).spawn();
+    Ok(())
 }
 
 #[tauri::command]

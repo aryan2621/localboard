@@ -99,7 +99,15 @@ pub async fn delete_workspace(app: AppHandle, id: String) -> AppResult<Workspace
                     secrets::delete(&reference)?;
                 }
             }
+            for automation in db.list_automations()? {
+                secrets::delete(&format!("webhook:{}", automation.id))?;
+                for step in &automation.steps {
+                    secrets::delete(&crate::commands::automations::webhook_secret_ref(&id, &step.id))?;
+                }
+            }
         }
+        secrets::delete(&format!("workspace-key:{id}"))?;
+        secrets::delete(&crate::commands::automations::smtp_secret(&id))?;
         state.app_db()?.delete_workspace(&id)?;
         if dir.exists() {
             std::fs::remove_dir_all(&dir)?;
