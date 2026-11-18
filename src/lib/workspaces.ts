@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { api, errorMessage, type WorkspaceList } from './api'
 import { invalidateWorkspaceData, queryClient, queryKeys } from './queryClient'
+import { flushUndoableDeletes } from './undoableDelete'
 import { useNavigation } from '../stores/navigation'
 
 export function useWorkspaces() {
@@ -12,7 +13,10 @@ export function useWorkspaces() {
 export function useWorkspaceAction() {
   const resetForWorkspace = useNavigation((state) => state.resetForWorkspace)
   return useMutation({
-    mutationFn: (run: () => Promise<WorkspaceList>) => run(),
+    mutationFn: async (run: () => Promise<WorkspaceList>) => {
+      await flushUndoableDeletes()
+      return run()
+    },
     onSuccess: (list) => {
       const previous = queryClient.getQueryData<WorkspaceList>(queryKeys.workspaces)
       queryClient.setQueryData(queryKeys.workspaces, list)

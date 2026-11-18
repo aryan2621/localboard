@@ -40,7 +40,7 @@ import { Label } from '../../components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
 import { Textarea } from '../../components/ui/textarea'
-import { ConfirmDialog, CopyField, DetailHeader, EmptyState, FormField, MoreMenu, PageContainer, PageHeader, SectionHeader, ViewToggle } from '../../components/layout/ui'
+import { CopyField, DetailHeader, EmptyState, FormField, MoreMenu, PageContainer, PageHeader, SectionHeader, ViewToggle } from '../../components/layout/ui'
 import { useViewMode } from '../../lib/useViewMode'
 import { GenerationSteps } from '../../components/analyst/StepsPanel'
 import { Banner, ChoiceGrid, IconTile, Meter, Panel, SaveBar, StatRow, Timeline } from '../../components/layout/patterns'
@@ -52,6 +52,7 @@ import { PaginationBar } from '../../components/ui/pagination'
 import { usePagination } from '../../lib/usePagination'
 import { iconStroke } from '../../lib/icon'
 import { queryClient, queryKeys } from '../../lib/queryClient'
+import { undoableDelete } from '../../lib/undoableDelete'
 import { useNavigation } from '../../stores/navigation'
 import { useGeneration } from '../../stores/generation'
 
@@ -234,7 +235,6 @@ export function AutomationsPage() {
   const [steps, setSteps] = useState<DraftStep[]>([emptyStep()])
   const [idea, setIdea] = useState('')
   const [draftOpen, setDraftOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
   const [token, setToken] = useState<string | null>(null)
   const [stepSecrets, setStepSecrets] = useState<Record<string, string>>({})
   const [creating, setCreating] = useState(false)
@@ -309,15 +309,12 @@ export function AutomationsPage() {
     },
     onError: (failure) => toast.error(errorMessage(failure)),
   })
-  const remove = useMutation({
-    mutationFn: () => api.automationDelete(selected),
-    onSuccess: () => {
-      setSelected('')
-      setCreating(false)
-      void queryClient.invalidateQueries({ queryKey: queryKeys.automations })
-    },
-    onError: (failure) => toast.error(errorMessage(failure)),
-  })
+  const remove = () => {
+    const id = selected
+    undoableDelete<Automation>({ id, name: name || 'job', listKey: queryKeys.automations, remove: () => api.automationDelete(id) })
+    setSelected('')
+    setCreating(false)
+  }
   const toggle = useMutation({
     mutationFn: (item: Automation) =>
       api.automationSave({
@@ -579,7 +576,7 @@ export function AutomationsPage() {
               {!run.isPending && <Play strokeWidth={iconStroke} />} Run now
             </Button>
             <MoreMenu>
-              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleteOpen(true)}>
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={remove}>
                 <Trash2 size={14} strokeWidth={iconStroke} /> Delete job
               </DropdownMenuItem>
             </MoreMenu>
@@ -1020,13 +1017,6 @@ export function AutomationsPage() {
         </SheetContent>
       </Sheet>
 
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title={`Delete “${name || 'this job'}”?`}
-        description="The job and its run history are removed. This cannot be undone."
-        onConfirm={() => remove.mutate()}
-      />
     </div>
   )
 }

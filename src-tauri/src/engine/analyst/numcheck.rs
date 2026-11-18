@@ -13,7 +13,11 @@ struct Found {
     dated: bool,
     /// Printed as a year: after a month name or a word like "in"/"since"/"year".
     year_context: bool,
+    /// Preceded by a word claiming an increase ("up 5%", "grew 5%").
+    rise: bool,
 }
+
+const RISE_WORDS: [&str; 5] = ["up", "increased", "rose", "grew", "gained"];
 
 const YEAR_WORDS: [&str; 24] = [
     "in", "since", "year", "fy", "by", "during", "until", "through", "of", "january", "february", "march", "april", "may", "june",
@@ -73,6 +77,7 @@ fn scan(text: &str) -> Vec<Found> {
             plain_int: decimals == 0 && multiplier == 1.0 && !percent && !had_separator,
             dated,
             year_context,
+            rise: RISE_WORDS.contains(&previous_word.as_str()),
         });
     }
     found
@@ -89,10 +94,15 @@ fn collect(facts: &Value, out: &mut Vec<f64>) {
 }
 
 fn traced(found: &Found, known: &[f64]) -> bool {
+    matching(found, known).next().is_some()
+}
+
+/// The known values (signed) that the narrated number matches by magnitude.
+fn matching<'a>(found: &'a Found, known: &'a [f64]) -> impl Iterator<Item = f64> + 'a {
     let target = found.value.abs();
     let slack = found.tolerance * 1.001 + 1e-9;
-    known.iter().any(|fact| {
-        let fact = fact.abs();
+    known.iter().copied().filter(move |signed| {
+        let fact = signed.abs();
         (target - fact).abs() <= slack
             || (found.percent && (target - fact * 100.0).abs() <= slack)
             || (found.percent && (target / 100.0 - fact).abs() <= slack / 100.0)
@@ -110,8 +120,11 @@ pub fn untraced(text: &str, facts: &Value, question: &str) -> Vec<String> {
         if found.dated || (found.plain_int && (found.value <= 10.0 || (found.year_context && (1900.0..=2100.0).contains(&found.value)))) {
             continue;
         }
-        if !traced(&found, &known) && !missing.contains(&found.raw) {
-            missing.push(found.raw.trim().to_owned());
+        // shortcut: only "up X" against negative-only data; "down X" vs positive is a common positive-magnitude phrasing, too noisy.
+        let wrong_sign = found.rise && { let mut m = matching(&found, &known).peekable(); m.peek().is_some() && m.all(|v| v < 0.0) };
+        let label = if wrong_sign { format!("{} (data is negative)", found.raw.trim()) } else { found.raw.trim().to_owned() };
+        if (wrong_sign || !traced(&found, &known)) && !missing.contains(&label) {
+            missing.push(label);
         }
     }
     missing
@@ -132,6 +145,13 @@ mod tests {
     fn times_100_only_for_percents() {
         assert!(untraced("Growth was 12%.", &json!({"g": 0.12}), "").is_empty());
         assert_eq!(untraced("Total was 1200.", &json!({"g": 12}), ""), vec!["1200"]);
+    }
+
+    #[test]
+    fn up_claim_against_negative_data_is_flagged() {
+        assert_eq!(untraced("Revenue was up 5%.", &json!({"g": -0.05}), ""), vec!["5% (data is negative)"]);
+        assert!(untraced("Revenue was up 5%.", &json!({"g": 0.05}), "").is_empty());
+        assert!(untraced("Revenue was down 5%.", &json!({"g": -0.05}), "").is_empty());
     }
 
     #[test]

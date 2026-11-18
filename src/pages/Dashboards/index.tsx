@@ -22,6 +22,7 @@ import { api, errorMessage, type ChartKind, type DashboardSummary, type LiveDash
 import { iconStroke } from '../../lib/icon'
 import { usePagination } from '../../lib/usePagination'
 import { queryClient, queryKeys } from '../../lib/queryClient'
+import { undoableDelete } from '../../lib/undoableDelete'
 import { useGeneration } from '../../stores/generation'
 import { relativeTime } from '../../lib/time'
 import { IconTile } from '../../components/layout/patterns'
@@ -651,7 +652,6 @@ function DashboardView({ id }: { id: string }) {
   const [addSqlOpen, setAddSqlOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [versionsOpen, setVersionsOpen] = useState(false)
-  const [deleteOpen, setDeleteOpen] = useState(false)
   const live = useQuery({ queryKey: [...queryKeys.dashboard(id), params], queryFn: () => api.dashboard(id, params) })
 
   const dashboard = live.data?.dashboard
@@ -672,14 +672,10 @@ function DashboardView({ id }: { id: string }) {
     },
     onError: (failure) => toast.error(errorMessage(failure)),
   })
-  const removeDashboard = useMutation({
-    mutationFn: () => api.dashboardDelete(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboards })
-      openDashboard(null)
-    },
-    onError: (failure) => toast.error(errorMessage(failure)),
-  })
+  const removeDashboard = () => {
+    undoableDelete<DashboardSummary>({ id, name: dashboard?.name ?? 'dashboard', listKey: queryKeys.dashboards, remove: () => api.dashboardDelete(id) })
+    openDashboard(null)
+  }
   const removeTile = useMutation({
     mutationFn: (tileId: string) => api.dashboardDeleteTile(tileId),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard(id) }),
@@ -782,19 +778,11 @@ function DashboardView({ id }: { id: string }) {
               Duplicate
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setVersionsOpen(true)}>Versions…</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleteOpen(true)}>
+            <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={removeDashboard}>
               <Trash2 size={14} strokeWidth={iconStroke} /> Delete dashboard
             </DropdownMenuItem>
           </>
         }
-      />
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="Delete this dashboard?"
-        description="Its tiles and saved versions are removed. Your data is not affected."
-        confirmLabel="Delete dashboard"
-        onConfirm={() => removeDashboard.mutate()}
       />
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
         <SheetContent>
