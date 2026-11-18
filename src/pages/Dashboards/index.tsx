@@ -190,27 +190,18 @@ function DashboardGroups({
         return (
           <section key={group.key || 'unfiled'} className="space-y-3">
             {groups.length > 1 && <SectionHeader title={group.label} description={`${items.length} ${items.length === 1 ? 'dashboard' : 'dashboards'}`} />}
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
+            <div className="divide-y divide-border [&>*]:min-w-0">
               {items.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => onOpen(item.id)}
-                  className="group flex flex-col rounded-lg border border-border bg-surface text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="flex w-full items-center gap-3 px-2 py-2 text-left transition-colors duration-fast hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <span className="flex h-24 items-end gap-1.5 rounded-t-lg border-b border-border bg-muted/40 px-5 pb-4" aria-hidden>
-                    {[38, 64, 46, 80, 56, 72, 90].map((height, index) => (
-                      <span key={index} className="w-full rounded-t-sm bg-chart-1/25 transition-colors duration-fast group-hover:bg-chart-1/45" style={{ height: `${height}%` }} />
-                    ))}
-                  </span>
-                  <span className="flex items-center gap-3 px-4 py-3">
-                    <IconTile icon={LayoutDashboard} size="sm" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-app-label font-semibold text-foreground" title={item.name}>{item.name}</span>
-                      <span className="block truncate text-app-caption text-muted-foreground">
-                        {item.tileCount} {item.tileCount === 1 ? 'tile' : 'tiles'} · edited {relativeTime(item.updatedAt)}
-                      </span>
-                    </span>
+                  <IconTile icon={LayoutDashboard} size="sm" />
+                  <span className="min-w-0 flex-1 truncate text-app-body font-medium text-foreground" title={item.name}>{item.name}</span>
+                  <span className="shrink-0 text-app-caption text-muted-foreground">
+                    {item.tileCount} {item.tileCount === 1 ? 'tile' : 'tiles'} · edited {relativeTime(item.updatedAt)}
                   </span>
                 </button>
               ))}

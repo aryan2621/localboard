@@ -408,13 +408,14 @@ export function QueryBenchPage() {
           <SheetBody>
 <SearchInput value={tableSearch} onChange={setTableSearch} placeholder="Search tables and columns" />
               {(schemaQuery.data ?? []).length === 0 && <EmptyState title="No tables" description="Add data in Connections first." />}
+              <div className="divide-y divide-border">
               {filteredTables.map((table) => (
-                <details key={table.relation} className="group rounded-lg border border-border bg-surface">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 [&::-webkit-details-marker]:hidden">
+                <details key={table.relation} className="group">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2 py-2 [&::-webkit-details-marker]:hidden">
                     <button type="button" onClick={(event) => { event.preventDefault(); insertAtCursor(table.relation) }} className="truncate font-mono text-app-caption text-foreground hover:underline">{table.relation}</button>
                     <ChevronDown size={14} strokeWidth={iconStroke} className="shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                   </summary>
-                  <div className="flex flex-wrap gap-1 border-t border-border px-3 py-2">
+                  <div className="flex flex-wrap gap-1 px-2 pb-2">
                     {table.columns.map((column) => (
                       <button
                         key={column}
@@ -428,6 +429,7 @@ export function QueryBenchPage() {
                   </div>
                 </details>
               ))}
+              </div>
           </SheetBody>
         </SheetContent>
       </Sheet>
@@ -441,12 +443,13 @@ export function QueryBenchPage() {
               ) : (
                 <SearchInput value={historySearch} onChange={setHistorySearch} placeholder="Search history" />
               )}
+              <div className="divide-y divide-border">
               {historyPg.pageItems.map((entry) => (
                 <button
                   key={entry.id}
                   type="button"
                   onClick={() => restoreHistory(entry)}
-                  className="block w-full rounded-lg border border-border bg-surface px-3 py-2 text-left transition-colors duration-fast hover:border-foreground/25 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  className="block w-full px-2 py-2 text-left transition-colors duration-fast hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <span className="block truncate font-mono text-app-caption text-foreground" title={entry.sql}>{entry.sql}</span>
                   <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-app-caption text-muted-foreground">
@@ -457,6 +460,7 @@ export function QueryBenchPage() {
                   </span>
                 </button>
               ))}
+              </div>
               <PaginationBar page={historyPg.page} pageSize={historyPg.pageSize} total={historyPg.total} onPageChange={historyPg.setPage} onPageSizeChange={historyPg.setPageSize} />
           </SheetBody>
         </SheetContent>

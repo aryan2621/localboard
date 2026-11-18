@@ -416,7 +416,7 @@ function TableOverview({ tables }: { tables: TableRecord[] }) {
       {shown.length === 0 ? (
         <p className="text-app-label text-muted-foreground">No tables match “{search}”.</p>
       ) : view === 'cards' ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
+        <div className="divide-y divide-border [&>*]:min-w-0">
           {pg.pageItems.map((table) => (
             <ListItemCard
               key={table.id}

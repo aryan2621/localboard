@@ -438,7 +438,7 @@ export function AutomationsPage() {
         <ViewToggle value={view} onChange={setView} />
       </div>
       {view === 'cards' ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
+        <div className="divide-y divide-border [&>*]:min-w-0">
           {jobPg.pageItems.map((item) => {
             const Icon = TRIGGER_ICON[item.triggerKind] ?? Timer
             return (
@@ -446,20 +446,18 @@ export function AutomationsPage() {
                 key={item.id}
                 type="button"
                 onClick={() => load(item)}
-                className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4 text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="flex w-full items-center gap-3 px-2 py-2 text-left transition-colors duration-fast hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="flex items-start gap-3">
-                  <IconTile icon={Icon} tone={item.enabled && !item.needsReview ? 'brand' : 'muted'} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-app-label font-semibold text-foreground" title={item.name}>{item.name}</span>
-                    <span className="block truncate text-app-caption text-muted-foreground" title={triggerWords(item.triggerKind, item.trigger)}>{triggerWords(item.triggerKind, item.trigger)}</span>
-                  </span>
-                  {statusBadge(item)}
+                <IconTile icon={Icon} tone={item.enabled && !item.needsReview ? 'brand' : 'muted'} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-app-body font-medium text-foreground" title={item.name}>{item.name}</span>
+                  <span className="block truncate text-app-caption text-muted-foreground" title={triggerWords(item.triggerKind, item.trigger)}>{triggerWords(item.triggerKind, item.trigger)}</span>
                 </span>
-                <span className="mt-auto flex items-center gap-2 text-app-caption text-muted-foreground">
+                <span className="flex shrink-0 items-center gap-2 text-app-caption text-muted-foreground">
                   {statusDot(item)}
                   {item.lastRunAt ? `Last ran ${relativeTime(item.lastRunAt)}` : 'Never run'} · {item.steps.length} {item.steps.length === 1 ? 'step' : 'steps'}
                 </span>
+                {statusBadge(item)}
               </button>
             )
           })}

@@ -421,36 +421,32 @@ function SourceRow({ connection, onExplore, layout = 'card' }: { connection: Con
   }
 
   return (
-    <div className="group flex flex-col rounded-lg border border-border bg-surface transition-colors duration-fast hover:border-foreground/25">
-      <div className="flex items-start gap-3 px-4 pt-4">
-        <IconTile icon={icon} tone={database ? 'brand' : 'muted'} />
-        <button
-          type="button"
-          disabled={connection.tableCount === 0}
-          onClick={() => openSchemaFor(connection.id)}
-          className="min-w-0 flex-1 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:cursor-default"
-        >
-          <span className="block truncate text-app-label font-semibold text-foreground" title={connection.name}>{connection.name}</span>
-          <Hint text={connection.detail}>
-            <span className="block truncate font-mono text-app-caption text-muted-foreground" title={connection.detail}>{connection.detail}</span>
-          </Hint>
-        </button>
-        {action.isPending && <Loader2 size={15} strokeWidth={iconStroke} className="mt-1 animate-spin text-muted-foreground" />}
-        {menu}
-      </div>
-      <div className="mt-auto flex flex-wrap items-center gap-2 px-4 pb-3 pt-3">
-        {connection.sourceMissing && <StatusBadge variant="warning">Not found</StatusBadge>}
-        {typeBadge}
-        <span className="text-app-caption text-muted-foreground">
-          {tables}
-          {snapshotLabel(connection) ? ` · ${snapshotLabel(connection)}` : ` · added ${relativeTime(connection.createdAt)}`}
-        </span>
-        {database && (
-          <Button variant="outline" size="sm" className="ml-auto h-7" onClick={() => onExplore(connection)}>
-            Explore
-          </Button>
-        )}
-      </div>
+    <div className="group flex items-center gap-3 px-2 py-2 transition-colors duration-fast hover:bg-accent/50">
+      <IconTile icon={icon} size="sm" tone={database ? 'brand' : 'muted'} />
+      <button
+        type="button"
+        disabled={connection.tableCount === 0}
+        onClick={() => openSchemaFor(connection.id)}
+        className="min-w-0 flex-1 rounded text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default"
+      >
+        <span className="block truncate text-app-body font-medium text-foreground" title={connection.name}>{connection.name}</span>
+        <Hint text={connection.detail}>
+          <span className="block truncate font-mono text-app-caption text-muted-foreground" title={connection.detail}>{connection.detail}</span>
+        </Hint>
+      </button>
+      {connection.sourceMissing && <StatusBadge variant="warning">Not found</StatusBadge>}
+      {typeBadge}
+      <span className="hidden shrink-0 text-app-caption text-muted-foreground sm:inline">
+        {tables}
+        {snapshotLabel(connection) ? ` · ${snapshotLabel(connection)}` : ` · added ${relativeTime(connection.createdAt)}`}
+      </span>
+      {database && (
+        <Button variant="outline" size="sm" className="h-7" onClick={() => onExplore(connection)}>
+          Explore
+        </Button>
+      )}
+      {action.isPending && <Loader2 size={15} strokeWidth={iconStroke} className="animate-spin text-muted-foreground" />}
+      {menu}
       {removeDialog}
     </div>
   )
@@ -897,7 +893,7 @@ export function ConnectionsPage() {
             {shown.length === 0 ? (
               <p className="text-app-label text-muted-foreground">No sources match “{search}”.</p>
             ) : view === 'cards' ? (
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
+              <div className="divide-y divide-border [&>*]:min-w-0">
                 {pg.pageItems.map((connection) => (
                   <SourceRow key={connection.id} connection={connection} onExplore={(item) => explore.mutate(item)} />
                 ))}

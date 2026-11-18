@@ -150,22 +150,18 @@ function ArtifactTabPanel({
             {newButton}
           </div>
           {shown.length === 0 && <p className="text-app-label text-muted-foreground">Nothing matches “{search}”.</p>}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 [&>*]:min-w-0">
+          <div className="divide-y divide-border [&>*]:min-w-0">
             {pg.pageItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => onOpen(item.id)}
-                className="group flex flex-col rounded-lg border border-border bg-surface text-left transition-colors duration-fast hover:border-foreground/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="flex w-full items-center gap-3 px-2 py-2 text-left transition-colors duration-fast hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <span className="flex items-center gap-3 px-4 py-3">
-                  <IconTile icon={Icon} size="sm" />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-app-label font-semibold text-foreground" title={item.name}>{item.name}</span>
-                    <span className="block truncate text-app-caption text-muted-foreground">
-                      {item.itemCount} {item.itemCount === 1 ? unit.replace(/s$/, '') : unit} · edited {relativeTime(item.updatedAt)}
-                    </span>
-                  </span>
+                <IconTile icon={Icon} size="sm" />
+                <span className="min-w-0 flex-1 truncate text-app-body font-medium text-foreground" title={item.name}>{item.name}</span>
+                <span className="shrink-0 text-app-caption text-muted-foreground">
+                  {item.itemCount} {item.itemCount === 1 ? unit.replace(/s$/, '') : unit} · edited {relativeTime(item.updatedAt)}
                 </span>
               </button>
             ))}
