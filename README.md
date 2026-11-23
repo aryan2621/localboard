@@ -2,7 +2,7 @@
 
 **Ask your data questions in plain language. A private AI data analyst that runs on your computer.**
 
-<!-- DEMO VIDEO: paste the https://github.com/user-attachments/assets/... link on the next line -->
+[![Watch the LocalBoard demo](https://img.youtube.com/vi/PAbbz2CYxac/maxresdefault.jpg)](https://youtu.be/PAbbz2CYxac)
 
 - **Ask:** connect CSV, Excel, Parquet or JSON files, or a PostgreSQL, MySQL or SQLite database (other connectors are experimental and hidden), and ask in plain English. The analyst writes the SQL, runs it, checks it and answers with a chart.
 - **Build:** turn answers into dashboards, multi-page datasites, PDF reports and slide decks.
