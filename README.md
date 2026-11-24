@@ -11,7 +11,7 @@
 
 Queries run on your computer. AI runs through a provider you configure (Anthropic, OpenAI, Gemini, Ollama or an OpenAI-compatible endpoint); cloud providers receive your questions, schema, sample rows and results, and Offline mode blocks them. Other outbound traffic is what you set up (database hosts, optional SMTP or remote MCP). Every query is checked to be a single read-only `SELECT`.
 
-**[⬇ Download for macOS](https://github.com/aryan2621/localboard/releases/latest/download/LocalBoard_0.1.0_aarch64.dmg)**
+**[⬇ Download for macOS](https://github.com/aryan2621/localboard/releases/latest)**
 · macOS 11+, Apple silicon · [Windows and all downloads](https://github.com/aryan2621/localboard/releases/latest)
 
 🛠 **[Developer guide](docs/dev.md)**: every feature in detail, build from source, privacy and governance
